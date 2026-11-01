@@ -70,7 +70,7 @@
     "typescript-language-server": "^6.0.0",
     "wrangler": "^4.69.0"
   },
-  "packageManager": "pnpm@12.15.0",
+  "packageManager": "pnpm@12.16.1",
   "devEngines": {
     "runtime": {
       "name": "node",
