@@ -10,6 +10,13 @@ export const routes = {
   sampleArticle: '/posts/audio-interface-under-the-desk',
   articleWithoutCodeBlock: '/posts/nespresso-mold',
   articleWithCodeBlock: '/posts/resolve-sidekick-nvim-codex-search-error',
+  /**
+   * Markdown 拡張の表示確認に使う代表記事。Callout（Info / Note）、コードタイトル、
+   * リンクカード、目次、シンタックスハイライトをすべて含む。
+   */
+  markdownFeaturesArticle: '/posts/resolve-sidekick-nvim-codex-search-error',
+  /** Warning の Callout を含む記事。 */
+  calloutWarningArticle: '/posts/setup-obsidian-livesync',
   tagsBase: '/tags/',
   /** `routes.sampleArticle` の raw Markdown エンドポイント。 */
   sampleArticleMarkdown: '/posts/audio-interface-under-the-desk.md',

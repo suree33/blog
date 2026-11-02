@@ -22,9 +22,9 @@
       "minimumReleaseAge": "3 days"
     },
     {
-      "description": "Astro関連の minor/patch をまとめる",
+      "description": "Astro関連（Astro の Markdown 処理系 satteri を含む）の minor/patch をまとめる",
       "matchManagers": ["npm"],
-      "matchPackageNames": ["@astrojs/**", "astro", "astro-**"],
+      "matchPackageNames": ["@astrojs/**", "astro", "astro-**", "satteri"],
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "astro"
     },

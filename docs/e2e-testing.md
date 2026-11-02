@@ -4,7 +4,7 @@
 
 ## 概要
 
-Astro のビルド結果を `astro preview` で起動し、スモークテスト、axe-core アクセシビリティ検査、ナビゲーション、タグページ、テーマ切り替え、404 ページ、ビジュアルリグレッションを検証します。主なブラウザ UI spec はデスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の 6 プロジェクトで実行し、axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。
+Astro のビルド結果を `astro preview` で起動し、スモークテスト、axe-core アクセシビリティ検査、ナビゲーション、タグページ、テーマ切り替え、404 ページ、全記事の巡回、Markdown 拡張の表示、ビジュアルリグレッションを検証します。主なブラウザ UI spec はデスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の 6 プロジェクトで実行し、axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で、全記事の巡回は `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。
 
 テストコードは Playwright の fixture とページオブジェクトモデル (POM) で構成しています。アサーションは spec に置き、POM はページ遷移や安定したロケーターの提供に限定します。
 
@@ -12,6 +12,7 @@ Astro のビルド結果を `astro preview` で起動し、スモークテスト
 
 - `pnpm run test:e2e`: ヘッドレスで全 E2E テストを実行
 - `pnpm run test:worker`: Worker の公開 HTTP レスポンス境界を Node.js Test Runner で検証
+- `pnpm run test:unit`: ユニットテスト（Vitest）。詳細は `docs/unit-testing.md` を参照
 - `pnpm run test:e2e:headed`: ブラウザを表示して実行
 - `pnpm run test:e2e:ui`: Playwright UI モードで実行
 - `pnpm run test:e2e:update`: ビジュアルスナップショットを更新
@@ -38,6 +39,7 @@ tests/e2e/
 │   ├── footer.ts             # <footer> (contentinfo)
 │   ├── post-list.ts          # ホームの記事一覧
 │   ├── post-metadata.ts      # 記事メタデータ
+│   ├── markdown-content.ts   # 記事本文（Callout / コードブロック / リンクなど）
 │   └── toc.ts                # 目次 (TOC)
 ├── pages/                    # ページオブジェクト
 │   ├── home-page.ts          # ホーム (/)
@@ -50,7 +52,7 @@ tests/e2e/
 │   └── test.ts               # 共通 fixture
 ├── utils/
 │   ├── routes.ts             # テストで使うルート定義
-│   ├── site-pages.ts         # ページ全体 VRT の撮影対象（記事・タグをソースから列挙）
+│   ├── site-pages.ts         # ページ全体 VRT の撮影対象と全記事の一覧（ソースから列挙）
 │   └── regex.ts              # 正規表現ユーティリティ
 ├── support/
 │   └── network-stub.ts       # E2E ビルド用のネットワークスタブ（--import プリロード）
@@ -65,6 +67,8 @@ tests/e2e/
     ├── tag.spec.ts           # タグページ (/tags/[tag]) の確認
     ├── theme.spec.ts         # テーマ切り替えの確認
     ├── toc.spec.ts           # 目次 (TOC) の表示・追従
+    ├── posts.spec.ts         # 全記事の巡回（HTTP 200・記事レイアウト・h1）
+    ├── markdown-features.spec.ts # Markdown 拡張（Callout / コードタイトル / リンクカード / 目次 / ハイライト）
     ├── not-found.spec.ts     # 404 ページの確認
     ├── visual.spec.ts        # ビジュアルリグレッション（コンポーネント単位）
     ├── visual-pages.spec.ts  # ビジュアルリグレッション（全ページ・フルページ）
@@ -105,6 +109,9 @@ export const routes = {
   home: '/',
   about: '/about',
   sampleArticle: '/posts/audio-interface-under-the-desk',
+  // ...
+  markdownFeaturesArticle: '/posts/resolve-sidekick-nvim-codex-search-error',
+  calloutWarningArticle: '/posts/setup-obsidian-livesync',
   tagsBase: '/tags/',
   sampleArticleMarkdown: '/posts/audio-interface-under-the-desk.md',
   rss: '/rss.xml',
@@ -117,7 +124,13 @@ export const sampleArticleDescription =
   'オーディオインターフェースを両面テープで机の下に設置するために、突っ張り棒を使って仮固定しました。';
 ```
 
+`markdownFeaturesArticle` は Callout（Info / Note）、コードタイトル、リンクカード、目次、シンタックスハイライトをすべて含む記事で、`markdown-features.spec.ts` の代表記事です。`calloutWarningArticle` は Warning の Callout を含む記事です。
+
 `sampleTag` は `sampleArticle` が持つ代表タグで、タグページの `<h1>` と記事リンクの検証に使います。`tagsBase` と組み合わせて `/tags/{tag}` を組み立てます。
+
+### `tests/e2e/utils/site-pages.ts`
+
+`posts` は `src/pages/posts/*.md`（`template/` と `_` 始まりを除く）から列挙した全記事（`slug` / `route` / frontmatter の `title`）です。`sitePages` はそれにホーム・About・Dreamhouse・全タグページ・404 を加えた、ページ全体 VRT の撮影対象です。`posts` は `posts.spec.ts` でも使います。
 
 ### `tests/e2e/utils/regex.ts`
 
@@ -138,13 +151,14 @@ export const sampleArticleDescription =
 - `footer.ts`: `root`、`blogLink`、`aboutLink`、`rssLink` を提供します。
 - `post-list.ts`: `<main>` 内の先頭の `<ul>` を記事一覧として扱います。Tailwind preflight により Chrome では `list` role が落ちるため、`getByRole('list')` は使いません。
 - `post-metadata.ts`: `dot-separated` クラスのうち `<time>` を含む要素を記事メタデータとして扱います。
+- `markdown-content.ts`: 記事本文（`<article>`）内の Markdown 由来の要素を特定します。Callout・コードタイトル・リンクカードは Markdown 処理系のプラグインが生成し、Sätteri への移行で HTML 構造やクラス名が変わりうるため、プラグイン固有のクラス名や data 属性は使いません。`callout(title, body)` はタイトルと完全一致するテキストと本文テキストの両方を含む最も内側の要素、`codeBlock(code)` はそのコードを含む `<pre>`、`linkTo(url)` はその URL への `<a href>`、`textExact(text)` は完全一致するテキスト、`tocHeadings` は本文の h2 / h3 です。
 - `toc.ts`: `aria-label="目次"` の `<nav>` を TOC ルートとします。記事ページにはデスクトップ用（sticky サイドバー）とモバイル用（本文内インライン）の 2 つの TOC が DOM 上に存在し、ビューポート幅に応じて一方だけが可視になるため、`filter({ visible: true })` で表示中の方を選びます。`links` / `link(name)` / `currentLink` を提供します。
 
 ### ページオブジェクト (`tests/e2e/pages/`)
 
 - `home-page.ts`: `goto()`、`header`、`footer`、`postList`
 - `about-page.ts`: `goto()`、`header`、`footer`、`heading`
-- `article-page.ts`: `goto(route, title)`、`header`、`footer`、`metadata`、`toc`、`heading`
+- `article-page.ts`: `goto(route, title)`、`header`、`footer`、`metadata`、`toc`、`content`（`MarkdownContent`）、`heading`
 - `tag-page.ts`: `goto(tag)`、`header`、`footer`、`postList`、`heading`（`<h1>{tag}のタグが付いた記事`）。`header` / `footer` / `postList` は他ページと同じ POM を再利用する
 - `rss-feed-page.ts`: `goto()`、`response`、`content()`。RSS はブラウザ描画ではなく XML 応答のため `APIRequestContext` で取得し、`DOMParser` でパースする。`response` はステータス・ヘッダー検証用、`content()` はパース済みのチャネル/アイテムを返す
 - `not-found-page.ts`: `goto()`（戻り値 `Response | null`）、`header`、`footer`、`heading`、`homeLink`
@@ -229,6 +243,29 @@ axe-core による自動検査だけではアクセシビリティ適合を保�
 - TOC リンクをクリックすると URL ハッシュが更新され、対応見出しがビューポート内にスクロールされ、クリックしたリンクが `aria-current="location"` になることを確認します。
 - ページ末尾へスクロールすると最後の見出しが current になることを確認します（`aria-current` がスクロール位置に追従する）。
 - デスクトップ用（sticky サイドバー）とモバイル用（インライン）の 2 つの `<nav>` が DOM に存在し、ビューポート幅に応じて一方だけが可視になることを確認します。
+
+### 全記事の巡回 (`posts.spec.ts`)
+
+Markdown 処理系の移行などで一部の記事だけが壊れることを検出するため、`utils/site-pages.ts` の `posts`（ソースから列挙した全記事）を 1 記事 1 テストで巡回します。
+
+- HTTP 200 で返る。
+- 記事レイアウト（`MarkdownPostLayout`）が適用されている: ページタイトルが `{title} — Daiki Sato`、ヘッダー（banner）とフッター（contentinfo）、`<article>` が 1 つ、記事メタデータの公開日（`<time>`）が表示される。
+- `<article>` 内に frontmatter の `title` と完全一致する `<h1>` が 1 つだけ表示される。
+- 本文に h2 / h3 がある記事では、表示中の目次に本文の h2 / h3 と同じ項目が同じ順で並ぶ。ない記事では目次（`<nav aria-label="目次">`）を出さない。
+
+ブラウザ差の出にくい構造的な確認なので、`chromium` / `Mobile Chrome` の 2 プロジェクトで実行し、他は `test.skip` します（目次はデスクトップではサイドバー、モバイルでは本文内に表示されるため、両方の配置を確認できます）。列挙結果が sitemap と一致することは `visual-pages.spec.ts` が検証します。
+
+### Markdown 拡張の表示 (`markdown-features.spec.ts`)
+
+Callout、コードタイトル、リンクカード、目次、シンタックスハイライトが表示されることを、代表記事（`routes.markdownFeaturesArticle`、Warning の Callout は `routes.calloutWarningArticle`）で確認します。これらのプラグインは Sätteri への移行で置き換わる（remark-flexible-code-titles → Shiki transformer、rehype-callouts / remark-link-card-plus → リポジトリ内の Sätteri 拡張など）ため、移行の前後で同じテストが通り続けるよう、プラグイン固有のクラス名・data 属性・DOM 構造には依存せず、利用者から見える振る舞いだけを確認します。見た目の細部は `visual-pages.spec.ts` が担当します。
+
+- **Callout**（Info / Note / Warning）: タイトル（`Info` など）と本文が表示され、タイトルが本文より上にある。`[!NOTE]` などの記法がそのまま表示されていない。Callout が枠線または背景色で区別され、タイトルが本文と異なる文字色で強調される。
+- **コードタイトル**: タイトル（例: `lua/sidekick/config.lua:106`）が表示され、`lua:...` の記法がそのまま表示されていない。タイトルがコードの 1 行目より上にあり、コードブロック（`<pre>`）に隙間なく付いていて（タイトルがブロックの内側に入る実装も許容）、左端が揃う。
+- **リンクカード**: URL だけの段落が、その URL へのリンクとして表示され、リンク内にリンク先のタイトル（og:title）とホスト名が別の行に表示され、画像（OG 画像・favicon）がすべて読み込まれる。リンクの表示テキストが URL だけではない。E2E ビルドではネットワークスタブが og:title を `E2E スタブ: {ホスト名}{パス}` にするため、その接頭辞でタイトルを特定します。あわせて、文中の URL（Callout 内の autolink）はカードにならず、URL をテキストとする通常のリンクのままであることを確認します。
+- **目次**: 目次に本文の h2 / h3 が順に並び、各リンクの `href` が見出しの `id` を指す。見出しの `id`（例: `#回避策workaround`）は外部から共有される URL の一部なので、生成規則が変わらないよう期待値を固定しています。
+- **シンタックスハイライト**: システム配色をライト / ダークに切り替えて、コードのトークンが 3 色以上で色分けされること、ダークではライトと異なる配色・背景色になることを計算済みスタイルで確認します。
+
+レイアウトや CSS（`light-dark()` など）のブラウザ差を検出するため、全 6 プロジェクトで実行します。
 
 ### ビジュアルリグレッション (`visual.spec.ts`)
 
@@ -367,4 +404,4 @@ playwright/.cache/
 blob-report/
 ```
 
-なお、スモーク、ナビゲーション、タグ、テーマ、404、目次 (TOC)、ビジュアルリグレッション（コンポーネント単位）の各テストは、デスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の全 6 プロジェクトで実行します。axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。 ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。
+なお、スモーク、ナビゲーション、タグ、テーマ、404、目次 (TOC)、ビジュアルリグレッション（コンポーネント単位）の各テストは、デスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の全 6 プロジェクトで実行します。Markdown 拡張の表示テストも全 6 プロジェクトで実行します。axe-core アクセシビリティ検査、RSS フィードテスト、全記事の巡回は `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。

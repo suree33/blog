@@ -43,6 +43,18 @@ jobs:
       - name: Run Worker tests
         run: pnpm run test:worker
 
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - *checkout
+      - *setup-pnpm
+
+      - name: Run unit tests
+        run: pnpm run test:unit
+
   build:
     name: Build
     runs-on: ubuntu-latest

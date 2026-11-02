@@ -1,6 +1,7 @@
 import { type Locator, type Page } from '@playwright/test';
 import { Header } from '../components/header';
 import { Footer } from '../components/footer';
+import { MarkdownContent } from '../components/markdown-content';
 import { PostMetadata } from '../components/post-metadata';
 import { TableOfContents } from '../components/toc';
 import { routes, sampleArticleTitle } from '../utils/routes';
@@ -19,6 +20,8 @@ export class ArticlePage {
   readonly footer: Footer;
   readonly metadata: PostMetadata;
   readonly toc: TableOfContents;
+  /** 記事本文（Markdown から生成された部分を含む `<article>`）。 */
+  readonly content: MarkdownContent;
 
   private currentTitle: string = sampleArticleTitle;
 
@@ -29,6 +32,7 @@ export class ArticlePage {
     this.footer = new Footer(page);
     this.metadata = new PostMetadata(page);
     this.toc = new TableOfContents(page);
+    this.content = new MarkdownContent(this.root);
   }
 
   /**

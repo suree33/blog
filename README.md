@@ -32,6 +32,17 @@ pnpm run dev
 pnpm run format
 ```
 
+### テスト
+
+```bash
+pnpm run lint          # eslint + astro check + tsc
+pnpm run test:unit     # ユニットテスト (Vitest)
+pnpm run test:worker   # Worker の HTTP 応答 (Node.js Test Runner)
+pnpm run test:e2e      # E2E テスト (Playwright)
+```
+
+詳細は [docs/unit-testing.md](docs/unit-testing.md) と [docs/e2e-testing.md](docs/e2e-testing.md) を参照してください。
+
 ### ビルド
 
 ```bash

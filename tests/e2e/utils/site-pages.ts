@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { routes } from './routes';
 
 /**
- * ページ全体のビジュアルリグレッション（`visual-pages.spec.ts`）で撮影するページ一覧。
+ * ページ全体のビジュアルリグレッション（`visual-pages.spec.ts`）で撮影するページ一覧と、
+ * 全記事の一覧（`posts.spec.ts` でも使う）。
  *
  * 記事とタグはソース（`src/pages/`）から動的に列挙し、記事やタグを追加したときに
  * 撮影対象から漏れないようにする。列挙結果がビルド後の sitemap と一致することは
@@ -81,8 +82,32 @@ export function parseFrontmatterTags(markdown: string): string[] {
   return tags;
 }
 
+/**
+ * frontmatter の `title` を読み取る。
+ *
+ * 1 行で書かれた値（クォートあり / なし）に対応する。`title` がなければ `undefined`。
+ */
+export function parseFrontmatterTitle(markdown: string): string | undefined {
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(markdown)?.[1];
+  const value = frontmatter
+    ?.split(/\r?\n/)
+    .find((line) => /^title:/.test(line))
+    ?.slice('title:'.length);
+  return value === undefined ? undefined : unquote(value) || undefined;
+}
+
+/** ソースから列挙した記事（`src/pages/posts/*.md`）。 */
+export interface PostSource {
+  /** ファイル名から拡張子を除いたもの（例: `nespresso-mold`）。 */
+  slug: string;
+  /** 記事ページのパス（例: `/posts/nespresso-mold`）。 */
+  route: string;
+  /** frontmatter の `title`。記事ページの `<h1>` になる。 */
+  title: string;
+}
+
 /** `src/pages/posts/*.md`（`template/` などのサブディレクトリと `_` 始まりを除く）。 */
-function listPostSlugs(): string[] {
+function listPosts(): PostSource[] {
   return fs
     .readdirSync(postsDir, { withFileTypes: true })
     .filter(
@@ -91,9 +116,25 @@ function listPostSlugs(): string[] {
         entry.name.endsWith('.md') &&
         !entry.name.startsWith('_'),
     )
-    .map((entry) => entry.name.replace(/\.md$/, ''))
-    .sort();
+    .map((entry) => {
+      const slug = entry.name.replace(/\.md$/, '');
+      const title = parseFrontmatterTitle(
+        fs.readFileSync(path.join(postsDir, entry.name), 'utf-8'),
+      );
+      if (!title) {
+        throw new Error(`記事 ${entry.name} の frontmatter に title がない`);
+      }
+      return { slug, route: `/posts/${slug}`, title };
+    })
+    .sort((a, b) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
 }
+
+/**
+ * 全記事の一覧（slug 順）。
+ *
+ * ページ全体のビジュアルリグレッションと、全記事を巡回する `posts.spec.ts` で共有する。
+ */
+export const posts: PostSource[] = listPosts();
 
 /** タグページ（`src/pages/tags/[tag].astro`）と同じく `src/pages/**\/*.md` からタグを集める。 */
 function listTags(): string[] {
@@ -122,9 +163,9 @@ export const sitePages: SitePage[] = [
     snapshotPath: ['dreamhouse'],
     inSitemap: true,
   },
-  ...listPostSlugs().map((slug) => ({
+  ...posts.map(({ slug, route }) => ({
     label: `記事 ${slug}`,
-    route: `/posts/${slug}`,
+    route,
     snapshotPath: ['posts', slug],
     inSitemap: true,
   })),
