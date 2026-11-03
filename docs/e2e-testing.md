@@ -257,7 +257,7 @@ Markdown 処理系の移行などで一部の記事だけが壊れることを�
 
 ### Markdown 拡張の表示 (`markdown-features.spec.ts`)
 
-Callout、コードタイトル、リンクカード、目次、シンタックスハイライトが表示されることを、代表記事（`routes.markdownFeaturesArticle`、Warning の Callout は `routes.calloutWarningArticle`）で確認します。これらのプラグインは Sätteri への移行で置き換わる（remark-flexible-code-titles → Shiki transformer、rehype-callouts / remark-link-card-plus → リポジトリ内の Sätteri 拡張など）ため、移行の前後で同じテストが通り続けるよう、プラグイン固有のクラス名・data 属性・DOM 構造には依存せず、利用者から見える振る舞いだけを確認します。見た目の細部は `visual-pages.spec.ts` が担当します。
+Callout、コードタイトル、リンクカード、目次、シンタックスハイライトが表示されることを、代表記事（`routes.markdownFeaturesArticle`、Warning の Callout は `routes.calloutWarningArticle`）で確認します。これらのプラグインは Sätteri への移行で置き換わる（remark-flexible-code-titles → Shiki transformer（置き換え済み、`docs/code-title.md`）、rehype-callouts / remark-link-card-plus → リポジトリ内の Sätteri 拡張など）ため、移行の前後で同じテストが通り続けるよう、プラグイン固有のクラス名・data 属性・DOM 構造には依存せず、利用者から見える振る舞いだけを確認します。見た目の細部は `visual-pages.spec.ts` が担当します。
 
 - **Callout**（Info / Note / Warning）: タイトル（`Info` など）と本文が表示され、タイトルが本文より上にある。`[!NOTE]` などの記法がそのまま表示されていない。Callout が枠線または背景色で区別され、タイトルが本文と異なる文字色で強調される。
 - **コードタイトル**: タイトル（例: `lua/sidekick/config.lua:106`）が表示され、`lua:...` の記法がそのまま表示されていない。タイトルがコードの 1 行目より上にあり、コードブロック（`<pre>`）に隙間なく付いていて（タイトルがブロックの内側に入る実装も許容）、左端が揃う。

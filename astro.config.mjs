@@ -5,8 +5,9 @@ import { unified } from '@astrojs/markdown-remark';
 import icon from 'astro-icon';
 import { defineConfig } from 'astro/config';
 import rehypeCallouts from 'rehype-callouts';
-import remarkCodeTitles from 'remark-flexible-code-titles';
 import remarkLinkCard from 'remark-link-card-plus';
+
+import { transformerCodeTitle } from './src/lib/markdown/code-title.ts';
 
 const POSTS_MARKDOWN_LAYOUT = '@layouts/MarkdownPostLayout.astro';
 const POSTS_MARKDOWN_PAGE_PATTERN =
@@ -37,7 +38,6 @@ export default defineConfig({
     processor: unified({
       remarkPlugins: [
         postsDefaultLayout,
-        remarkCodeTitles,
         [
           remarkLinkCard,
           {
@@ -53,6 +53,7 @@ export default defineConfig({
         light: 'github-light',
       },
       defaultColor: 'light-dark()',
+      transformers: [transformerCodeTitle()],
     },
   },
   vite: {

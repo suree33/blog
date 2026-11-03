@@ -61,6 +61,12 @@ test('インラインコードを通常のテキストに置き換える', () =>
 
 `tests/unit/satteri.test.ts` は、`markdownToHtml` の呼び出し、frontmatter の分離、mdast / hast プラグインの適用ができることを確かめるスモークテストです。
 
+## Shiki transformer のテストの書き方
+
+コードタイトル（`src/lib/markdown/code-title.ts`、`docs/code-title.md`）のような Shiki transformer は、`shiki` の `codeToHtml` にサイトと同じテーマ設定（`themes: { light: 'github-light', dark: 'github-dark' }`、`defaultColor: 'light-dark()'`）と transformer を渡して検証します。Astro と同じく、フェンスのメタ文字列は `meta: { __raw: '...' }` として渡します。
+
+`shiki` も `satteri` と同じく、テストから import するために devDependency として明示し、バージョンを Astro（`@astrojs/internal-helpers`）が使うものに合わせて固定しています。Renovate では Astro グループで一緒に更新します。
+
 ## GitHub Actions
 
 `.github/workflows/ci.yml` の `unit`（Unit tests）ジョブで `pnpm run test:unit` を実行します。checkout と pnpm のセットアップは他のジョブと同じ YAML anchor（`*checkout` / `*setup-pnpm`）を再利用します。

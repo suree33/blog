@@ -79,7 +79,7 @@ Tagsには、先ほど設定したタグを指定します。
 
 GitHub Actionsの設定ファイル `.github/workflows/deploy.yml` を作成します。
 
-```yaml:deploy.yml
+```yaml title="deploy.yml"
 name: Deploy to server
 on:
   release:
