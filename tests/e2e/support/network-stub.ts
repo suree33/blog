@@ -64,11 +64,14 @@ const FAKE_PUBLIC_ADDRESS = '93.184.215.14';
 const STUB_PATH_PREFIX = '/__e2e-network-stub?url=';
 const PATCHED = Symbol.for('blog.e2e.networkStub.patched');
 const PATCH_UNDICI = Symbol.for('blog.e2e.networkStub.patchUndici');
-const LINK_CARD_CACHE_DIR = path.join(
-  process.cwd(),
-  'public',
-  'remark-link-card-plus',
-);
+/**
+ * リンクカードの画像の保存先。`remark-link-card-plus` と、置き換え予定の
+ * リポジトリ内プラグイン（`src/lib/markdown/link-card.ts`）の両方を片付ける。
+ */
+const LINK_CARD_CACHE_DIRS = [
+  path.join(process.cwd(), 'public', 'remark-link-card-plus'),
+  path.join(process.cwd(), 'public', 'link-card-images'),
+];
 const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
 
 type GlobalWithStub = typeof globalThis & {
@@ -477,7 +480,7 @@ process.on('exit', () => {
   if (servedImageUrls.size === 0) {
     return;
   }
-  // remark-link-card-plus は decodeURI(url.href) の SHA-256 をファイル名に使う。
+  // どちらのプラグインも decodeURI(url.href) の SHA-256 をファイル名に使う。
   const hashes = new Set(
     [...servedImageUrls].flatMap((url) => {
       try {
@@ -487,16 +490,18 @@ process.on('exit', () => {
       }
     }),
   );
-  let entries: string[];
-  try {
-    entries = fs.readdirSync(LINK_CARD_CACHE_DIR);
-  } catch {
-    return;
-  }
-  for (const entry of entries) {
-    const [hash] = entry.split('.');
-    if (hash && hashes.has(hash)) {
-      fs.rmSync(path.join(LINK_CARD_CACHE_DIR, entry), { force: true });
+  for (const directory of LINK_CARD_CACHE_DIRS) {
+    let entries: string[];
+    try {
+      entries = fs.readdirSync(directory);
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const [hash] = entry.split('.');
+      if (hash && hashes.has(hash)) {
+        fs.rmSync(path.join(directory, entry), { force: true });
+      }
     }
   }
 });

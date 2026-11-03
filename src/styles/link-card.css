@@ -1,0 +1,75 @@
+/*
+ * リンクカード（`src/lib/markdown/link-card.ts`）のスタイル。
+ * `remark-link-card.css` と同じ見た目で、クラス名の接頭辞だけを `link-card__` にしたもの。
+ * Sätteri への切り替え（#766）で `global.css` から読み込み、`remark-link-card.css` を削除する。
+ * 詳細は `docs/markdown-link-cards.md` を参照。
+ */
+/* ブレークポイント: 60ch（Tailwindcss/Typographyのproseのmax-widthを参考に） */
+.link-card__container {
+  --padding-x: 1rem;
+  --padding-y: 0.7rem;
+  --border-radius: calc(0.5rem - 1px);
+  @apply rounded-[calc(var(--border-radius)+1px)];
+  @apply border border-(--tw-prose-hr);
+  @apply transition-colors hover:bg-gray-50 dark:hover:bg-gray-800;
+  @apply mb-5 w-full;
+}
+
+.link-card__card {
+  @apply grid grid-cols-[1fr_116px] gap-4;
+  @apply no-underline;
+
+  @media (min-width: 60ch) {
+    @apply grid-cols-[1fr_220px];
+  }
+}
+
+.link-card__main {
+  @apply flex flex-col justify-center font-normal;
+  @apply max-w-full min-w-full;
+  @apply col-1;
+  @apply py-(--padding-y) pr-0 pl-(--padding-x);
+  @apply rounded-tl-(--border-radius) rounded-bl-(--border-radius);
+}
+
+.link-card__content {
+}
+
+.link-card__title {
+  @apply text-base leading-5 font-bold;
+  @apply text-(--tw-prose-headings);
+  @apply line-clamp-2 text-ellipsis;
+}
+
+.link-card__description {
+  @apply text-xs text-gray-500 dark:text-gray-400;
+  @apply mt-1 mb-3;
+
+  @apply line-clamp-1 text-ellipsis;
+}
+
+.link-card__meta {
+  @apply flex items-center gap-2;
+}
+
+.link-card__favicon {
+  @apply m-0 mt-0.5;
+}
+
+.link-card__url {
+  @apply text-xs text-gray-600 dark:text-gray-300;
+  @apply line-clamp-1 text-ellipsis;
+}
+
+.link-card__thumbnail {
+  @apply col-2 aspect-square;
+
+  @media (min-width: 60ch) {
+    @apply aspect-[1.91/1];
+  }
+}
+
+.link-card__image {
+  @apply m-0 h-full w-full object-cover;
+  @apply rounded-tr-(--border-radius) rounded-br-(--border-radius);
+}
