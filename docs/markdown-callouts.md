@@ -2,8 +2,7 @@
 
 このドキュメントでは、記事の Markdown で使う GitHub 風の Callout（`> [!NOTE]` など）と、それを変換する Sätteri の hast プラグイン `src/lib/markdown/callout.ts` について説明します。
 
-> [!IMPORTANT]
-> このプラグインと `src/styles/callout.css` は、まだサイトに組み込んでいません。現在の記事は従来どおり `rehype-callouts`（`astro.config.mjs` の `rehypePlugins` と `src/styles/global.css` の `@import 'rehype-callouts/theme/github'`）で表示しています。Sätteri への切り替え（#766）で組み込みます。
+このプラグインは `rehype-callouts`（unified の rehype プラグイン）を置き換えたものです。経緯は `docs/adr/0001-markdown-processor-satteri.md` を参照。
 
 ## 記法
 
@@ -39,7 +38,7 @@ blockquote の 1 行目の先頭に `[!種類]` を書きます。
 | `[!CAUTION]`     | Caution        | alert-triangle     | `#d1242f` / `#d1242f` |
 | `[!INFO]`        | Info           | info               | `#888` / `#888`       |
 
-GitHub の 5 種類に、記事で使っている `INFO` を加えています。タイトル、アイコン、色、余白は、これまでの表示（`rehype-callouts` を既定の設定で使い、CSS は github テーマを読み込む構成）と同じになるように合わせています。そのため、アイコンは GitHub の Octicons ではなく `rehype-callouts` の既定（obsidian テーマ）の Lucide のアイコンで、`INFO` は色を持たない灰色です。
+GitHub の 5 種類に、記事で使っている `INFO` を加えています。タイトル、アイコン、色、余白は、移行前の表示（`rehype-callouts` を既定の設定で使い、CSS は github テーマを読み込む構成）と同じになるように合わせています。そのため、アイコンは GitHub の Octicons ではなく `rehype-callouts` の既定（obsidian テーマ）の Lucide のアイコンで、`INFO` は色を持たない灰色です。
 
 ## Callout にしないもの
 
@@ -50,7 +49,7 @@ GitHub の 5 種類に、記事で使っている `INFO` を加えています�
 - `[!種類]` が 1 段落目の先頭にない（文の途中や 2 段落目以降にある、強調などで囲まれている）
 - 折りたたみの記法（`[!NOTE]-` / `[!NOTE]+`）や、`]` の直後に空白なしで文字が続くもの
 
-`rehype-callouts`（obsidian テーマの既定設定）は `[!TODO]` などの Obsidian の種類や折りたたみにも対応していますが、記事では使っていないため対応していません。使う場合はプラグインと CSS に追加します。
+`rehype-callouts`（obsidian テーマの既定設定）は `[!TODO]` などの Obsidian の種類や折りたたみにも対応していましたが、記事では使っていないため対応していません（移行後は通常の blockquote として表示されます）。使う場合はプラグインと CSS に追加します。
 
 ## 出力する HTML
 
@@ -74,13 +73,10 @@ GitHub の 5 種類に、記事で使っている `INFO` を加えています�
 
 - ダークモードは `rehype-callouts` と同じく `<html>` に `.dark` クラスがあるときだけ切り替えます。テーマを「OS の設定」にしている場合（クラスなし）は、OS がダークでもライトの色になります（これまでの表示と同じ）。
 
-## Astro への組み込み（#766）
+## Astro への組み込み
 
-切り替え時に次を行います。
-
-1. `astro.config.mjs` の Sätteri の `hastPlugins` に `calloutPlugin` を追加し、`rehype-callouts` を外す。
-2. `src/styles/global.css` の `@import 'rehype-callouts/theme/github'` と `/* rehype-callouts fix */` を削除し、`@import './callout.css'` を追加する。
-3. `rehype-callouts` を依存から外す。
+- `astro.config.mjs` の `markdown.processor: satteri({ hastPlugins: [calloutPlugin] })` で組み込んでいます。Astro の Sätteri の処理では、ユーザーの hast プラグインはシンタックスハイライトの後、画像の処理と見出しの `id` 付けの前に実行されます。
+- スタイルは `src/styles/global.css` から `@import './callout.css'` で読み込みます。
 
 ## テスト
 

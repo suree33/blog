@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: Intel Core i5-13600KFでゲームがクラッシュする問題
 pubDate: 2024-07-31
 updatedDate: 2024-08-02

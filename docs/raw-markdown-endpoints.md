@@ -21,7 +21,7 @@ Raw Markdown の生成は `src/pages/posts/[slug].md.ts` で実装していま�
 
 - `import.meta.glob('./*.md', { query: '?raw', import: 'default', eager: true })` で `src/pages/posts/` 直下の記事 Markdown を文字列として読み込む
 - `getStaticPaths()` で記事ごとの `slug` を列挙し、静的ビルド時に `/posts/[slug].md` を生成する
-- 読み込んだ Markdown の frontmatter から `layout` 行を除去する
+- 読み込んだ Markdown の frontmatter から `layout` 行を除去する（記事は `layout: '@layouts/MarkdownPostLayout.astro'` を frontmatter に書いているが、読者には不要な Astro の内部設定のため出力しない）
 - `GET` は raw Markdown を返し、Worker が最終レスポンスの `Content-Type` を `text/markdown; charset=utf-8` に正規化する
 
 `template/_blog-post.md` や画像ディレクトリ配下のファイルは、`./*.md` の対象外です。

@@ -1,6 +1,6 @@
 @import 'tailwindcss';
-@import 'rehype-callouts/theme/github';
-@import './remark-link-card.css';
+@import './callout.css';
+@import './link-card.css';
 @import './code-block.css';
 
 @plugin '@tailwindcss/typography';
@@ -33,9 +33,4 @@
       margin: 0;
     }
   }
-}
-
-/* rehype-callouts fix */
-.callout-title-icon svg {
-  fill: none;
 }

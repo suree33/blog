@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: GitHub Actions × Tailscale で Palworld サーバーを自動デプロイする
 pubDate: 2025-01-26
 tags:

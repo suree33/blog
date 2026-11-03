@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: 欲しいものリスト 2024.04
 pubDate: 2024-04-18
 tags:

@@ -7,7 +7,7 @@
  *
  * ## 目的
  *
- * リンクカード（`remark-link-card-plus`）はビルド時に外部サイトの OGP・favicon・
+ * リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・
  * OG 画像を取得する。取得結果はネットワーク状態や時刻、相手サイトの変更（403 / 429
  * を含む）で変わるため、そのままではページ全体のビジュアルリグレッションが決定的に
  * ならない。このプリロードはビルド中の localhost 以外への HTTP(S) をすべて、
@@ -16,15 +16,20 @@
  * ## 差し替える経路
  *
  * 1. undici の Dispatcher（`DispatcherBase.prototype.dispatch`）
- *    - npm の `undici` は `module.registerHooks()` の load フックで読み込み時に
- *      パッチする。バージョンや個数に依存しない。`open-graph-scraper` のように
- *      独自の `Agent` を `dispatcher` に明示指定するライブラリもここで捕捉する。
  *    - Node.js 組み込みの `fetch` は `Symbol.for('undici.globalDispatcher.1')` の
  *      グローバル Dispatcher を使うため、パッチ済み `Agent` をグローバル Dispatcher に
- *      設定して捕捉する（`globalThis.fetch` を使う将来の自前プラグインも対象）。
+ *      設定して捕捉する（リンクカードプラグインが使う `globalThis.fetch` はこの経路）。
+ *    - npm の `undici` は `module.registerHooks()` の load フックで読み込み時に
+ *      パッチする。バージョンや個数に依存しない。独自の `Agent` を `dispatcher` に
+ *      明示指定するライブラリもここで捕捉する。
  * 2. `node:http` / `node:https` の `request()` / `get()`
- * 3. `node:dns` の `lookup()`（`open-graph-scraper` は取得前に DNS で公開 IP か
- *    確認するため。実際の接続は 1. / 2. で横取りするので、返すアドレスへは接続しない）
+ * 3. `node:dns` の `lookup()`（取得前に DNS で公開 IP かを確認するライブラリのため。
+ *    実際の接続は 1. / 2. で横取りするので、返すアドレスへは接続しない）
+ *
+ * 現在ビルド中に外部と通信するのはリンクカードプラグインの `fetch` だけで、1. の npm の
+ * `undici` のパッチと 2. / 3. は、別の経路で通信するライブラリが加わっても決定性を保つ
+ * ための備え（旧リンクカードプラグイン `remark-link-card-plus` が使っていた
+ * `open-graph-scraper` は、独自の `Agent` と 3. を使っていた）。
  *
  * 横取りしたリクエストは、プロセス内で起動するループバックの HTTP サーバー
  * （スタブサーバー）へ転送し、そこで合成レスポンスを返す。
@@ -37,8 +42,8 @@
  * - それ以外: URL から決まる og:title / og:description / og:image / favicon を持つ HTML
  *
  * og:image と favicon の URL は予約済み TLD `.invalid` 配下（`*.e2e-stub.invalid`）に
- * する。`remark-link-card-plus` は画像 URL の SHA-256 をファイル名にして
- * `public/remark-link-card-plus/` にキャッシュするため、実在 URL と衝突しない
+ * する。リンクカードプラグインは画像 URL の SHA-256 をファイル名にして
+ * `public/link-card-images/` に保存し、保存済みなら再取得しないため、実在 URL と衝突しない
  * スタブ URL を使えば、ローカルに残った本物のキャッシュが結果を変えることはない。
  * ビルドで書き出されたスタブ画像は、プロセス終了時に同ディレクトリから削除する
  * （public/ を汚さず、以降の本番ビルドにスタブ画像が紛れ込まないようにするため）。
@@ -58,20 +63,20 @@ const LOG_PREFIX = '[e2e-network-stub]';
 const STUB_HOST_SUFFIX = '.e2e-stub.invalid';
 /**
  * 非ローカルのホスト名に対して DNS が返すアドレス。
- * `open-graph-scraper` の公開 IP チェックを通すためだけの値で、実際には接続しない。
+ * 公開 IP かを確認するライブラリのチェックを通すためだけの値で、実際には接続しない。
  */
 const FAKE_PUBLIC_ADDRESS = '93.184.215.14';
 const STUB_PATH_PREFIX = '/__e2e-network-stub?url=';
 const PATCHED = Symbol.for('blog.e2e.networkStub.patched');
 const PATCH_UNDICI = Symbol.for('blog.e2e.networkStub.patchUndici');
 /**
- * リンクカードの画像の保存先。`remark-link-card-plus` と、置き換え予定の
- * リポジトリ内プラグイン（`src/lib/markdown/link-card.ts`）の両方を片付ける。
+ * リンクカードの画像の保存先（`src/lib/markdown/link-card.ts` の既定値）。
  */
-const LINK_CARD_CACHE_DIRS = [
-  path.join(process.cwd(), 'public', 'remark-link-card-plus'),
-  path.join(process.cwd(), 'public', 'link-card-images'),
-];
+const LINK_CARD_IMAGE_DIR = path.join(
+  process.cwd(),
+  'public',
+  'link-card-images',
+);
 const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
 
 type GlobalWithStub = typeof globalThis & {
@@ -480,7 +485,7 @@ process.on('exit', () => {
   if (servedImageUrls.size === 0) {
     return;
   }
-  // どちらのプラグインも decodeURI(url.href) の SHA-256 をファイル名に使う。
+  // リンクカードプラグインは decodeURI(url.href) の SHA-256 をファイル名に使う。
   const hashes = new Set(
     [...servedImageUrls].flatMap((url) => {
       try {
@@ -490,18 +495,16 @@ process.on('exit', () => {
       }
     }),
   );
-  for (const directory of LINK_CARD_CACHE_DIRS) {
-    let entries: string[];
-    try {
-      entries = fs.readdirSync(directory);
-    } catch {
-      continue;
-    }
-    for (const entry of entries) {
-      const [hash] = entry.split('.');
-      if (hash && hashes.has(hash)) {
-        fs.rmSync(path.join(directory, entry), { force: true });
-      }
+  let entries: string[];
+  try {
+    entries = fs.readdirSync(LINK_CARD_IMAGE_DIR);
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const [hash] = entry.split('.');
+    if (hash && hashes.has(hash)) {
+      fs.rmSync(path.join(LINK_CARD_IMAGE_DIR, entry), { force: true });
     }
   }
 });

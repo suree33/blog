@@ -1,32 +1,13 @@
+import { satteri } from '@astrojs/markdown-satteri';
 import partytown from '@astrojs/partytown';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
-import { unified } from '@astrojs/markdown-remark';
 import icon from 'astro-icon';
 import { defineConfig } from 'astro/config';
-import rehypeCallouts from 'rehype-callouts';
-import remarkLinkCard from 'remark-link-card-plus';
 
+import { calloutPlugin } from './src/lib/markdown/callout.ts';
 import { transformerCodeTitle } from './src/lib/markdown/code-title.ts';
-
-const POSTS_MARKDOWN_LAYOUT = '@layouts/MarkdownPostLayout.astro';
-const POSTS_MARKDOWN_PAGE_PATTERN =
-  /(^|[/\\])src[/\\]pages[/\\]posts[/\\].+\.md$/;
-
-function postsDefaultLayout() {
-  return (_tree, file) => {
-    const filePath = file.history[0];
-    const frontmatter = file.data.astro?.frontmatter;
-
-    if (!filePath || !frontmatter) {
-      return;
-    }
-
-    if (POSTS_MARKDOWN_PAGE_PATTERN.test(filePath) && !frontmatter.layout) {
-      frontmatter.layout = POSTS_MARKDOWN_LAYOUT;
-    }
-  };
-}
+import { linkCard } from './src/lib/markdown/link-card.ts';
 
 // https://astro.build/config
 export default defineConfig({
@@ -35,17 +16,11 @@ export default defineConfig({
     '/posts': '/',
   },
   markdown: {
-    processor: unified({
-      remarkPlugins: [
-        postsDefaultLayout,
-        [
-          remarkLinkCard,
-          {
-            cache: true,
-          },
-        ],
-      ],
-      rehypePlugins: [rehypeCallouts],
+    // Astro 7 の既定の Markdown 処理系 Sätteri に、リポジトリ内の拡張を追加する。
+    // 詳細は docs/adr/0001-markdown-processor-satteri.md を参照。
+    processor: satteri({
+      mdastPlugins: [linkCard()],
+      hastPlugins: [calloutPlugin],
     }),
     shikiConfig: {
       themes: {

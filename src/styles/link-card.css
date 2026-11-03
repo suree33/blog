@@ -1,7 +1,7 @@
 /*
  * リンクカード（`src/lib/markdown/link-card.ts`）のスタイル。
- * `remark-link-card.css` と同じ見た目で、クラス名の接頭辞だけを `link-card__` にしたもの。
- * Sätteri への切り替え（#766）で `global.css` から読み込み、`remark-link-card.css` を削除する。
+ * 旧プラグイン（`remark-link-card-plus`）用のスタイルと同じ見た目で、クラス名の接頭辞だけを
+ * `link-card__` にしたもの。`@apply` を使うため `global.css` から読み込む。
  * 詳細は `docs/markdown-link-cards.md` を参照。
  */
 /* ブレークポイント: 60ch（Tailwindcss/Typographyのproseのmax-widthを参考に） */

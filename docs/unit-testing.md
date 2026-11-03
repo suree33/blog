@@ -2,7 +2,7 @@
 
 このドキュメントでは、Vitest を使ったユニットテストの構成と書き方をまとめます。ブラウザでの表示確認は Playwright（`docs/e2e-testing.md`）、Worker の HTTP 応答境界は Node.js Test Runner（`pnpm run test:worker`）が担当し、Vitest はそれ以外の TypeScript モジュール単位のテストを担当します。
 
-主な用途は、リポジトリ内で所有する Markdown 拡張（Sätteri の mdast / hast プラグイン）の単体テストです。Sätteri のプラグインは Astro に組み込む前に、`satteri` の `markdownToHtml` に渡して単体で検証します。
+主な用途は、リポジトリ内で所有する Markdown 拡張（Sätteri の mdast / hast プラグイン）の単体テストです。Sätteri のプラグインは Astro のビルドを通さずに、`satteri` の `markdownToHtml` に渡して単体で検証します。
 
 ## コマンド
 
@@ -60,6 +60,8 @@ test('インラインコードを通常のテキストに置き換える', () =>
 - 表示上の互換性（見た目や利用者から見える振る舞い）は E2E（`markdown-features.spec.ts` / `visual-pages.spec.ts`）で確認します。ユニットテストでは、プラグインが Markdown の記法をどの構文木・HTML に変換するかを確認します。
 
 `tests/unit/satteri.test.ts` は、`markdownToHtml` の呼び出し、frontmatter の分離、mdast / hast プラグインの適用ができることを確かめるスモークテストです。
+
+`tests/unit/posts-layout.test.ts` は、記事の Markdown（`src/pages/posts/*.md`）とテンプレートが frontmatter で `MarkdownPostLayout` を指定していることを確かめます（記事レイアウトは自動適用しないため。`docs/layouts.md` を参照）。
 
 ## Shiki transformer のテストの書き方
 

@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: Astroにおけるremark-link-cardを使ったリンクカード
 pubDate: 2024-04-05
 updatedDate: 2026-02-12

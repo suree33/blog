@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: Nature Remo Lapis does not Matter with Sesame 5
 pubDate: 2024-07-12
 tags:

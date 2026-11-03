@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: Obsidian Syncは高いので、Self-hosted LiveSyncを使う
 pubDate: 2024-04-15
 updatedDate: 2025-02-03

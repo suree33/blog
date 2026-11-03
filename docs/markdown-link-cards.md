@@ -1,9 +1,6 @@
 # Markdown のリンクカード（Sätteri プラグイン）
 
-記事の段落に URL だけを置くと、リンク先の OG メタデータ（タイトル・説明・サムネイル・favicon）を表示するカードになります。現在は `remark-link-card-plus`（unified）で表示しており、このドキュメントはその置き換えとなるリポジトリ内の Sätteri プラグインについて説明します。
-
-> [!NOTE]
-> このプラグインはまだ Astro に組み込んでいません。Markdown 処理を Sätteri へ切り替えるとき（#766）に組み込みます。それまでの本番表示は `remark-link-card-plus` と `src/styles/remark-link-card.css` のままです。
+記事の段落に URL だけを置くと、リンク先の OG メタデータ（タイトル・説明・サムネイル・favicon）を表示するカードになります。このドキュメントでは、それを行うリポジトリ内の Sätteri プラグインについて説明します。`remark-link-card-plus`（unified の remark プラグイン、以下「旧プラグイン」）を置き換えたものです（経緯は `docs/adr/0001-markdown-processor-satteri.md`）。
 
 ## ファイル
 
@@ -12,7 +9,7 @@
 | `src/lib/markdown/link-card.ts`           | mdast プラグイン本体（対象段落の判定、カードの HTML、取得の束ね） |
 | `src/lib/markdown/link-card-metadata.ts`  | ページの取得と OG メタデータの解析                           |
 | `src/lib/markdown/link-card-image.ts`     | favicon・サムネイル画像の保存                                |
-| `src/styles/link-card.css`                | カードのスタイル（`remark-link-card.css` のクラス名を変えたもの） |
+| `src/styles/link-card.css`                | カードのスタイル（旧プラグイン用のスタイルのクラス名を変えたもの） |
 | `src/lib/markdown/link-card*.test.ts`     | 外部通信をモックした単体テスト                               |
 
 ## 使い方
@@ -108,10 +105,9 @@ URL・画像パス・ホスト名は属性値・本文としてすべてエス�
 - 保存に失敗した画像（404 など）をローカルに書き出しません（旧プラグインは応答本文を拡張子なしで保存し、壊れた画像を参照していました）。
 - 取得前の公開 IP アドレスの確認（`open-graph-scraper` の SSRF 対策）は行いません。取得先は記事の筆者が書いた URL だけなので、ビルド時の用途では不要と判断しました。
 
-## Astro への組み込み（#766 で行うこと）
+## Astro への組み込み
 
-- `astro.config.mjs` の Sätteri の `mdastPlugins` に `linkCard()` を追加する
-- `src/styles/global.css` の `@import './remark-link-card.css';` を `@import './link-card.css';` に置き換え、`remark-link-card.css` を削除する（`link-card.css` は `@apply` を使うため、`global.css` から読み込む必要がある）
-- `tests/e2e/support/network-stub.ts` の後片付け対象から `public/remark-link-card-plus/` を外す（`public/link-card-images/` は対象に追加済み）
-- `remark-link-card-plus` と、`.gitignore` の `public/remark-link-card-plus/` を削除する
-- 切り替えの前後で、E2E ビルド（ネットワークスタブあり）のページ全体の表示が変わらないことを確かめる
+- `astro.config.mjs` の `markdown.processor: satteri({ mdastPlugins: [linkCard()] })` で組み込んでいます。
+- スタイルは `src/styles/global.css` から `@import './link-card.css'` で読み込みます（`link-card.css` は `@apply` を使うため、Tailwind を読み込む `global.css` から読み込む必要がある）。
+- 画像はページの描画中に `public/link-card-images/` へ書き出します。Astro は静的ページを生成した後に `public/` を `dist/` へコピーするため、空の状態からのビルドでも画像は `dist/link-card-images/` に含まれます。
+- 旧プラグインのキャッシュ `public/remark-link-card-plus/` は使いません。ローカルに残っている場合は削除して構いません。

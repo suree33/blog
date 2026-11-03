@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: VIAでキーボードを設定していて知った/気がついたTips
 pubDate: 2025-08-28
 tags:

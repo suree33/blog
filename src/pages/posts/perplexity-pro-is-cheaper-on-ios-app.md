@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: Perplexity Proを契約してみた
 pubDate: 2024-04-14
 tags:

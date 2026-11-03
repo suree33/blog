@@ -38,13 +38,13 @@ export function cn(...inputs: ClassValue[]) {}
 
 ### Markdown 処理系との関係
 
-Shiki transformer は Markdown 処理系に依存しません。Astro は unified（`@astrojs/markdown-remark`）でも Sätteri（`@astrojs/markdown-satteri`、Astro 7 のデフォルト）でも、`@astrojs/internal-helpers/shiki` の同じハイライタを使い、次のように呼び出します。
+Shiki transformer は Markdown 処理系に依存しません。Astro は unified（`@astrojs/markdown-remark`）でも Sätteri（`@astrojs/markdown-satteri`、Astro 7 のデフォルトで、このサイトが使う処理系）でも、`@astrojs/internal-helpers/shiki` の同じハイライタを使い、次のように呼び出します。
 
 - `shikiConfig.transformers` をそのまま Shiki に渡す
 - コードフェンスのメタ文字列を `meta: { __raw: meta }` として渡す（transformer からは `this.options.meta.__raw` で読む）
 - Shiki が返した root の最初の子で、元の `<pre>` を置き換える
 
-そのため transformer は root の子を 1 つ（`div.code-block`）にしています。Sätteri へ切り替えても、このままで同じ HTML が出力されます。
+そのため transformer は root の子を 1 つ（`div.code-block`）にしています。unified から Sätteri へ切り替えたときも、同じ HTML が出力されることを確認しています。
 
 ## スタイル
 

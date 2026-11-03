@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: remark-link-card-plusへ移行しました
 pubDate: 2026-02-12
 tags: 

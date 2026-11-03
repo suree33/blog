@@ -5,9 +5,7 @@
  * 見た目は、これまで使っていた `rehype-callouts`（github テーマの CSS + 既定のアイコン）と
  * 同じになるように値を合わせている。
  * ダークモードは `rehype-callouts` と同じく `.dark` クラスがあるときだけ切り替える。
- *
- * NOTE: Sätteri への切り替え（#766）まではサイトに import しない。
- * 詳細は `docs/markdown-callouts.md` を参照。
+ * `global.css` から読み込む。詳細は `docs/markdown-callouts.md` を参照。
  */
 
 .markdown-callout {

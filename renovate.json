@@ -49,13 +49,6 @@
       "groupName": "postcss"
     },
     {
-      "description": "Markdown関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["rehype**", "remark**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "markdown"
-    },
-    {
       "description": "Iconify関連の minor/patch をまとめる",
       "matchManagers": ["npm"],
       "matchPackageNames": ["@iconify-json/**"],

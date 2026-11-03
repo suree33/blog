@@ -46,7 +46,7 @@ python3 .agents/skills/init-post/scripts/init_post.py \
 ## 実装メモ
 
 - テンプレート内の `pubDate: {{date}}` を置換する。
-- `src/pages/posts/` 配下の記事 Markdown は `astro.config.mjs` の remark プラグインで `MarkdownPostLayout` が自動適用されるため、テンプレートに `layout` は書かない。
+- 記事レイアウトはテンプレートの `layout: '@layouts/MarkdownPostLayout.astro'` で指定する（自動適用はしない）。生成した記事から `layout` 行を消さない。raw Markdown（`/posts/<slug>.md`）では `layout` 行は除去される。
 - 既存ファイルがある場合は `--force` が無ければ失敗させる。
 
 ## リソース

@@ -257,7 +257,7 @@ Markdown 処理系の移行などで一部の記事だけが壊れることを�
 
 ### Markdown 拡張の表示 (`markdown-features.spec.ts`)
 
-Callout、コードタイトル、リンクカード、目次、シンタックスハイライトが表示されることを、代表記事（`routes.markdownFeaturesArticle`、Warning の Callout は `routes.calloutWarningArticle`）で確認します。これらのプラグインは Sätteri への移行で置き換わる（remark-flexible-code-titles → Shiki transformer（置き換え済み、`docs/code-title.md`）、rehype-callouts / remark-link-card-plus → リポジトリ内の Sätteri 拡張など）ため、移行の前後で同じテストが通り続けるよう、プラグイン固有のクラス名・data 属性・DOM 構造には依存せず、利用者から見える振る舞いだけを確認します。見た目の細部は `visual-pages.spec.ts` が担当します。
+Callout、コードタイトル、リンクカード、目次、シンタックスハイライトが表示されることを、代表記事（`routes.markdownFeaturesArticle`、Warning の Callout は `routes.calloutWarningArticle`）で確認します。これらの拡張は Sätteri への移行で置き換えた（remark-flexible-code-titles → Shiki transformer（`docs/code-title.md`）、rehype-callouts / remark-link-card-plus → リポジトリ内の Sätteri 拡張（`docs/markdown-callouts.md` / `docs/markdown-link-cards.md`））もので、移行の前後で同じテストが通り続けるよう、プラグイン固有のクラス名・data 属性・DOM 構造には依存せず、利用者から見える振る舞いだけを確認します。見た目の細部は `visual-pages.spec.ts` が担当します。
 
 - **Callout**（Info / Note / Warning）: タイトル（`Info` など）と本文が表示され、タイトルが本文より上にある。`[!NOTE]` などの記法がそのまま表示されていない。Callout が枠線または背景色で区別され、タイトルが本文と異なる文字色で強調される。
 - **コードタイトル**: タイトル（例: `lua/sidekick/config.lua:106`）が表示され、`lua:...` の記法がそのまま表示されていない。タイトルがコードの 1 行目より上にあり、コードブロック（`<pre>`）に隙間なく付いていて（タイトルがブロックの内側に入る実装も許容）、左端が揃う。
@@ -295,7 +295,7 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 決定性のための対策:
 
-- **ビルド時ネットワークスタブ**: リンクカード（`remark-link-card-plus`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL は `*.e2e-stub.invalid` にするため、`public/remark-link-card-plus/` に残った本物のキャッシュとは衝突しません。ビルドで書き出したスタブ画像は終了時に同ディレクトリ（と、置き換え予定のリンクカードプラグインの保存先 `public/link-card-images/`）から削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
+- **ビルド時ネットワークスタブ**: リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、Node.js 組み込み `fetch`（グローバル Dispatcher。リンクカードプラグインはこれを使う）と、別の経路で通信するライブラリへの備えとしての npm の `undici` の Dispatcher（独自 `Agent` を渡す場合も含む）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL は `*.e2e-stub.invalid` にするため、`public/link-card-images/` に残った本物の画像とは衝突しません。ビルドで書き出したスタブ画像は終了時に同ディレクトリから削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
 - **ビルド時のタイムゾーン**: 記事の日付はビルド時に整形されるため、`TZ=UTC` に固定します。
 - **ブラウザ側**: localhost 以外へのリクエスト（Google Analytics / Partytown など）は `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
 - **フォント**: `tests/e2e/styles/screenshot-pages.css` で本文を `Noto Sans CJK JP`、`code` / `pre` / `kbd` / `samp` を `Noto Sans Mono CJK JP` に固定します。等幅表示を保つことで、コードブロックの崩れも検出できます（どちらも `fonts-noto-cjk` に含まれます）。

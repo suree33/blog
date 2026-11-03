@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: 手を乾かすために卓上扇風機を買った
 pubDate: 2024-03-10
 tags:

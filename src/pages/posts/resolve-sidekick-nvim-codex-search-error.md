@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: sidekick.nvimでCodexを使うと表示される [features].web_search_request is deprecated を解消する
 pubDate: 2026-02-16
 updatedDate: 2026-03-17

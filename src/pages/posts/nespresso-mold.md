@@ -1,4 +1,5 @@
 ---
+layout: '@layouts/MarkdownPostLayout.astro'
 title: ネスプレッソの手入れはサボるな。カビるから。
 pubDate: 2026-07-05
 ---

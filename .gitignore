@@ -112,7 +112,6 @@ pnpm-debug.log*
 .DS_Store
 
 .wrangler/
-public/remark-link-card-plus/
 public/link-card-images/
 
 # Playwright

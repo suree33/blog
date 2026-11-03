@@ -63,9 +63,11 @@ pnpm run preview
 - [Tailwind CSS](https://tailwindcss.com/)
   - [Tailwind Typography](https://github.com/tailwindlabs/tailwindcss-typography)
 
-### Remarkプラグイン
+### Markdown
 
-- [remark-link-card-plus](https://github.com/okaryo/remark-link-card-plus)
+- [Sätteri](https://github.com/bruits/satteri)（Astro 7 のデフォルトの Markdown 処理系）
+  - Callout・リンクカードは、リポジトリ内の Sätteri プラグイン（`src/lib/markdown/`）で実装しています。経緯は [ADR 0001](docs/adr/0001-markdown-processor-satteri.md) を参照してください。
+- [Shiki](https://shiki.style/)（シンタックスハイライト。コードタイトルは Shiki transformer で実装）
 
 ### アセット
 
