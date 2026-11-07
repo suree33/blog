@@ -1,0 +1,22 @@
+/*
+ * ページ全体のビジュアルリグレッション（visual-pages.spec.ts）用の固定スタイル。
+ *
+ * 本文は Noto Sans CJK JP に固定し、コードブロックやキーボード表記は等幅の
+ * Noto Sans Mono CJK JP に固定する。等幅を残すことで、コードブロックの
+ * レイアウト崩れもスクリーンショットで検出できる。
+ * どちらも CI の fonts-noto-cjk に含まれる。
+ */
+* {
+  font-family: 'Noto Sans CJK JP', sans-serif !important;
+}
+
+code,
+code *,
+kbd,
+kbd *,
+pre,
+pre *,
+samp,
+samp * {
+  font-family: 'Noto Sans Mono CJK JP', monospace !important;
+}

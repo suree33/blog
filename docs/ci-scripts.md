@@ -13,6 +13,14 @@ CIでビルドだけを実行するためのスクリプトです。
 - `prebuild` は `build` スクリプトに紐づくフック名のため、`pnpm run build:ci` では実行されません。
 - このリポジトリのCIでは `lint` を独立ステップで実行しているため、`prebuild` の重複実行を避ける目的で使います。
 
+## `build:e2e`
+
+```bash
+pnpm run build:e2e
+```
+
+Playwright E2E の `webServer` が使うビルドです。`build:ci` と同じく `prebuild` を経由せずに `astro build` を実行しますが、`TZ=UTC` と `NODE_OPTIONS=--import ./tests/e2e/support/network-stub.ts` を付けて、ビルド時の外部 HTTP（リンクカードの OGP 取得など）を決定的なスタブ応答に置き換えます。本番デプロイには使いません。詳細は [E2E テスト](./e2e-testing.md) を参照してください。
+
 ## 使い分け
 
 - ローカル開発: `pnpm run build`

@@ -57,7 +57,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm run build:ci && pnpm run preview --port ${e2ePort}`,
+    // `build:e2e` はビルド時の外部 HTTP をスタブに置き換えた `astro build`
+    // （tests/e2e/support/network-stub.ts を参照）。
+    command: `pnpm run build:e2e && pnpm run preview --port ${e2ePort}`,
     url: e2eBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

@@ -4,7 +4,7 @@
 
 ## 概要
 
-Astro のビルド結果を `astro preview` で起動し、スモークテスト、axe-core アクセシビリティ検査、ナビゲーション、タグページ、テーマ切り替え、404 ページ、ビジュアルリグレッションを検証します。主なブラウザ UI spec はデスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の 6 プロジェクトで実行し、axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。
+Astro のビルド結果を `astro preview` で起動し、スモークテスト、axe-core アクセシビリティ検査、ナビゲーション、タグページ、テーマ切り替え、404 ページ、ビジュアルリグレッションを検証します。主なブラウザ UI spec はデスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の 6 プロジェクトで実行し、axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。
 
 テストコードは Playwright の fixture とページオブジェクトモデル (POM) で構成しています。アサーションは spec に置き、POM はページ遷移や安定したロケーターの提供に限定します。
 
@@ -50,9 +50,13 @@ tests/e2e/
 │   └── test.ts               # 共通 fixture
 ├── utils/
 │   ├── routes.ts             # テストで使うルート定義
+│   ├── site-pages.ts         # ページ全体 VRT の撮影対象（記事・タグをソースから列挙）
 │   └── regex.ts              # 正規表現ユーティリティ
+├── support/
+│   └── network-stub.ts       # E2E ビルド用のネットワークスタブ（--import プリロード）
 ├── styles/
-│   └── screenshot.css        # スクリーンショット用の固定スタイル
+│   ├── screenshot.css        # スクリーンショット用の固定スタイル
+│   └── screenshot-pages.css  # ページ全体 VRT 用の固定スタイル（等幅フォントを維持）
 └── specs/
     ├── smoke.spec.ts         # 基本表示の確認
     ├── accessibility.spec.ts # axe-coreアクセシビリティ検査
@@ -62,18 +66,19 @@ tests/e2e/
     ├── theme.spec.ts         # テーマ切り替えの確認
     ├── toc.spec.ts           # 目次 (TOC) の表示・追従
     ├── not-found.spec.ts     # 404 ページの確認
-    ├── visual.spec.ts        # ビジュアルリグレッション
+    ├── visual.spec.ts        # ビジュアルリグレッション（コンポーネント単位）
+    ├── visual-pages.spec.ts  # ビジュアルリグレッション（全ページ・フルページ）
     ├── rss.spec.ts           # RSS フィードの確認
     └── raw-markdown.spec.ts  # raw Markdown エンドポイント
 ```
 
-ビジュアルスナップショットは `tests/e2e/specs/visual.spec.ts-snapshots/` に保存します。`snapshotPathTemplate` で OS サフィックスを外し、プロジェクト名だけを付けます。例: `article-metadata-chromium.png`
+ビジュアルスナップショットは `tests/e2e/specs/<spec ファイル名>-snapshots/` に保存します。`snapshotPathTemplate` で OS サフィックスを外し、プロジェクト名だけを付けます。例: `article-metadata-chromium.png`
 
 ## `playwright.config.ts` の要点
 
 - `testDir`: `./tests/e2e/specs` を指定し、spec ファイルだけをテスト対象にします。
-- `webServer`: `pnpm run build:ci && pnpm run preview --port 4322` でプレビューサーバーを起動し、E2E 専用の `http://localhost:4322/` の応答を待ってからテストを開始します。通常の開発サーバーが使う `4321` とは競合しません。
-- `build:ci`: `prebuild` による `pnpm lint` の再実行を避けるため、E2E では通常の `build` ではなく `build:ci` を使います。
+- `webServer`: `pnpm run build:e2e && pnpm run preview --port 4322` でプレビューサーバーを起動し、E2E 専用の `http://localhost:4322/` の応答を待ってからテストを開始します。通常の開発サーバーが使う `4321` とは競合しません。
+- `build:e2e`: `prebuild`（`pnpm lint`）を経由しない `astro build` を、`TZ=UTC` と `NODE_OPTIONS=--import ./tests/e2e/support/network-stub.ts` 付きで実行します。ビルド時の外部 HTTP をスタブに置き換えるためです（後述の「ページ全体のビジュアルリグレッション」を参照）。本番用の `build` / `build:ci` は変更しません。
 - `reporter`: 通常は `list` で標準出力に進行を出し、`html` で `playwright-report/` を生成します。GitHub Actions 上では `github` reporter も追加し、失敗箇所を Actions の annotation として表示します。
 - `fullyParallel`: spec 内のテストも並列化します。`workers` は常に `undefined` とし、Playwright のデフォルト（論理 CPU コア数の半分）に任せます。
 - `projects`: デスクトップ 3 種（`chromium` / `firefox` / `webkit`）とモバイル 3 種（`Mobile Chrome` / `Mobile Safari` / `Mobile Safari (Small screen)`）を定義します。
@@ -243,6 +248,29 @@ axe-core による自動検査だけではアクセシビリティ適合を保�
 sudo apt-get install fonts-noto-cjk
 ```
 
+### ページ全体のビジュアルリグレッション (`visual-pages.spec.ts`)
+
+Markdown 処理系の移行などで「画面での表示が変わらない」ことを確認するため、サイトの全ページをフルページで撮影します。
+
+- 対象: ホーム、About、Dreamhouse、全記事（`src/pages/posts/*.md`、`template/` を除く）、全タグページ、404。記事とタグは `tests/e2e/utils/site-pages.ts` がソース（ファイル名と frontmatter の `tags`）から列挙します。列挙結果がビルド後の sitemap と一致することも検証するため、ページの追加漏れや列挙ロジックの誤りはテスト失敗になります。
+- プロジェクト: `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）のみ。ダークは Shiki の `light-dark()` 配色や Callout のダーク用スタイルを確認するために撮影します。他のプロジェクトは `test.skip` します。
+- スナップショット名: ルートから決めます。例: `posts/nespresso-mold-light-chromium.png`、`tags/ガジェット-dark-chromium.png`、`home-light-Mobile-Chrome.png`。
+
+決定性のための対策:
+
+- **ビルド時ネットワークスタブ**: リンクカード（`remark-link-card-plus`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL は `*.e2e-stub.invalid` にするため、`public/remark-link-card-plus/` に残った本物のキャッシュとは衝突しません。ビルドで書き出したスタブ画像は終了時に同ディレクトリから削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
+- **ビルド時のタイムゾーン**: 記事の日付はビルド時に整形されるため、`TZ=UTC` に固定します。
+- **ブラウザ側**: localhost 以外へのリクエスト（Google Analytics / Partytown など）は `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
+- **フォント**: `tests/e2e/styles/screenshot-pages.css` で本文を `Noto Sans CJK JP`、`code` / `pre` / `kbd` / `samp` を `Noto Sans Mono CJK JP` に固定します。等幅表示を保つことで、コードブロックの崩れも検出できます（どちらも `fonts-noto-cjk` に含まれます）。
+
+記事やタグを追加・変更すると、そのページのベースラインが必要になります。`pnpm run test:e2e:update` でスナップショットを生成し、記事と一緒にコミットしてください。ベースラインは CI（GitHub Actions の ubuntu-latest）の描画が基準です。ローカル（コンテナや macOS）とはアンチエイリアスが異なるため、ローカルで生成したベースラインは CI で数百ピクセル程度ずれて失敗することがあります。
+
+CI のベースラインへ差し替える手順:
+
+1. ローカルで生成したベースラインをコミットして push し、CI の `e2e` ジョブを失敗させる。
+2. 失敗した実行の `test-results` artifact をダウンロードする。失敗したテストごとに `*-actual.png`（CI での描画結果）が含まれる。
+3. 各 `*-actual.png` を、対応するベースライン（`tests/e2e/specs/visual-pages.spec.ts-snapshots/` 配下の同じ名前のファイル）に上書きコピーしてコミットする。差分がなく成功したベースラインはそのままにする。
+
 ### RSS フィードテスト (`rss.spec.ts`)
 
 `/rss.xml` はブログ購読用の配信面。XML 応答を `APIRequestContext` で取得し、`DOMParser` でパースして検証する。`browserName !== 'chromium'` のプロジェクトを `test.skip` でスキップするため、`browserName === 'chromium'` となる `chromium` / `Mobile Chrome` の 2 プロジェクトで実行する。
@@ -262,6 +290,7 @@ sudo apt-get install fonts-noto-cjk
 pnpm run test:e2e:update
 # 個別 spec のみ更新する場合
 pnpm exec playwright test tests/e2e/specs/visual.spec.ts --update-snapshots
+pnpm exec playwright test tests/e2e/specs/visual-pages.spec.ts --update-snapshots
 ```
 
 ### raw Markdown エンドポイント (`raw-markdown.spec.ts`)
@@ -338,4 +367,4 @@ playwright/.cache/
 blob-report/
 ```
 
-なお、スモーク、ナビゲーション、タグ、テーマ、404、目次 (TOC)、ビジュアルリグレッションの各テストは、デスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の全 6 プロジェクトで実行します。axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。
+なお、スモーク、ナビゲーション、タグ、テーマ、404、目次 (TOC)、ビジュアルリグレッション（コンポーネント単位）の各テストは、デスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の全 6 プロジェクトで実行します。axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。 ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。
