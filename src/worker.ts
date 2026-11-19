@@ -67,13 +67,8 @@ const matchesMediaType = (preference: AcceptPreference, mediaType: string) => {
   );
 };
 
-const specificity = ({ mediaType, parameters }: AcceptPreference) => {
-  const concreteParts = mediaType
-    .split('/')
-    .filter((part) => part.length > 0 && part !== '*');
-
-  return concreteParts.length + parameters.length;
-};
+const typeSpecificity = ({ mediaType }: AcceptPreference) =>
+  mediaType.split('/').filter((part) => part.length > 0 && part !== '*').length;
 
 const bestPreferenceFor = (
   preferences: AcceptPreference[],
@@ -83,7 +78,10 @@ const bestPreferenceFor = (
     .filter((preference) => matchesMediaType(preference, mediaType))
     .sort(
       (a, b) =>
-        specificity(b) - specificity(a) || b.q - a.q || a.order - b.order,
+        typeSpecificity(b) - typeSpecificity(a) ||
+        b.parameters.length - a.parameters.length ||
+        b.q - a.q ||
+        a.order - b.order,
     )[0];
 
 const prefersMarkdown = (acceptHeader: string | null) => {
