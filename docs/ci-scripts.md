@@ -1,5 +1,11 @@
 # CI向けスクリプト
 
+## `test:unit`
+
+`pnpm run test:unit` で Vitest を一度実行します。既存の Lint ジョブで Worker テストの後に実行し、
+Playwright やビジュアルスナップショットには依存しません。
+対象とローカルでの実行方法は [ユニットテスト](./unit-testing.md) を参照してください。
+
 ## `build:ci`
 
 ```bash
