@@ -33,7 +33,7 @@ pnpm i remark-link-card-plus
 
 今回は移行なので、やったことはimportの `'remark-link-card'` を `'remark-link-card-plus'` に置き換えただけ。
 
-```javascript:astro.config.mjs
+```javascript title="astro.config.mjs"
 import remarkLinkCard from 'remark-link-card-plus';
 
 export default defineConfig({
@@ -56,7 +56,7 @@ export default defineConfig({
 
 基本的に[remark-link-cardの時のCSS](https://sur33.com/posts/remark-link-card-with-astro)をremark-link-card-plus用に書き換えただけ。ただ、Tailwind CSS化してあるため、 `@apply` を多用しており、純粋なCSSはほぼありません。Tailwind CSSを使っていないプロジェクトでは、AIなどで頑張って生CSS化して使ってください。
 
-```css:remark-link-card.css
+```css title="remark-link-card.css"
 /* ブレークポイント: 60ch（Tailwindcss/Typographyのproseのmax-widthを参考に） */
 .remark-link-card-plus__container {
   --padding-x: 1rem;

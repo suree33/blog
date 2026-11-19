@@ -13,6 +13,7 @@ export const routes = {
   tagsBase: '/tags/',
   /** `routes.sampleArticle` の raw Markdown エンドポイント。 */
   sampleArticleMarkdown: '/posts/audio-interface-under-the-desk.md',
+  notFoundArticleMarkdown: '/posts/this-route-does-not-exist.md',
   rss: '/rss.xml',
   /**
    * 存在しないルート。404 ページの検証に使用する。

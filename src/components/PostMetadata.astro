@@ -22,16 +22,18 @@ const formattedUpdatedDate = updatedDate ? formatDate(updatedDate) : null;
       {tag}
     </a>
   ))}
-  {formattedPubDate && (
+  {pubDate && formattedPubDate && (
     <div>
       <Icon name="fa6-solid:feather" class="mr-1 mb-[.12em] inline text-sm" />
-      <time datetime={formattedPubDate}>{formattedPubDate}</time>
+      <time datetime={new Date(pubDate).toISOString()}>{formattedPubDate}</time>
     </div>
   )}
-  {formattedUpdatedDate && (
+  {updatedDate && formattedUpdatedDate && (
     <div>
       <Icon name="fa6-solid:rotate" class="mr-1 mb-[.12em] inline text-sm" />
-      <time datetime={formattedUpdatedDate}>{formattedUpdatedDate}</time>
+      <time datetime={new Date(updatedDate).toISOString()}>
+        {formattedUpdatedDate}
+      </time>
     </div>
   )}
 </div>

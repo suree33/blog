@@ -27,9 +27,11 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
   ヘッダー、フッター、見出し ID と目次リンクの対応を検証します。
 - 実際の記事の生成 HTML を Cheerio で解析し、GFM テーブル、セル内の強調、Shiki の
   light/dark 用トークン、インラインコード、相対画像のアセット解決を検証します。
+- コードタイトル付きの記事でタイトルとハイライトを確認し、テスト用の Markdown で
+  タイトルのエスケープやタイトルのないブロックの構造を検証します。
 - 記事が 0 件になった場合や、コンパイル・描画時に例外が発生した場合も失敗します。
 
-コードタイトル、Callout、リンクカードの個別テストはこのファイルには含みません。
+Callout、リンクカードの個別テストは含みません。
 記事内にある場合は通常どおり処理されるため、リンクカードのメタデータ取得には
 本番ビルドと同じくネットワークとプラグインのキャッシュを使用します。
 外部サイトの応答内容はアサートしません。
@@ -38,9 +40,11 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
 検証しません。それらは [Playwright E2E](./e2e-testing.md) が担当します。
 Container API は実験的 API のため、Astro 更新時は互換性にも注意してください。
 
-Callout の移行用テストは `tests/unit/satteri-callouts.test.ts` で実行します。
-既存記事の Callout を抜き出し、unified と Sätteri の出力 HTML を比較します。
-本番の組み込み手順は [Markdown の Callout](./markdown-callouts.md) を参照してください。
-
 CI では既存の Lint ジョブで実行します。pre-commit の既存チェック（format、lint、build）は
 変更していないため、コミット前には `pnpm run test:unit` も実行してください。
+
+## Callout 移行テスト
+
+`tests/unit/satteri-callouts.test.ts` は既存記事の Callout を抜き出し、
+unified と Sätteri の出力 HTML を比較します。
+本番の組み込み手順は [Markdown の Callout](./markdown-callouts.md) を参照してください。
