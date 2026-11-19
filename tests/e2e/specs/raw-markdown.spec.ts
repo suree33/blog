@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '../fixtures/test';
 import {
   routes,
@@ -63,10 +64,32 @@ test.describe('raw Markdown エンドポイント', () => {
       'frontmatter の後に記事本文が含まれる',
     ).toBeGreaterThan(0);
 
-    // Astro 表示用の `layout` frontmatter は除去されていること
+    const source = await readFile(
+      new URL(
+        `../../../src/pages${routes.sampleArticleMarkdown}`,
+        import.meta.url,
+      ),
+      'utf8',
+    );
+    const [, frontmatter] = source.split(/^---$/m, 2);
+    const layoutLine = /^layout:[^\n]+\n/m;
+    expect(frontmatter, '代表記事の frontmatter に layout 行がある').toMatch(
+      layoutLine,
+    );
     expect(
       body,
-      'raw Markdown の frontmatter から Astro 表示用の layout が除去される',
-    ).not.toMatch(/^layout:/m);
+      'raw Markdown は layout 行だけを除いた記事ソースと一致する',
+    ).toBe(source.replace(layoutLine, ''));
+  });
+
+  test('存在しない記事の .md URL は HTTP 404 を返す', async ({ request }) => {
+    const response = await request.get(routes.notFoundArticleMarkdown, {
+      maxRedirects: 0,
+    });
+
+    expect(
+      response.status(),
+      '存在しない記事の .md URL は HTTP 404 を返す',
+    ).toBe(404);
   });
 });
