@@ -271,12 +271,12 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 #### ベースラインの生成・更新
 
-[Playwright 公式ガイド](https://playwright.dev/docs/test-snapshots) のとおり、生成と比較は同じ OS・ブラウザ・フォント環境で行います。CI の `visual` ジョブと同じ **`mcr.microsoft.com/playwright:v1.64.1-noble`（Linux amd64）** を使ってください。通常のホスト OS で更新しないでください。
+[Playwright 公式ガイド](https://playwright.dev/docs/test-snapshots) のとおり、生成と比較は同じ OS・ブラウザ・フォント環境で行います。CI の `visual` ジョブと同じ **`mcr.microsoft.com/playwright:v1.65.1-noble`（Linux amd64）** を使ってください。通常のホスト OS で更新しないでください。
 
 ```sh
 docker run --rm --init --ipc=host --platform=linux/amd64 \
   -v "$PWD:/work" -v /work/node_modules -w /work \
-  mcr.microsoft.com/playwright:v1.64.1-noble \
+  mcr.microsoft.com/playwright:v1.65.1-noble \
   sh -c 'npm install -g pnpm@12.16.1 && apt-get update && apt-get install -y fonts-noto-cjk && pnpm install --frozen-lockfile && pnpm run test:e2e:visual:update && pnpm run test:e2e:visual'
 ```
 

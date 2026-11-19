@@ -112,8 +112,9 @@ interface Frontmatter {
     alt: string;
   };
   description?: string;
-  ogimage?: {
+  ogimage?: string | {
     src: string;
+    alt?: string;
   };
 }
 ```
