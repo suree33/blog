@@ -8,7 +8,7 @@ import { defineMdastPlugin, type MdastNode } from 'satteri';
 
 export interface LinkCardOptions {
   fetch?: typeof globalThis.fetch;
-  cacheDirectory?: string;
+  cacheDirectory: string;
   timeout?: number;
 }
 
@@ -86,12 +86,9 @@ function renderCard(data: CardData) {
 </div>`;
 }
 
-export function linkCard(options: LinkCardOptions = {}) {
+export function linkCard(options: LinkCardOptions) {
   const fetch = options.fetch ?? globalThis.fetch;
   const timeout = options.timeout ?? 10_000;
-  const directory =
-    options.cacheDirectory ??
-    path.join(process.cwd(), 'public/link-card-images');
   const cards = new Map<string, Promise<string | undefined>>();
   const images = new Map<string, Promise<string>>();
   const warn = (url: string, error: unknown) =>
@@ -99,6 +96,7 @@ export function linkCard(options: LinkCardOptions = {}) {
 
   async function cacheImage(url: string): Promise<string> {
     try {
+      const directory = options.cacheDirectory;
       const hash = createHash('sha256').update(decodeURI(url)).digest('hex');
       await mkdir(directory, { recursive: true });
       const cached = (await readdir(directory)).find((file) =>

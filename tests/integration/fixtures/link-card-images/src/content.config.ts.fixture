@@ -1,0 +1,7 @@
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { withLinkCardImages } from '../../../../../src/lib/markdown/link-card-assets';
+
+export const collections = {
+  posts: defineCollection({ loader: withLinkCardImages(glob({ pattern: '*.md', base: './posts' })) }),
+};
