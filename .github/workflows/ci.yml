@@ -43,6 +43,9 @@ jobs:
       - name: Run Worker tests
         run: pnpm run test:worker
 
+      - name: Run unit tests
+        run: pnpm run test:unit
+
       - name: Run git hook tests
         run: |
           git --version
