@@ -1,0 +1,6 @@
+---
+import { getEntry, render } from 'astro:content';
+const entry = await getEntry('posts', 'card');
+const { Content } = await render(entry!);
+---
+<html lang="en"><head><title>Fixture</title></head><body><Content /></body></html>

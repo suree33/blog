@@ -6,9 +6,11 @@ import icon from 'astro-icon';
 import { defineConfig } from 'astro/config';
 import process from 'node:process';
 
-import { linkCard } from './src/lib/markdown/link-card.ts';
+import { createLinkCards } from './src/lib/markdown/link-card-assets.ts';
 import { satteriCallouts } from './src/lib/satteri-callouts.ts';
 import { codeTitleTransformer } from './src/lib/code-title.ts';
+
+const linkCards = createLinkCards();
 
 // https://astro.build/config
 export default defineConfig({
@@ -22,7 +24,7 @@ export default defineConfig({
   },
   markdown: {
     processor: satteri({
-      mdastPlugins: [linkCard()],
+      mdastPlugins: [linkCards.plugin],
       hastPlugins: [satteriCallouts],
     }),
     shikiConfig: {
@@ -41,6 +43,7 @@ export default defineConfig({
     },
   },
   integrations: [
+    linkCards.integration,
     sitemap(),
     icon(),
     partytown({

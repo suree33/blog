@@ -1,7 +1,8 @@
 # Sätteri 用リンクカード
 
 `src/lib/markdown/link-card.ts` は、Sätteri の mdast プラグイン `linkCard()` を提供します。
-`astro.config.mjs` の Sätteri プロセッサの `mdastPlugins` に `linkCard()` を登録しています。
+`src/lib/markdown/link-card-assets.ts` の `createLinkCards()` は、Markdown プラグインと Astro integration を返します。
+`astro.config.mjs` で、それぞれを Sätteri の `mdastPlugins` と Astro の `integrations` に登録しています。
 `src/styles/global.css` は `src/styles/link-card.css` を読み込みます。
 コードタイトルは Shiki transformer、Callout は別の HAST プラグインで処理します。
 
@@ -29,12 +30,34 @@ Google favicon の HEAD と画像 GET は、旧実装と同じ `AbortSignal.time
 プラグインインスタンス内で共有し、メタデータと画像の重複取得を避けます。
 メタデータのディスクキャッシュはありません。
 
-favicon と OG 画像は `public/link-card-images/` に保存し、
-`/link-card-images/` から参照します。このディレクトリは gitignore 済みです。
+favicon と OG 画像は Astro の `config.cacheDir` 配下の `link-card-images/` に保存し、
+公開 URL は従来どおり `/link-card-images/` を使います。
+通常の保存先は `node_modules/.astro/link-card-images/`、E2E 用は `node_modules/.astro-e2e/link-card-images/` です。
+パスは `astro:config:done` で受け取る設定から解決し、作業ディレクトリには依存しません。
 名前は `decodeURI` した画像 URL の SHA-256 と画像形式の拡張子です。
 既存ファイルがあればダウンロードを省略します。
 SVG は Content-Type、それ以外は `file-type` で形式を判定します。
 画像の Content-Type だが形式を判定できない場合は、旧プラグイン同様 `.png` にします。
+
+### Astro のビルドキャッシュと開発サーバー
+
+Astro は内容が変わらない記事の描画済み HTML をデータストアから再利用します。
+このとき Markdown プラグインは実行されません。
+Cloudflare Workers Builds は `node_modules/.astro` をキャッシュしますが、生成された `public/` の画像は保存しません。
+画像も `config.cacheDir` に保存することで、HTML と画像を一緒にキャッシュします。
+
+integration は毎回の `astro:build:done` で、画像をフックの `dir` が指すクライアント出力先へコピーします。
+記事の再描画がないビルドでも画像を出力します。
+`astro:server:setup` では Vite middleware を登録し、開発時も同じ公開 URL でキャッシュ画像を配信します。
+
+`src/content.config.ts` は `glob()` を `withLinkCardImages()` で包みます。
+この loader は、データストア内の描画済み HTML が参照する画像を読み込み前に確認します。
+1 つでも画像がなければ、公開 API の `store.clear()` でコレクションを消してから `glob()` を実行し、記事を再描画します。
+旧 `public/link-card-images/` 方式からの移行時や画像キャッシュだけが失われた場合も、自動で画像を再取得します。
+integration の追加だけで Astro がデータストアを無効化するとは想定していません。
+
+関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、
+[Content Loader API](https://docs.astro.build/en/reference/content-loader-reference/)。
 
 - メタデータ取得失敗: ホスト名をタイトルにし、説明は空、サムネイルなしのカードを生成します。
 - Google HEAD が非 OK: 旧実装と同じく favicon を省略します。
@@ -50,6 +73,8 @@ SVG は Content-Type、それ以外は `file-type` で形式を判定します�
 ## テスト用オプション
 
 `linkCard({ fetch, cacheDirectory, timeout })` で通信・保存先・タイムアウト（ミリ秒）を差し替えられます。
+単独で使う場合は `cacheDirectory` の指定が必須です。
+Astro からは `createLinkCards()` が解決した保存先を渡します。
 `timeout` を明示するとメタデータ・HEAD・画像すべてにその値を使い、OGS に渡す場合だけ秒へ変換します。
 `fetch` を指定した場合、メタデータもその関数で取得し、HTTP の charset でデコードした HTML を
 `open-graph-scraper` の HTML 入力に渡します。未指定時は同ライブラリ本来の URL 取得
@@ -65,6 +90,12 @@ CSS は接頭辞を置換した旧 CSS の fixture とファイル全体を比�
 
 ```sh
 pnpm run test:unit -- src/lib/markdown/link-card.test.ts
+pnpm exec vitest run --config vitest.integration.config.ts tests/integration/link-card-images.test.ts
 ```
+
+`link-card-assets.test.ts` は loader の再描画判定と画像コピーの空・正常・エラーケースを検証します。
+`tests/integration/link-card-images.test.ts` は外部通信をモックした Astro サイトをビルドし、
+初回・キャッシュあり・画像キャッシュ欠落の各状態で HTML と画像を確認します。
+同じサイトを開発サーバーでも起動し、画像の GET・HEAD と存在しない画像の 404 を確認します。
 
 単体テストは HTML 構造を比較します。ブラウザ上の見た目は全ページのビジュアル回帰テストで検証します。

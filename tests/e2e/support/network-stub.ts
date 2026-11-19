@@ -38,10 +38,10 @@
  *
  * og:image と favicon の URL は予約済み TLD `.invalid` 配下（`*.e2e-stub.invalid`）に
  * する。`linkCard()` は画像 URL の SHA-256 をファイル名にして
- * `public/link-card-images/` にキャッシュするため、実在 URL と衝突しない
+ * `node_modules/.astro-e2e/link-card-images/` にキャッシュするため、実在 URL と衝突しない
  * スタブ URL を使えば、ローカルに残った本物のキャッシュが結果を変えることはない。
  * ビルドで書き出されたスタブ画像は、プロセス終了時に同ディレクトリから削除する
- * （public/ を汚さず、以降の本番ビルドにスタブ画像が紛れ込まないようにするため）。
+ * （以降のテストビルドにスタブ画像を残さないようにするため）。
  */
 import { createHash } from 'node:crypto';
 import dns from 'node:dns';
@@ -66,7 +66,8 @@ const PATCHED = Symbol.for('blog.e2e.networkStub.patched');
 const PATCH_UNDICI = Symbol.for('blog.e2e.networkStub.patchUndici');
 const LINK_CARD_CACHE_DIR = path.join(
   process.cwd(),
-  'public',
+  'node_modules',
+  '.astro-e2e',
   'link-card-images',
 );
 const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
