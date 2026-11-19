@@ -1,13 +1,13 @@
 import partytown from '@astrojs/partytown';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
-import { unified } from '@astrojs/markdown-remark';
+import { satteri } from '@astrojs/markdown-satteri';
 import icon from 'astro-icon';
 import { defineConfig } from 'astro/config';
-import rehypeCallouts from 'rehype-callouts';
-import remarkLinkCard from 'remark-link-card-plus';
 import process from 'node:process';
 
+import { linkCard } from './src/lib/markdown/link-card.ts';
+import { satteriCallouts } from './src/lib/satteri-callouts.ts';
 import { codeTitleTransformer } from './src/lib/code-title.ts';
 
 // https://astro.build/config
@@ -21,16 +21,9 @@ export default defineConfig({
     '/posts': '/',
   },
   markdown: {
-    processor: unified({
-      remarkPlugins: [
-        [
-          remarkLinkCard,
-          {
-            cache: true,
-          },
-        ],
-      ],
-      rehypePlugins: [rehypeCallouts],
+    processor: satteri({
+      mdastPlugins: [linkCard()],
+      hastPlugins: [satteriCallouts],
     }),
     shikiConfig: {
       themes: {

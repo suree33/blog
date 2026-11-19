@@ -31,8 +31,8 @@ CI の独立した「Worker integration tests」ジョブでもビルド後に�
 
 ## Markdown 回帰テスト
 
-`tests/unit/markdown.test.ts` は現在の unified ベースの Markdown 設定をそのまま使います。
-テスト専用のレンダラーや Sätteri 設定への切り替えは行いません。
+`tests/unit/markdown.test.ts` は本番と同じ Sätteri ベースの Markdown 設定を使います。
+テスト専用のレンダラーには切り替えません。
 
 - `src/content/posts/**/*.md` を列挙し、Astro がページとして扱わない `_` 始まりのテンプレートと
   `.obsidian/` を除外します。記事追加時に一覧の手動更新は不要です。
@@ -55,10 +55,10 @@ Callout、リンクカードの個別テストは含みません。
 
 ## Sätteri リンクカードの単体テスト
 
-`src/lib/markdown/link-card.test.ts` は、未組み込みのローカルプラグインと
-`remark-link-card-plus` の HTML・CSS 互換性、画像キャッシュ、失敗時の縮退を検証します。
+`src/lib/markdown/link-card.test.ts` は、ローカルプラグインの
+固定 HTML・CSS との互換性、画像キャッシュ、失敗時の縮退を検証します。
 ループバック HTTP サーバーと注入した fetch を使うため、このテスト自体は外部通信しません。
-サイトの Markdown 設定は変更しません。詳細は [Sätteri 用リンクカード](./markdown-link-cards.md) を参照してください。
+詳細は [Sätteri 用リンクカード](./markdown-link-cards.md) を参照してください。
 
 ## 検証範囲と CI
 
@@ -69,8 +69,8 @@ Container API は実験的 API のため、Astro 更新時は互換性にも注�
 CI では既存の Lint ジョブで実行します。pre-commit の既存チェック（format、lint、build）は
 変更していないため、コミット前には `pnpm run test:unit` も実行してください。
 
-## Callout 移行テスト
+## Callout 回帰テスト
 
 `tests/unit/satteri-callouts.test.ts` は既存記事の Callout を抜き出し、
-unified と Sätteri の出力 HTML を比較します。
-本番の組み込み手順は [Markdown の Callout](./markdown-callouts.md) を参照してください。
+旧 unified 出力を保存した固定 HTML と Sätteri の出力を比較します。
+設定は [Markdown の Callout](./markdown-callouts.md) を参照してください。

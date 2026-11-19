@@ -6,8 +6,5 @@ export default getViteConfig({
     include: ['src/lib/**/*.test.ts', 'tests/unit/**/*.test.ts'],
     environment: 'node',
     testTimeout: 30_000,
-    server: {
-      deps: { inline: ['remark-link-card-plus'] },
-    },
   },
 });
