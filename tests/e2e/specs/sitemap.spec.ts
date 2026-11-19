@@ -17,10 +17,11 @@ async function readSitemapLocations(
   rootName: 'sitemapindex' | 'urlset',
 ): Promise<URL[]> {
   const response = await request.get(path, { maxRedirects: 0 });
-  expect(response.status(), path).toBe(200);
-  expect(response.headers()['content-type'], path).toMatch(
-    /^(application|text)\/xml(?:;|$)/i,
-  );
+  expect(response.status(), `${path} は HTTP 200 を返す`).toBe(200);
+  expect(
+    response.headers()['content-type'],
+    `${path} の Content-Type は XML 形式である`,
+  ).toMatch(/^(application|text)\/xml(?:;|$)/i);
 
   const { parseError, root, namespace, locations } = await page.evaluate(
     ({ xml, entryName, sitemapNamespace }) => {
@@ -54,15 +55,22 @@ async function readSitemapLocations(
     },
   );
 
-  expect(parseError, `${path} must be well-formed XML`).toBeNull();
-  expect(root, path).toBe(rootName);
-  expect(namespace, path).toBe(sitemapNamespace);
-  expect(locations, path).not.toHaveLength(0);
+  expect(parseError, `${path} は整形式の XML である`).toBeNull();
+  expect(root, `${path} のルート要素は <${rootName}> である`).toBe(rootName);
+  expect(namespace, `${path} はサイトマップの名前空間を使う`).toBe(
+    sitemapNamespace,
+  );
+  expect(
+    locations,
+    `${path} にはサイトマップの項目が 1 件以上ある`,
+  ).not.toHaveLength(0);
 
   return locations.map((location) => {
-    expect(location, `${path} must have a <loc> for every entry`).toBeTruthy();
+    expect(location, `${path} の各項目に空でない <loc> がある`).toBeTruthy();
     const url = new URL(location ?? '');
-    expect(url.origin, location).toBe(productionOrigin);
+    expect(url.origin, `<loc> の URL「${location}」は本番オリジンを指す`).toBe(
+      productionOrigin,
+    );
     return url;
   });
 }
@@ -102,7 +110,10 @@ test.describe('サイトマップ', () => {
       routes.sampleArticle,
       tagPath,
     ]) {
-      expect(paths).toContain(path);
+      expect(
+        paths,
+        `サイトマップには主要ページ「${path}」が含まれる`,
+      ).toContain(path);
     }
   });
 
@@ -110,14 +121,21 @@ test.describe('サイトマップ', () => {
     request,
   }) => {
     const response = await request.get('/robots.txt', { maxRedirects: 0 });
-    expect(response.status()).toBe(200);
-    expect(response.headers()['content-type']).toMatch(/^text\/plain(?:;|$)/i);
+    expect(response.status(), 'robots.txt は HTTP 200 を返す').toBe(200);
+    expect(
+      response.headers()['content-type'],
+      'robots.txt の Content-Type は text/plain である',
+    ).toMatch(/^text\/plain(?:;|$)/i);
 
     const body = await response.text();
     const sitemaps = Array.from(
       body.matchAll(/^[ \t]*sitemap[ \t]*:[ \t]*([^#\r\n]+)/gim),
       ([, url]) => url.trim(),
     );
-    expect(sitemaps).toContain(new URL(sitemapIndex, productionOrigin).href);
+    const indexUrl = new URL(sitemapIndex, productionOrigin).href;
+    expect(
+      sitemaps,
+      `robots.txt は本番のインデックス「${indexUrl}」を指定する`,
+    ).toContain(indexUrl);
   });
 });
