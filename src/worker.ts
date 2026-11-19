@@ -43,7 +43,7 @@ const parseAcceptHeader = (acceptHeader: string | null): AcceptPreference[] =>
         order,
       };
     })
-    .filter(({ mediaType, q }) => mediaType.length > 0 && q > 0) ?? [];
+    .filter(({ mediaType }) => mediaType.length > 0) ?? [];
 
 const matchesMediaType = (preference: AcceptPreference, mediaType: string) => {
   const [preferenceType, preferenceSubtype] = preference.mediaType.split('/');
@@ -66,8 +66,8 @@ const bestPreferenceFor = (
     .filter((preference) => matchesMediaType(preference, mediaType))
     .sort(
       (a, b) =>
-        b.q - a.q ||
         specificity(b.mediaType) - specificity(a.mediaType) ||
+        b.q - a.q ||
         a.order - b.order,
     )[0];
 
@@ -75,7 +75,7 @@ const prefersMarkdown = (acceptHeader: string | null) => {
   const preferences = parseAcceptHeader(acceptHeader);
   const markdown = bestPreferenceFor(preferences, 'text/markdown');
 
-  if (!markdown || markdown.mediaType !== 'text/markdown') {
+  if (!markdown || markdown.mediaType !== 'text/markdown' || markdown.q === 0) {
     return false;
   }
 
