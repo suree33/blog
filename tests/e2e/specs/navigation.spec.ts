@@ -10,7 +10,10 @@ import { HOME_URL_REGEX } from '../utils/regex';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
-  test('mobile menu traps Tab and Shift+Tab', async ({ homePage, page }) => {
+  test('モバイルメニューを開いている間はTab/Shift+Tabのフォーカスをメニュー内に留める', async ({
+    homePage,
+    page,
+  }) => {
     await page.setViewportSize({ width: 390, height: 600 });
     await homePage.goto();
     await homePage.header.openMobileMenu();
@@ -28,7 +31,7 @@ test.describe('ナビゲーション', () => {
     await expect(controls.last()).toBeFocused();
   });
 
-  test('mobile menu closes on Escape and restores focus', async ({
+  test('Escapeでモバイルメニューを閉じてハンバーガーボタンにフォーカスを戻す', async ({
     homePage,
     page,
   }) => {
