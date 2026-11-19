@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { parseFrontmatter } from '@astrojs/markdown-remark';
+import { parseFrontmatter } from 'astro/markdown';
 import { load } from 'cheerio';
 import config from '../../../src/config.json' with { type: 'json' };
 import { expect, test } from '../fixtures/test';
@@ -214,7 +214,7 @@ test.describe('RSS フィード', () => {
       );
       const article = load(await articleResponse.text());
       const linkCardImages = new Set(
-        article('.remark-link-card-plus__container img')
+        article('.link-card__container img')
           .toArray()
           .map(
             (image) =>
