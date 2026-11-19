@@ -297,14 +297,26 @@ Playwright の更新時は lockfile のバージョンと CI・上記 Docker タ
 
 ### スナップショットの更新
 
-意図した UI 変更でベースラインを更新する場合は以下を実行し、差分をコミットしてください。
+コンポーネント単位のベースラインを更新する場合は以下を実行し、差分をコミットしてください。
 
 ```sh
 pnpm run test:e2e:update
 # 個別 spec のみ更新する場合
 pnpm exec playwright test tests/e2e/specs/visual.spec.ts --update-snapshots
-pnpm exec playwright test tests/e2e/specs/visual-pages.spec.ts --update-snapshots
 ```
+
+フルページ比較は既定の `playwright.config.ts` では除外しています。全ページを更新する場合は、上記「ベースラインの生成・更新」のコンテナ手順（`pnpm run test:e2e:visual:update`）を使ってください。
+
+個別ページ・テーマ・プロジェクトだけ更新する場合も、CI と同じコンテナと専用 config を使います。例としてホームのライトテーマ（デスクトップ Chromium）の 1 枚だけを再生成する手順:
+
+```sh
+docker run --rm --init --ipc=host --platform=linux/amd64 \
+  -v "$PWD:/work" -v /work/node_modules -w /work \
+  mcr.microsoft.com/playwright:v1.65.1-noble \
+  sh -c 'npm install -g pnpm@12.16.1 && apt-get update && apt-get install -y fonts-noto-cjk && pnpm install --frozen-lockfile && pnpm exec playwright test -c playwright.visual.config.ts --project=chromium --grep " ホーム（light）$" --update-snapshots=all'
+```
+
+`--project` と `--grep` で対象を絞り、`--update-snapshots=all` で一致したテストの画像だけを再生成します。検索文字列の先頭の空白と末尾の `$` は、「タグ スマートホーム」などの別テストを含めないために必要です。この例の出力先は `tests/e2e/specs/visual-pages.spec.ts-snapshots/home-light-chromium-linux.png` です。差分を目視確認し、意図した PNG だけをコミットしてください。
 
 ### raw Markdown エンドポイント (`raw-markdown.spec.ts`)
 
