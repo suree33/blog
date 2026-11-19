@@ -1,4 +1,5 @@
 import { execFile, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   cp,
   mkdtemp,
@@ -75,6 +76,55 @@ test('clean, cached, and missing-image builds preserve HTML and assets; dev serv
           await readFile(path.join(root, 'cache', source)),
         );
       }
+    }
+    await writeFile(
+      path.join(root, 'posts/unaffected.md'),
+      'https://unaffected.example.com/',
+    );
+    const imageHash = createHash('sha256')
+      .update('https://example.com/image.svg')
+      .digest('hex');
+    await rm(path.join(root, `cache/link-card-images/${imageHash}.svg`));
+    const failed = await exec(
+      process.execPath,
+      [cli, 'build', '--root', root],
+      {
+        cwd: repository,
+        env: { ...env, FIXTURE_FAIL_IMAGE: 'true' },
+      },
+    );
+    expect(failed.stdout).toContain(
+      'Fixture metadata: https://unaffected.example.com/',
+    );
+    expect(
+      await readFile(path.join(root, 'output/index.html'), 'utf8'),
+    ).toContain('src="https://example.com/image.svg"');
+    for (const retry of ['failed', 'recovered', 'warm']) {
+      const result = await exec(
+        process.execPath,
+        [cli, 'build', '--root', root],
+        {
+          cwd: repository,
+          env: {
+            ...env,
+            FIXTURE_FAIL_IMAGE: String(retry === 'failed'),
+            FIXTURE_FAIL_UNAFFECTED: 'true',
+          },
+        },
+      );
+      expect(result.stdout).not.toContain(
+        'Fixture metadata: https://unaffected.example.com/',
+      );
+      if (retry === 'warm')
+        expect(result.stdout).not.toContain('Fixture metadata:');
+      else
+        expect(result.stdout).toContain(
+          'Rebuilding content with remote link card thumbnails: card',
+        );
+      if (retry !== 'failed')
+        expect(
+          await readFile(path.join(root, 'output/index.html'), 'utf8'),
+        ).toBe(baseline);
     }
     const server = spawn(
       process.execPath,

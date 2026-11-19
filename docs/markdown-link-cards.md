@@ -52,9 +52,9 @@ integration は毎回の `astro:build:done` で、画像をフックの `dir` �
 
 `src/content.config.ts` は `glob()` を `withLinkCardImages()` で包みます。
 この loader は、データストア内の描画済み HTML が参照する画像を読み込み前に確認します。
-1 つでも画像がなければ、公開 API の `store.clear()` でコレクションを消してから `glob()` を実行し、記事を再描画します。
+画像がない記事だけを公開 API の `store.delete(id)` で削除してから `glob()` を実行し、その記事を再描画します。他の記事のキャッシュは残します。
 旧 `public/link-card-images/` 方式からの移行時や画像キャッシュだけが失われた場合も、自動で画像を再取得します。
-リモートサムネイル URL が HTML に残っている場合は、次のビルドで記事を再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。リモート favicon は対象外です。
+リモートサムネイル URL が HTML に残っている場合も、その記事だけを次のビルドで再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。リモート favicon は対象外です。
 integration の追加だけで Astro がデータストアを無効化するとは想定していません。
 
 関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、

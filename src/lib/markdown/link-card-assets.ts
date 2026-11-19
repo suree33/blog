@@ -17,41 +17,35 @@ export function withLinkCardImages(loader: Loader): Loader {
     name: `link-card-images:${loader.name}`,
     async load(context) {
       const directory = imageDirectory(context.config);
-      if (
-        context.store
-          .values()
-          .some((entry) =>
-            /<img src="https?:\/\/[^" ]+" class="link-card__image"/.test(
-              entry.rendered?.html ?? '',
-            ),
-          )
-      ) {
-        context.logger.info(
-          'Rebuilding content with remote link card thumbnails',
-        );
-        context.store.clear();
-      }
-      const filenames = new Set(
-        context.store
-          .values()
-          .flatMap((entry) =>
-            Array.from(
-              (entry.rendered?.html ?? '').matchAll(
-                new RegExp(`/link-card-images/(${imageFilename})`, 'g'),
-              ),
-              (match) => match[1],
-            ),
-          ),
-      );
-      for (const filename of filenames) {
-        try {
-          await access(new URL(filename, directory));
-        } catch {
+      for (const [id, entry] of context.store.entries()) {
+        const html = entry.rendered?.html ?? '';
+        if (
+          /<img src="https?:\/\/[^" ]+" class="link-card__image"/.test(html)
+        ) {
           context.logger.info(
-            'Rebuilding content with missing link card images',
+            `Rebuilding content with remote link card thumbnails: ${id}`,
           );
-          context.store.clear();
-          break;
+          context.store.delete(id);
+          continue;
+        }
+        const filenames = new Set(
+          Array.from(
+            html.matchAll(
+              new RegExp(`/link-card-images/(${imageFilename})`, 'g'),
+            ),
+            (match) => match[1],
+          ),
+        );
+        for (const filename of filenames) {
+          try {
+            await access(new URL(filename, directory));
+          } catch {
+            context.logger.info(
+              `Rebuilding content with missing link card images: ${id}`,
+            );
+            context.store.delete(id);
+            break;
+          }
         }
       }
       await loader.load(context);
