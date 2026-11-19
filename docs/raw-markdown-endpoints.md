@@ -31,7 +31,9 @@ Raw Markdown の生成は `src/pages/posts/[slug].md.ts` で実装していま�
 - `wrangler.toml` の `assets.run_worker_first = ["/posts/*"]` で記事配下のみ Worker を先に実行する
 - `GET` / `HEAD` で `/posts/[slug]` にアクセスされ、`Accept` ヘッダーで `text/markdown` が `text/html` 以上に優先される場合だけ `/posts/[slug].md` を Assets binding から返す
 - `Accept` ヘッダーの `q` 値、ワイルドカード、同じ `q` 値での記述順を考慮する
-- キャッシュが `Accept` ごとに分かれるよう、Markdown 返却時に `Vary: Accept` を付与する
+- 1つのメディアタイプに複数の media range が当てはまる場合は、RFC 9110 に従い最も具体的なものの `q` 値を使う（例: `text/html;q=0, */*;q=0.8` では `text/html` は受け付けない扱い）
+- 具体性はまず型・サブタイプ（`text/markdown` > `text/*` > `*/*`）で比べ、同じ型同士では `charset` などの media type パラメータ付きの range をより具体的な扱いとする。配信する UTF-8 の変種に一致する `charset=utf-8`（引用符付きの `charset="utf-8"` も同じ）以外のパラメータを持つ range は当てはまらないものとする
+- キャッシュが `Accept` ごとに分かれるよう、振り分け対象（`GET` / `HEAD` の `/posts/[slug]`）のレスポンスには Markdown・HTML のどちらを返す場合も `Vary: Accept` を付与する
 
 Worker 側は `.md` への振り分けに加え、Cloudflare Workers Static Assets が拡張子から付与する `text/markdown` に `charset=utf-8` を補います。raw Markdown の生成処理自体は Astro の endpoint に寄せています。別ホスティングへ移植する場合は、この振り分け・ヘッダー正規化層を移植先の middleware / edge function / rewrite に置き換えます。
 

@@ -9,9 +9,14 @@ const MARKDOWN_POSTS_PATH_PATTERN = /^\/posts\/[^/]+\.md$/;
 
 interface AcceptPreference {
   mediaType: string;
+  parameters: string[];
   q: number;
   order: number;
 }
+
+// Both the HTML and the Markdown variants are served as UTF-8.
+const VARIANT_PARAMETERS = new Set(['charset=utf-8']);
+const QUOTED_VALUE = /^([^=]+=)"(.*)"$/;
 
 const parseQValue = (parameters: string[]) => {
   const quality = parameters.find((parameter) => parameter.startsWith('q='));
@@ -35,15 +40,19 @@ const parseAcceptHeader = (acceptHeader: string | null): AcceptPreference[] =>
     .map((mediaRange, order) => {
       const [mediaType, ...parameters] = mediaRange
         .split(';')
-        .map((part) => part.trim().toLowerCase());
+        .map((part) => part.trim().toLowerCase().replace(QUOTED_VALUE, '$1$2'));
+      const qIndex = parameters.findIndex((parameter) =>
+        parameter.startsWith('q='),
+      );
 
       return {
         mediaType,
+        parameters: qIndex === -1 ? parameters : parameters.slice(0, qIndex),
         q: parseQValue(parameters),
         order,
       };
     })
-    .filter(({ mediaType, q }) => mediaType.length > 0 && q > 0) ?? [];
+    .filter(({ mediaType }) => mediaType.length > 0) ?? [];
 
 const matchesMediaType = (preference: AcceptPreference, mediaType: string) => {
   const [preferenceType, preferenceSubtype] = preference.mediaType.split('/');
@@ -51,11 +60,14 @@ const matchesMediaType = (preference: AcceptPreference, mediaType: string) => {
 
   return (
     (preferenceType === '*' || preferenceType === type) &&
-    (preferenceSubtype === '*' || preferenceSubtype === subtype)
+    (preferenceSubtype === '*' || preferenceSubtype === subtype) &&
+    preference.parameters.every((parameter) =>
+      VARIANT_PARAMETERS.has(parameter),
+    )
   );
 };
 
-const specificity = (mediaType: string) =>
+const typeSpecificity = ({ mediaType }: AcceptPreference) =>
   mediaType.split('/').filter((part) => part.length > 0 && part !== '*').length;
 
 const bestPreferenceFor = (
@@ -66,8 +78,9 @@ const bestPreferenceFor = (
     .filter((preference) => matchesMediaType(preference, mediaType))
     .sort(
       (a, b) =>
+        typeSpecificity(b) - typeSpecificity(a) ||
+        b.parameters.length - a.parameters.length ||
         b.q - a.q ||
-        specificity(b.mediaType) - specificity(a.mediaType) ||
         a.order - b.order,
     )[0];
 
@@ -75,7 +88,7 @@ const prefersMarkdown = (acceptHeader: string | null) => {
   const preferences = parseAcceptHeader(acceptHeader);
   const markdown = bestPreferenceFor(preferences, 'text/markdown');
 
-  if (!markdown || markdown.mediaType !== 'text/markdown') {
+  if (!markdown || markdown.mediaType !== 'text/markdown' || markdown.q === 0) {
     return false;
   }
 
@@ -124,12 +137,11 @@ const addMarkdownCharset = (response: Response) => {
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
-    const shouldReturnMarkdown =
+    const isNegotiable =
       (request.method === 'GET' || request.method === 'HEAD') &&
-      POSTS_PATH_PATTERN.test(url.pathname) &&
-      prefersMarkdown(request.headers.get('Accept'));
+      POSTS_PATH_PATTERN.test(url.pathname);
 
-    if (shouldReturnMarkdown) {
+    if (isNegotiable && prefersMarkdown(request.headers.get('Accept'))) {
       const markdownUrl = new URL(request.url);
       markdownUrl.pathname = `${url.pathname.replace(/\/$/, '')}.md`;
 
@@ -141,6 +153,10 @@ export default {
     }
 
     const response = await env.ASSETS.fetch(request);
+
+    if (isNegotiable) {
+      return addVaryAccept(response);
+    }
 
     return MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname)
       ? addMarkdownCharset(response)
