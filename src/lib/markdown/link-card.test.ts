@@ -66,10 +66,13 @@ beforeAll(async () => {
       return;
     }
     response.setHeader('content-type', 'text/html; charset=utf-8');
+    const imagePrefix = ['/http-image', '/throw-image'].includes(route)
+      ? `${route.slice(1)}-`
+      : '';
     const image =
       route === '/no-image'
         ? ''
-        : `<meta property="og:image" content="${origin}/first.svg"><meta property="og:image" content="${origin}/second.svg">`;
+        : `<meta property="og:image" content="${origin}/${imagePrefix}first.svg"><meta property="og:image" content="${origin}/${imagePrefix}second.svg">`;
     const description =
       route === '/no-description'
         ? ''
@@ -77,7 +80,7 @@ beforeAll(async () => {
     const favicon =
       route === '/no-favicon'
         ? ''
-        : `<link rel="icon" href="${route === '/malformed-favicon' ? 'http://[' : route === '/relative' ? '/favicon.svg' : `${origin}/favicon.svg`}">`;
+        : `<link rel="icon" href="${route === '/malformed-favicon' ? 'http://[' : route === '/relative' ? '/favicon.svg' : `${origin}/${imagePrefix}favicon.svg`}">`;
     response.end(
       `<html><head><meta charset="utf-8"><meta property="og:title" content="日本語 &lt;em&gt;title&lt;/em&gt; &amp; test">${description}${image}${favicon}</head><body></body></html>`,
     );
@@ -168,9 +171,13 @@ describe('remark-link-card-plus 0.8.1 との HTML 互換性', () => {
     '/no-description',
     '/relative',
     '/no-favicon',
+    '/http-image',
+    '/throw-image',
     '/error',
     '/refused',
   ])('%s', async (route) => {
+    if (route === '/http-image') imageStatus = 404;
+    if (route === '/throw-image') imageThrows = true;
     const markdown = `<${origin}${route}>`;
     const legacy = await createMarkdownProcessor({
       remarkPlugins: [[remarkLinkCard, { cache: true }]],
@@ -182,6 +189,17 @@ describe('remark-link-card-plus 0.8.1 との HTML 互換性', () => {
     const $ = load(newHtml);
     expect($('.link-card__container')).toHaveLength(1);
     expect($('.link-card__content').text()).not.toContain('bad()');
+    if (route === '/http-image') {
+      expect(requests).toContain(`GET ${origin}/http-image-first.svg`);
+      expect($('.link-card__image').attr('src')).toMatch(
+        /^\/link-card-images\/.+\.svg$/,
+      );
+    }
+    if (route === '/throw-image') {
+      expect($('.link-card__image').attr('src')).toBe(
+        `${origin}/throw-image-first.svg`,
+      );
+    }
     expect($('.link-card__image').attr('src') ?? '').not.toContain(
       'second.svg',
     );
@@ -293,7 +311,11 @@ describe('取得失敗とキャッシュ', () => {
   test.each(['http', 'non-image', 'throw', 'disk'])(
     '画像の失敗 (%s) はリモート参照に戻す',
     async (failure) => {
-      if (failure === 'http') imageStatus = 404;
+      if (failure === 'http') {
+        imageStatus = 404;
+        imageType = 'text/html';
+        imageBody = 'HTTP error';
+      }
       if (failure === 'non-image') imageType = 'text/html';
       if (failure === 'throw') imageThrows = true;
       const cacheDirectory =

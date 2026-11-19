@@ -109,7 +109,6 @@ export function linkCard(options: LinkCardOptions = {}) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(timeout),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
       const contentType = response.headers.get('content-type') ?? '';
       const detectedType = await fileTypeFromBuffer(buffer);
