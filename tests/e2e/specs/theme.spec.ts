@@ -4,6 +4,7 @@ import { expect, test } from '../fixtures/test';
 const DARK = /(?:^|\s)dark(?:\s|$)/;
 /** HTML の `class` 属性値内で `light` を単独のクラスとしてマッチする。 */
 const LIGHT = /(?:^|\s)light(?:\s|$)/;
+const DARK_BACKGROUND = /oklch\(0\.145 0 (?:0|none)\)/;
 
 /**
  * テーマトグルの挙動。
@@ -109,3 +110,93 @@ test.describe('テーマトグル', () => {
       .toBeNull();
   });
 });
+
+test.describe('ダーク OS のテーマトグル', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+  });
+
+  test('ライト → ダーク → システムを循環し、リロード後も永続化する', async ({
+    homePage,
+    isDesktop,
+    page,
+  }) => {
+    const toggleTheme = async (): Promise<void> => {
+      if (!isDesktop) {
+        await homePage.header.openMobileMenu();
+      }
+      await homePage.header.toggleTheme();
+    };
+
+    await homePage.goto();
+
+    const html = page.locator('html');
+    const body = page.locator('body');
+
+    await expect(html).not.toHaveAttribute('class', DARK);
+    await expect(html).not.toHaveAttribute('class', LIGHT);
+    await expect(body).toHaveCSS('background-color', DARK_BACKGROUND);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBeNull();
+
+    await toggleTheme();
+    await expect(html).toHaveAttribute('class', LIGHT);
+    await expect(html).not.toHaveAttribute('class', DARK);
+    await expect(body).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('light');
+
+    await page.reload();
+    await expect(html).toHaveAttribute('class', LIGHT);
+    await expect(body).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('light');
+
+    await toggleTheme();
+    await expect(html).toHaveAttribute('class', DARK);
+    await expect(html).not.toHaveAttribute('class', LIGHT);
+    await expect(body).toHaveCSS('background-color', DARK_BACKGROUND);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBe('dark');
+
+    await toggleTheme();
+    await expect(html).not.toHaveAttribute('class', DARK);
+    await expect(html).not.toHaveAttribute('class', LIGHT);
+    await expect(body).toHaveCSS('background-color', DARK_BACKGROUND);
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBeNull();
+  });
+});
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  test(`${colorScheme} OS で無効な保存テーマはシステム設定にフォールバックする`, async ({
+    homePage,
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme });
+    await page.addInitScript(() => {
+      if (window === window.top) {
+        localStorage.setItem('theme', 'bogus');
+      }
+    });
+    await homePage.goto();
+
+    const html = page.locator('html');
+
+    await expect(html).not.toHaveAttribute('class', DARK);
+    await expect(html).not.toHaveAttribute('class', LIGHT);
+    await expect(html).toHaveCSS('color-scheme', 'light dark');
+    await expect(page.locator('body')).toHaveCSS(
+      'background-color',
+      colorScheme === 'dark' ? DARK_BACKGROUND : 'rgb(255, 255, 255)',
+    );
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('theme')))
+      .toBeNull();
+  });
+}

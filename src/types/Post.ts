@@ -15,7 +15,7 @@ export interface PostFrontmatter {
   description?: string;
   tags?: string[];
   draft?: boolean;
-  ogimage?: OgImage;
+  ogimage?: string | OgImage;
   image?: Image;
 }
 
