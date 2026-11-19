@@ -22,12 +22,9 @@ const removeLayoutFrontmatter = (body: string) => {
     return body;
   }
 
-  const frontmatter = body.slice(4, frontmatterEndIndex);
-  const rest = body.slice(frontmatterEndIndex);
-  const frontmatterWithoutLayout = frontmatter.replace(
-    /^layout:\s*[^\n]*\n?/m,
-    '',
-  );
+  const frontmatter = body.slice(4, frontmatterEndIndex + 1);
+  const rest = body.slice(frontmatterEndIndex + 1);
+  const frontmatterWithoutLayout = frontmatter.replace(/^layout:[^\n]*\n/m, '');
 
   return `---\n${frontmatterWithoutLayout}${rest}`;
 };
