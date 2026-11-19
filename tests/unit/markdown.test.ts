@@ -3,6 +3,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { load } from 'cheerio';
 import { describe, expect, test } from 'vitest';
 import type { PostFrontmatter } from '../../src/types/Post';
+import * as codeTitlesFixture from './fixtures/code-titles.md';
 
 const posts = import.meta.glob<MarkdownInstance<PostFrontmatter>>([
   '../../src/pages/posts/**/*.md',
@@ -62,6 +63,58 @@ async function articleBody(slug: string) {
   const post = await posts[`../../src/pages/posts/${slug}.md`]();
   return load(await post.compiledContent());
 }
+
+describe('コードブロックのタイトル', () => {
+  test.each([
+    [
+      'resolve-sidekick-nvim-codex-search-error',
+      ['lua/sidekick/config.lua:106', 'lua/plugins/sidekick.lua'],
+    ],
+    ['remark-link-card-plus', ['astro.config.mjs', 'remark-link-card.css']],
+    [
+      'remark-link-card-with-astro',
+      ['astro.config.mjs', 'remark-link-card.css'],
+    ],
+    [
+      'tailscale-github-actions-to-deploy-palworld-server-docker',
+      ['deploy.yml'],
+    ],
+  ])(
+    '%s のコードタイトルとシンタックスハイライトを保持する',
+    async (slug, titles) => {
+      const $ = await articleBody(slug);
+      const labels = $('.remark-code-container > .remark-code-title');
+
+      expect(labels.map((_, label) => $(label).text()).get()).toEqual(titles);
+      for (const label of labels) {
+        const block = $(label).next('pre.astro-code');
+        expect(block).toHaveLength(1);
+        expect(block.find('code span[style]').length).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  test('メタ文字列のタイトルを HTML ではなくテキストとして描画する', async () => {
+    const $ = load(await codeTitlesFixture.compiledContent());
+    const title = $('.remark-code-title');
+    expect(title).toHaveLength(1);
+    expect(title.text()).toBe('<file> & 名前.ts');
+    expect(title.children()).toHaveLength(0);
+    expect(title.next('pre.astro-code').find('code').text()).toBe(
+      'const value = 1;',
+    );
+  });
+
+  test('タイトルなしのコードブロックも背景色のためにコンテナで囲む', async () => {
+    const $ = load(await codeTitlesFixture.compiledContent());
+    const untitled = $('.remark-code-container > pre.astro-code:only-child');
+    expect(untitled.map((_, pre) => $(pre).text()).get()).toEqual([
+      'empty title',
+      'different attribute',
+      'no language or title',
+    ]);
+  });
+});
 
 describe('現在使用している Markdown の拡張', () => {
   test('GFM テーブルとセル内の強調が HTML になる', async () => {

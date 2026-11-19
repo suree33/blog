@@ -46,6 +46,11 @@ pnpm run preview
 
 ## 使用ツール・サービス
 
+### コードブロックのタイトル
+
+コードフェンスの言語名に続けて `title="..."` を指定します（例: `` ```ts title="src/lib/utils.ts" ``）。
+タイトルは [Astro の Shiki transformer](https://docs.astro.build/en/guides/syntax-highlighting/#transformers) で表示します。
+
 ### フレームワーク
 
 - [Astro](https://astro.build/)
@@ -55,7 +60,6 @@ pnpm run preview
 ### Remarkプラグイン
 
 - [remark-link-card-plus](https://github.com/okaryo/remark-link-card-plus)
-- [remark-flexible-code-titles](https://github.com/ipikuka/remark-flexible-code-titles)
 
 ### アセット
 
