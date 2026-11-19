@@ -9,6 +9,8 @@ import { routes } from '../utils/routes';
 export interface RssFeedItem {
   title: string;
   link: string;
+  content: string;
+  pubDate: string;
 }
 
 /** RSS `<channel>` のうち本スイートで検証に使うフィールド。 */
@@ -17,6 +19,7 @@ export interface RssFeedContent {
   description: string;
   language: string;
   items: RssFeedItem[];
+  stylesheet: string;
 }
 
 /**
@@ -63,16 +66,31 @@ export class RssFeedPage {
     }
     return this.page.evaluate((xml) => {
       const doc = new DOMParser().parseFromString(xml, 'application/xml');
+      if (doc.querySelector('parsererror')) {
+        throw new Error('RSS XML のパースに失敗しました');
+      }
       const channel = doc.querySelector('channel');
       const items = Array.from(doc.querySelectorAll('item')).map((item) => ({
         title: item.querySelector('title')?.textContent ?? '',
         link: item.querySelector('link')?.textContent ?? '',
+        content:
+          item.getElementsByTagNameNS(
+            'http://purl.org/rss/1.0/modules/content/',
+            'encoded',
+          )[0]?.textContent ?? '',
+        pubDate: item.querySelector('pubDate')?.textContent ?? '',
       }));
       return {
         siteName: channel?.querySelector('title')?.textContent ?? '',
         description: channel?.querySelector('description')?.textContent ?? '',
         language: channel?.querySelector('language')?.textContent ?? '',
         items,
+        stylesheet:
+          Array.from(doc.childNodes).find(
+            (node) =>
+              node.nodeType === Node.PROCESSING_INSTRUCTION_NODE &&
+              node.nodeName === 'xml-stylesheet',
+          )?.nodeValue ?? '',
       };
     }, this._xml);
   }
