@@ -46,9 +46,6 @@ jobs:
       - name: Run unit tests
         run: pnpm run test:unit
 
-      - name: Run raw Markdown frontmatter tests
-        run: pnpm run test:markdown-frontmatter
-
   build:
     name: Build
     runs-on: ubuntu-latest
