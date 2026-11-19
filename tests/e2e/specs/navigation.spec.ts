@@ -10,6 +10,52 @@ import { HOME_URL_REGEX } from '../utils/regex';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
+  test('モバイルメニューを開いている間はTab/Shift+Tabのフォーカスをメニュー内に留める', async ({
+    homePage,
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 600 });
+    await homePage.goto();
+    await homePage.header.openMobileMenu();
+
+    const hamburger = homePage.header.root.locator('.hamburger');
+    const controls = page.locator('.sm-menu').locator('a[href], button');
+    await hamburger.focus();
+    for (const control of await controls.all()) {
+      await page.keyboard.press('Tab');
+      await expect(control).toBeFocused();
+    }
+    await page.keyboard.press('Tab');
+    await expect(hamburger).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(controls.last()).toBeFocused();
+  });
+
+  test('Escapeでモバイルメニューを閉じてハンバーガーボタンにフォーカスを戻す', async ({
+    homePage,
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 600 });
+    await homePage.goto();
+
+    const hamburger = homePage.header.root.locator('.hamburger');
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await homePage.header.openMobileMenu();
+      await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+      await homePage.header.aboutLink.focus();
+      await page.keyboard.press('Escape');
+
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(page.locator('.hamburger-toggle[data-active]')).toHaveCount(
+        0,
+      );
+      await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
+      await expect(hamburger).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(page.locator('.sm-menu :focus')).toHaveCount(0);
+    }
+  });
+
   test('ヘッダーとフッターのナビゲーションを名前で区別できる', async ({
     homePage,
     isDesktop,
