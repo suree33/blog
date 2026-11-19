@@ -27,6 +27,37 @@ test.describe('ナビゲーション', () => {
       .toHaveAccessibleName('フッター');
   });
 
+  test('画面幅を広げるとモバイルメニューを閉じて本文スクロールを復元する', async ({
+    homePage,
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 600 });
+    await homePage.goto();
+
+    const body = page.locator('body');
+    const hamburger = homePage.header.root.locator('.hamburger');
+    await homePage.header.openMobileMenu();
+    await expect(body).toHaveCSS('overflow', 'hidden');
+
+    await page.setViewportSize({ width: 1280, height: 600 });
+
+    await expect(body).not.toHaveCSS('overflow', 'hidden');
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+    await expect(hamburger).not.toHaveAttribute('data-active');
+    await expect(page.locator('.hamburger-toggle[data-active]')).toHaveCount(0);
+    await page.evaluate(() => window.scrollBy(0, 300));
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBeGreaterThan(0);
+
+    await page.setViewportSize({ width: 390, height: 600 });
+    await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+    await homePage.header.openMobileMenu();
+    await expect(body).toHaveCSS('overflow', 'hidden');
+    await hamburger.click();
+    await expect(body).not.toHaveCSS('overflow', 'hidden');
+  });
+
   test('モバイルメニューの開閉で本文スクロールをロック・復元する', async ({
     homePage,
     isDesktop,
