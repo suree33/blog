@@ -398,4 +398,4 @@ blob-report/
 
 `drafts.spec.ts` は home・RSS・sitemap・下書き専用タグ・記事・raw Markdown の非公開を確認します。`E2E_DRAFT_FIXTURE=true` の E2E ビルドだけが `tests/e2e/fixtures/posts/` を collection loader に追加します。本番の `build` / `build:ci` は追加しません。フルページ VRT の列挙は公開ソースのみを使い、fixture のルートは sitemap にも現れません。
 
-`build:e2e` は `--force` で Markdown をスタブ環境で再処理し、以前の実ネットワークのリンクカードを再利用しません。E2E と本番は Astro の既定キャッシュを共有します。fixture の有効・無効で glob が変わるため、`build:e2e` の直後に `build:ci` を実行しても下書きの出力は生成されません。
+`build:e2e` は `--force` で Markdown をスタブ環境で再処理し、以前の実ネットワークのリンクカードを再利用しません。Astro の content-layer キャッシュは E2E が `node_modules/.astro-e2e`、本番が `node_modules/.astro` に分離されています。fixture の有効・無効で glob が変わっても、変更されていない記事のレンダリング結果は再利用されるため、分離しないと `build:e2e` の直後の `build:ci` にスタブのリンクカードが混入します。下書きの出力だけでなく、リンクカードの内容も本番キャッシュと分離する必要があります。
