@@ -34,6 +34,19 @@ export const toggleHamburgerMenu = (
   const hamburger = document.querySelector<HTMLElement>(hamburgerSelector);
   const menu = document.querySelectorAll(toggleTargetSelector);
   if (hamburger) {
+    const closeMenu = () => {
+      hamburger.removeAttribute('data-active');
+      hamburger.setAttribute('aria-expanded', 'false');
+      menu.forEach((item) => item.removeAttribute('data-active'));
+      enableScroll();
+    };
+
+    window
+      .matchMedia('(min-width: 640px)')
+      .addEventListener('change', (event) => {
+        if (event.matches) closeMenu();
+      });
+
     hamburger.addEventListener('click', () => {
       if (hamburger.classList.contains('start')) {
         hamburger.classList.remove('start');
@@ -47,9 +60,7 @@ export const toggleHamburgerMenu = (
         menu.forEach((item) => item.setAttribute('data-active', ''));
         disableScroll();
       } else {
-        hamburger.setAttribute('aria-expanded', 'false');
-        menu.forEach((item) => item.removeAttribute('data-active'));
-        enableScroll();
+        closeMenu();
       }
     });
   }
