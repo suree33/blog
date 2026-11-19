@@ -193,8 +193,26 @@ test.describe('RSS フィード', () => {
       const item = items.find((item) => routeOf(item.link) === post.route);
       if (!item) throw new Error(`${post.route} が RSS にありません`);
       const $ = load(item.content);
+      const articleResponse = await rssFeedPage.request.get(
+        new URL(item.link).pathname,
+      );
+      expect(articleResponse.status(), `${post.route} の記事を取得できる`).toBe(
+        200,
+      );
+      const article = load(await articleResponse.text());
+      const linkCardImages = new Set(
+        article('.remark-link-card-plus__container img')
+          .toArray()
+          .map(
+            (image) =>
+              new URL(article(image).attr('src') ?? '', config.url).href,
+          ),
+      );
       expect(
-        $('img').length,
+        $('img')
+          .toArray()
+          .filter((image) => !linkCardImages.has($(image).attr('src') ?? ''))
+          .length,
         `${post.route} の Markdown 画像が残る`,
       ).toBeGreaterThanOrEqual(post.imageCount);
       for (const image of $('img').toArray()) {
@@ -211,6 +229,7 @@ test.describe('RSS フィード', () => {
           imageUrl.origin,
           `${post.route} の画像がサイトと同じオリジンを参照する`,
         ).toBe(new URL(config.url).origin);
+        if (linkCardImages.has(imageUrl.href)) continue;
         const response = await rssFeedPage.request.get(imageUrl.pathname);
         expect(
           response.status(),
