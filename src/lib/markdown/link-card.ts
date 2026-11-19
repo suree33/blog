@@ -111,9 +111,13 @@ export function linkCard(options: LinkCardOptions = {}) {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
       const contentType = response.headers.get('content-type') ?? '';
+      const detectedType = await fileTypeFromBuffer(buffer);
+      if (detectedType && !detectedType.mime.startsWith('image/')) {
+        throw new Error('Not an image');
+      }
       const extension = contentType.startsWith('image/svg+xml')
         ? 'svg'
-        : ((await fileTypeFromBuffer(buffer))?.ext ??
+        : (detectedType?.ext ??
           (contentType.startsWith('image/') ? 'png' : undefined));
       if (!extension) throw new Error('Not an image');
       const filename = `${hash}.${extension}`;

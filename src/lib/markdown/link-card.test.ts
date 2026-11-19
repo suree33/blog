@@ -44,6 +44,7 @@ let googleStatus = 200;
 let googleThrows = false;
 let imageStatus = 200;
 let imageType = 'image/svg+xml';
+let imageBody = svg;
 let imageThrows = false;
 let requests: string[];
 let fetch: typeof globalThis.fetch;
@@ -96,6 +97,7 @@ beforeEach(async () => {
   googleThrows = false;
   imageStatus = 200;
   imageType = 'image/svg+xml';
+  imageBody = svg;
   imageThrows = false;
   fetch = vi.fn(async (input, init) => {
     const url = input instanceof Request ? input.url : String(input);
@@ -110,7 +112,7 @@ beforeEach(async () => {
     if (!url.startsWith(origin)) throw new Error(`Unexpected network: ${url}`);
     if (url.endsWith('.svg')) {
       if (imageThrows) throw new Error('Image unavailable');
-      return new Response(svg, {
+      return new Response(imageBody, {
         status: imageStatus,
         headers: { 'content-type': imageType },
       });
@@ -260,6 +262,21 @@ describe('取得失敗とキャッシュ', () => {
     expect($('.link-card__container')).toHaveLength(1);
     expect($('.link-card__favicon')).toHaveLength(0);
   });
+
+  test.each(['application/pdf', 'image/png'])(
+    'PDF は Content-Type が %s でも画像としてキャッシュしない',
+    async (contentType) => {
+      imageType = contentType;
+      imageBody = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF';
+      const $ = load(await render(`<${origin}/full>`));
+      expect($('.link-card__image').attr('src')).toBe(`${origin}/first.svg`);
+      expect($('.link-card__favicon').attr('src')).toBe(
+        `${origin}/favicon.svg`,
+      );
+      expect(await readdir(directory)).toEqual([]);
+      expect(console.warn).toHaveBeenCalled();
+    },
+  );
 
   test.each(['http', 'non-image', 'throw', 'disk'])(
     '画像の失敗 (%s) はリモート参照に戻す',
