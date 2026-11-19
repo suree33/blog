@@ -137,12 +137,11 @@ const addMarkdownCharset = (response: Response) => {
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
-    const shouldReturnMarkdown =
+    const isNegotiable =
       (request.method === 'GET' || request.method === 'HEAD') &&
-      POSTS_PATH_PATTERN.test(url.pathname) &&
-      prefersMarkdown(request.headers.get('Accept'));
+      POSTS_PATH_PATTERN.test(url.pathname);
 
-    if (shouldReturnMarkdown) {
+    if (isNegotiable && prefersMarkdown(request.headers.get('Accept'))) {
       const markdownUrl = new URL(request.url);
       markdownUrl.pathname = `${url.pathname.replace(/\/$/, '')}.md`;
 
@@ -154,6 +153,10 @@ export default {
     }
 
     const response = await env.ASSETS.fetch(request);
+
+    if (isNegotiable) {
+      return addVaryAccept(response);
+    }
 
     return MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname)
       ? addMarkdownCharset(response)
