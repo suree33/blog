@@ -34,6 +34,15 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
 本番ビルドと同じくネットワークとプラグインのキャッシュを使用します。
 外部サイトの応答内容はアサートしません。
 
+## Sätteri リンクカードの単体テスト
+
+`src/lib/markdown/link-card.test.ts` は、未組み込みのローカルプラグインと
+`remark-link-card-plus` の HTML・CSS 互換性、画像キャッシュ、失敗時の縮退を検証します。
+ループバック HTTP サーバーと注入した fetch を使うため、このテスト自体は外部通信しません。
+サイトの Markdown 設定は変更しません。詳細は [Sätteri 用リンクカード](./markdown-link-cards.md) を参照してください。
+
+## 検証範囲と CI
+
 これは HTML 構造の回帰テストであり、CSS の可視性やブラウザ上の配色、JavaScript の操作は
 検証しません。それらは [Playwright E2E](./e2e-testing.md) が担当します。
 Container API は実験的 API のため、Astro 更新時は互換性にも注意してください。

@@ -113,6 +113,7 @@ pnpm-debug.log*
 
 .wrangler/
 public/remark-link-card-plus/
+public/link-card-images/
 
 # Playwright
 test-results/
