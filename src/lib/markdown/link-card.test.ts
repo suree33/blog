@@ -76,7 +76,7 @@ beforeAll(async () => {
     const favicon =
       route === '/no-favicon'
         ? ''
-        : `<link rel="icon" href="${route === '/relative' ? '/favicon.svg' : `${origin}/favicon.svg`}">`;
+        : `<link rel="icon" href="${route === '/malformed-favicon' ? 'http://[' : route === '/relative' ? '/favicon.svg' : `${origin}/favicon.svg`}">`;
     response.end(
       `<html><head><meta charset="utf-8"><meta property="og:title" content="日本語 &lt;em&gt;title&lt;/em&gt; &amp; test">${description}${image}${favicon}</head><body></body></html>`,
     );
@@ -214,6 +214,20 @@ describe('remark-link-card-plus 0.8.1 との HTML 互換性', () => {
 });
 
 describe('取得失敗とキャッシュ', () => {
+  test('不正な favicon URL は他のメタデータを保持して Google にフォールバックする', async () => {
+    const $ = load(await render(`<${origin}/malformed-favicon>`));
+    expect($('.link-card__title').text()).toBe('日本語 title & test');
+    expect($('.link-card__description').text()).toBe('説明 bold ');
+    expect($('.link-card__image')).toHaveLength(1);
+    const fallback = 'https://www.google.com/s2/favicons?domain=127.0.0.1';
+    const hash = createHash('sha256').update(fallback).digest('hex');
+    expect($('.link-card__favicon').attr('src')).toBe(
+      `/link-card-images/${hash}.svg`,
+    );
+    expect(requests).toContain(`HEAD ${fallback}`);
+    expect(console.warn).toHaveBeenCalled();
+  });
+
   test('既定の OGS URL 取得でも同じメタデータを描画する', async () => {
     const $ = load(
       await render(`<${origin}/full>`, linkCard({ cacheDirectory: directory })),

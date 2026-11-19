@@ -161,8 +161,13 @@ export function linkCard(options: LinkCardOptions = {}) {
   async function resolve(url: URL) {
     const og = await metadata(url);
     let favicon = og?.favicon;
-    if (favicon && !URL.canParse(favicon)) {
-      favicon = new URL(favicon, url.origin).href;
+    if (favicon) {
+      try {
+        favicon = new URL(favicon, url.origin).href;
+      } catch (error) {
+        warn(favicon, error);
+        favicon = undefined;
+      }
     }
     if (!favicon) {
       const fallback = `https://www.google.com/s2/favicons?domain=${url.hostname}`;
