@@ -162,6 +162,11 @@ const negotiationCases: { accept: string | null; markdown: boolean }[] = [
       'text/markdown;charset=utf-8;q=0.9, text/markdown;q=0.1, text/html;q=0.5',
     markdown: true,
   },
+  { accept: 'text/markdown;charset="utf-8", text/html;q=0.5', markdown: true },
+  {
+    accept: 'text/markdown;q=0.8, text/html;q=0, text/*;charset=utf-8;q=0.9',
+    markdown: true,
+  },
 ];
 
 for (const { accept, markdown } of negotiationCases) {
