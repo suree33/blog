@@ -1,14 +1,18 @@
-import {
-  expect,
-  test,
-  type APIRequestContext,
-  type Page,
-} from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
+import { expect, test } from '../fixtures/test';
 import { routes, sampleTag } from '../utils/routes';
 
 const productionOrigin = 'https://sur33.com';
 const sitemapIndex = '/sitemap-index.xml';
 const sitemapNamespace = 'http://www.sitemaps.org/schemas/sitemap/0.9';
+
+function previewPath(url: URL): string {
+  return `.${url.pathname}${url.search}`;
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/\/$/, '') || '/';
+}
 
 async function readSitemapLocations(
   request: APIRequestContext,
@@ -81,9 +85,10 @@ test.describe('サイトマップ', () => {
     'HTTP 応答は全プロジェクトで共通',
   );
 
-  test('インデックスと分割サイトマップに本番 URL と主要ページが含まれる', async ({
+  test('サイトマップが本番の主要ページと公開記事を含み、掲載先は HTTP 200 を返す', async ({
     request,
     page,
+    homePage,
   }) => {
     const shards = await readSitemapLocations(
       request,
@@ -93,16 +98,21 @@ test.describe('サイトマップ', () => {
     );
     const pages: URL[] = [];
     for (const shard of shards) {
-      const previewPath = `.${shard.pathname}${shard.search}`;
       pages.push(
-        ...(await readSitemapLocations(request, page, previewPath, 'urlset')),
+        ...(await readSitemapLocations(
+          request,
+          page,
+          previewPath(shard),
+          'urlset',
+        )),
       );
     }
 
-    const paths = pages.map((url) => {
-      const path = url.pathname.replace(/\/$/, '') || '/';
-      return `${path}${url.search}${url.hash}`;
-    });
+    const paths = new Set(
+      pages.map(
+        (url) => `${normalizePath(url.pathname)}${url.search}${url.hash}`,
+      ),
+    );
     const tagPath = `${routes.tagsBase}${encodeURIComponent(sampleTag)}`;
     for (const path of [
       routes.home,
@@ -114,6 +124,36 @@ test.describe('サイトマップ', () => {
         paths,
         `サイトマップには主要ページ「${path}」が含まれる`,
       ).toContain(path);
+    }
+
+    await homePage.goto();
+    const articlePaths = await homePage.postList.root
+      .getByRole('link')
+      .evaluateAll((links) =>
+        links.flatMap((link) =>
+          link instanceof HTMLAnchorElement ? [link.pathname] : [],
+        ),
+      );
+    const publishedPosts = articlePaths
+      .filter((path) => path.startsWith('/posts/'))
+      .map(normalizePath);
+    expect(publishedPosts, 'ホームの記事一覧に代表記事が含まれる').toContain(
+      routes.sampleArticle,
+    );
+    const missingPosts = publishedPosts.filter((path) => !paths.has(path));
+    expect(
+      missingPosts,
+      'サイトマップにはホームに表示される公開記事がすべて含まれる',
+    ).toEqual([]);
+
+    for (const url of pages) {
+      const response = await request.get(previewPath(url), { maxRedirects: 0 });
+      const status = response.status();
+      await response.dispose();
+      expect(
+        status,
+        `サイトマップの掲載先「${url.href}」は HTTP 200 を返す`,
+      ).toBe(200);
     }
   });
 
