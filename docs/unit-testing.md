@@ -21,7 +21,7 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
 `tests/unit/markdown.test.ts` は現在の unified ベースの Markdown 設定をそのまま使います。
 テスト専用のレンダラーや Sätteri 設定への切り替えは行いません。
 
-- `src/pages/posts/**/*.md` を列挙し、Astro がページとして扱わない `_` 始まりのテンプレートと
+- `src/content/posts/**/*.md` を列挙し、Astro がページとして扱わない `_` 始まりのテンプレートと
   `.obsidian/` を除外します。記事追加時に一覧の手動更新は不要です。
 - 各記事を Astro Container API でレイアウトごと描画し、タイトル、記事本文、公開日、
   ヘッダー、フッター、見出し ID と目次リンクの対応を検証します。

@@ -58,7 +58,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm run build:ci && pnpm run preview --port ${e2ePort}`,
+    command: `E2E_DRAFT_FIXTURE=true pnpm run build:ci && pnpm run preview --port ${e2ePort}`,
     url: e2eBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

@@ -22,8 +22,9 @@ export interface SitePage {
   inSitemap: boolean;
 }
 
-const pagesDir = fileURLToPath(new URL('../../../src/pages/', import.meta.url));
-const postsDir = path.join(pagesDir, 'posts');
+const postsDir = fileURLToPath(
+  new URL('../../../src/content/posts/', import.meta.url),
+);
 
 /** `src/pages/` 配下の `.md` を再帰的に列挙する（`.obsidian` などのドットディレクトリは除外）。 */
 function listMarkdownFiles(dir: string): string[] {
@@ -97,9 +98,14 @@ function listPostSlugs(): string[] {
 
 /** タグページ（`src/pages/tags/[tag].astro`）と同じく `src/pages/**\/*.md` からタグを集める。 */
 function listTags(): string[] {
-  const tags = listMarkdownFiles(pagesDir).flatMap((file) =>
-    parseFrontmatterTags(fs.readFileSync(file, 'utf-8')),
-  );
+  const tags = [
+    ...listMarkdownFiles(postsDir),
+    ...listMarkdownFiles(
+      fileURLToPath(new URL('../../../src/pages/', import.meta.url)),
+    ),
+  ]
+    .filter((file) => !file.includes('/template/'))
+    .flatMap((file) => parseFrontmatterTags(fs.readFileSync(file, 'utf-8')));
   return [...new Set(tags)].sort();
 }
 

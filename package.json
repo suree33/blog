@@ -8,7 +8,7 @@
     "prebuild": "pnpm lint",
     "build": "astro build",
     "build:ci": "astro build",
-    "build:e2e": "TZ=UTC NODE_OPTIONS=\"$NODE_OPTIONS --import ./tests/e2e/support/network-stub.ts\" astro build",
+    "build:e2e": "E2E_DRAFT_FIXTURE=true TZ=UTC NODE_OPTIONS=\"$NODE_OPTIONS --import ./tests/e2e/support/network-stub.ts\" astro build --force",
     "preview": "astro preview",
     "preview:workers": "wrangler dev",
     "deploy": "wrangler deploy",

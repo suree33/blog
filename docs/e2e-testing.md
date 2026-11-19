@@ -81,8 +81,8 @@ tests/e2e/
 ## `playwright.config.ts` の要点
 
 - `testDir`: `./tests/e2e/specs` を指定し、spec ファイルだけをテスト対象にします。
-- `webServer`: 通常は `build:ci`、フルページ専用の `playwright.visual.config.ts` は `build:e2e` でビルド後、`pnpm run preview --port 4322` を起動します。専用 config は既存サーバーを再利用しません。通常の開発サーバーが使う `4321` とは競合しません。
-- `build:e2e`: `prebuild`（`pnpm lint`）を経由しない `astro build` を、`TZ=UTC` と `NODE_OPTIONS=--import ./tests/e2e/support/network-stub.ts` 付きで実行します。ビルド時の外部 HTTP をスタブに置き換えるためです（後述の「ページ全体のビジュアルリグレッション」を参照）。本番用の `build` / `build:ci` は変更しません。
+- `webServer`: 通常は `E2E_DRAFT_FIXTURE=true build:ci`、フルページ専用の `playwright.visual.config.ts` は `build:e2e` でビルド後、`pnpm run preview --port 4322` を起動します。専用 config は既存サーバーを再利用しません。通常の開発サーバーが使う `4321` とは競合しません。
+- `build:e2e`: `prebuild`（`pnpm lint`）を経由しない `astro build` を、`E2E_DRAFT_FIXTURE=true`、`TZ=UTC` と `NODE_OPTIONS=--import ./tests/e2e/support/network-stub.ts` 付きで実行します。ビルド時の外部 HTTP をスタブに置き換えるためです（後述の「ページ全体のビジュアルリグレッション」を参照）。本番用の `build` / `build:ci` は変更しません。
 - `reporter`: 通常は `list` で標準出力に進行を出し、`html` で `playwright-report/` を生成します。GitHub Actions 上では `github` reporter も追加し、失敗箇所を Actions の annotation として表示します。
 - `fullyParallel`: spec 内のテストも並列化します。`workers` は常に `undefined` とし、Playwright のデフォルト（論理 CPU コア数の半分）に任せます。
 - `projects`: デスクトップ 3 種（`chromium` / `firefox` / `webkit`）とモバイル 3 種（`Mobile Chrome` / `Mobile Safari` / `Mobile Safari (Small screen)`）を定義します。
@@ -256,7 +256,7 @@ sudo apt-get install fonts-noto-cjk
 
 Markdown 処理系の移行などで「画面での表示が変わらない」ことを確認するため、サイトの全ページをフルページで撮影します。
 
-- 対象: ホーム、About、Dreamhouse、全記事（`src/pages/posts/*.md`、`template/` を除く）、全タグページ、404。記事とタグは `tests/e2e/utils/site-pages.ts` がソース（ファイル名と frontmatter の `tags`）から列挙します。列挙結果がビルド後の sitemap と一致することも検証するため、ページの追加漏れや列挙ロジックの誤りはテスト失敗になります。
+- 対象: ホーム、About、Dreamhouse、全記事（`src/content/posts/*.md`、`template/` を除く）、全タグページ、404。記事とタグは `tests/e2e/utils/site-pages.ts` がソース（ファイル名と frontmatter の `tags`）から列挙します。列挙結果がビルド後の sitemap と一致することも検証するため、ページの追加漏れや列挙ロジックの誤りはテスト失敗になります。
 - プロジェクト: `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）のみ。ダークは Shiki の `light-dark()` 配色や Callout のダーク用スタイルを確認するために撮影します。専用 config は 2 workers、retry なしで実行し、通常の `test:e2e` とは分離します。
 - スナップショット名: ルート・プロジェクト・OS から決めます。例: `posts/nespresso-mold-light-chromium-linux.png`、`home-light-Mobile-Chrome-linux.png`。ベースラインが欠けていても通常実行では生成せず失敗させます。
 
@@ -293,7 +293,7 @@ Playwright の更新時は lockfile のバージョンと CI・上記 Docker タ
 - `/rss.xml` が 200 で応答し、`content-type` が XML 系（`application/xml` 等）であること。
 - `<channel>` にサイト名（`config.siteName`）・説明・`<language>ja-jp</language>` が含まれること。
 - 代表記事（`sampleArticleTitle`）のタイトルとリンクが `<item>` に含まれること。リンクはホスト・末尾スラッシュの差異に依存しないようパスで部分一致させる。
-- frontmatter 不足記事の扱い: `src/pages/rss.xml.ts` の `hasRequiredFrontmatter` により、`title` または `pubDate` frontmatter を持たない記事はフィードから除外される。本リポジトリに draft 扱いは存在せず、この frontmatter 条件のみで絞り込む。記事テンプレート (`src/pages/posts/template/_blog-post.md`) は `title` が未設定のため除外され、フィードに出現しないことを検証する（全 `<item>` が空でない `title`・`link` を持つこと、および `/template/` を含むリンクがないこと）。
+- RSS は公開記事のみを出力します。既存の standalone Markdown ページ（Dreamhouse）も従来どおり含みます。テンプレートはコレクション glob の対象外です。
 
 ### スナップショットの更新
 
@@ -393,3 +393,9 @@ blob-report/
 ```
 
 なお、スモーク、ナビゲーション、タグ、テーマ、404、目次 (TOC)、ビジュアルリグレッション（コンポーネント単位）の各テストは、デスクトップ（Chromium / Firefox / WebKit）とモバイル（Mobile Chrome / Mobile Safari / Mobile Safari (Small screen)）の全 6 プロジェクトで実行します。axe-core アクセシビリティ検査と RSS フィードテストは `chromium` / `Mobile Chrome` の 2 プロジェクトで実行します。 ページ全体のビジュアルリグレッションは `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）で実行します。
+
+## 下書きの回帰テスト
+
+`drafts.spec.ts` は home・RSS・sitemap・下書き専用タグ・記事・raw Markdown の非公開を確認します。`E2E_DRAFT_FIXTURE=true` の E2E ビルドだけが `tests/e2e/fixtures/posts/` を collection loader に追加します。本番の `build` / `build:ci` は追加しません。フルページ VRT の列挙は公開ソースのみを使い、fixture のルートは sitemap にも現れません。
+
+E2E は専用の `node_modules/.astro-e2e` キャッシュを使い、本番の content layer キャッシュと分離します。`build:e2e` は `--force` で Markdown をスタブ環境で再処理し、以前の実ネットワークのリンクカードを再利用しません。

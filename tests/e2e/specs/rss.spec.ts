@@ -10,9 +10,7 @@ import { routes, sampleArticleTitle } from '../utils/routes';
  * 期待仕様（`src/pages/rss.xml.ts` 参考）:
  * - `@astrojs/rss` が `Content-Type: application/xml` で応答する。
  * - `<channel>` に `config.siteName`・`config.description`・`<language>ja-jp</language>` が含まれる。
- * - 各 `<item>` は `title` と `pubDate` frontmatter を持つ記事のみ（`hasRequiredFrontmatter`）。
- *   `title` または `pubDate` が未設定の記事（例: 記事テンプレート）はフィードから除外される。
- *   本リポジトリに draft 扱いは存在せず、上記 frontmatter 条件のみで絞り込む。
+ * - 公開記事と既存の standalone Markdown ページを含む。draft とテンプレートは除外する。
  */
 test.describe('RSS フィード', () => {
   test.beforeEach(({ browserName }) => {
