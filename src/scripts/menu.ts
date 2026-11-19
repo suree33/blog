@@ -34,7 +34,32 @@ export const toggleHamburgerMenu = (
   const hamburger = document.querySelector<HTMLElement>(hamburgerSelector);
   const menu = document.querySelectorAll(toggleTargetSelector);
   if (hamburger) {
+    const panel = document.getElementById(
+      hamburger.getAttribute('aria-controls') ?? '',
+    );
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMenu();
+        hamburger.focus();
+      } else if (event.key === 'Tab') {
+        const controls = [
+          hamburger,
+          ...(panel?.querySelectorAll<HTMLElement>('a[href], button') ?? []),
+        ].filter((element) => element.checkVisibility());
+        const index = controls.indexOf(document.activeElement as HTMLElement);
+        if (
+          event.shiftKey
+            ? index <= 0
+            : index === controls.length - 1 || index < 0
+        ) {
+          event.preventDefault();
+          (event.shiftKey ? controls.at(-1) : controls[0])?.focus();
+        }
+      }
+    };
     const closeMenu = () => {
+      document.removeEventListener('keydown', handleKeydown);
       hamburger.removeAttribute('data-active');
       hamburger.setAttribute('aria-expanded', 'false');
       menu.forEach((item) => item.removeAttribute('data-active'));
@@ -59,6 +84,7 @@ export const toggleHamburgerMenu = (
         hamburger.setAttribute('aria-expanded', 'true');
         menu.forEach((item) => item.setAttribute('data-active', ''));
         disableScroll();
+        document.addEventListener('keydown', handleKeydown);
       } else {
         closeMenu();
       }
