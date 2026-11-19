@@ -70,6 +70,29 @@ test('loader propagates rendering errors', async () => {
   ).rejects.toBe(error);
 });
 
+test.each(['image', 'favicon'])(
+  'loader migrates remote thumbnails but preserves remote favicons (%s)',
+  async (kind) => {
+    const clear = vi.fn();
+    const context = {
+      config: { cacheDir },
+      store: {
+        values: () => [
+          {
+            rendered: {
+              html: `<img src="https://example.com/image.png" class="link-card__${kind}">`,
+            },
+          },
+        ],
+        clear,
+      },
+      logger: { info: vi.fn() },
+    } as unknown as LoaderContext;
+    await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+    expect(clear).toHaveBeenCalledTimes(kind === 'image' ? 1 : 0);
+  },
+);
+
 test.each([false, true])(
   'build hook copies assets on every build (empty: %s)',
   async (empty) => {

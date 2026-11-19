@@ -17,6 +17,20 @@ export function withLinkCardImages(loader: Loader): Loader {
     name: `link-card-images:${loader.name}`,
     async load(context) {
       const directory = imageDirectory(context.config);
+      if (
+        context.store
+          .values()
+          .some((entry) =>
+            /<img src="https?:\/\/[^" ]+" class="link-card__image"/.test(
+              entry.rendered?.html ?? '',
+            ),
+          )
+      ) {
+        context.logger.info(
+          'Rebuilding content with remote link card thumbnails',
+        );
+        context.store.clear();
+      }
       const filenames = new Set(
         context.store
           .values()

@@ -182,14 +182,10 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     expect($('.link-card__content').text()).not.toContain('bad()');
     if (route === '/http-image') {
       expect(requests).toContain(`GET ${origin}/http-image-first.svg`);
-      expect($('.link-card__image').attr('src')).toMatch(
-        /^\/link-card-images\/.+\.svg$/,
-      );
+      expect($('.link-card__thumbnail')).toHaveLength(0);
     }
     if (route === '/throw-image') {
-      expect($('.link-card__image').attr('src')).toBe(
-        `${origin}/throw-image-first.svg`,
-      );
+      expect($('.link-card__thumbnail')).toHaveLength(0);
     }
     expect($('.link-card__image').attr('src') ?? '').not.toContain(
       'second.svg',
@@ -280,7 +276,7 @@ describe('取得失敗とキャッシュ', () => {
       imageType = contentType;
       imageBody = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF';
       const $ = load(await render(`<${origin}/full>`));
-      expect($('.link-card__image').attr('src')).toBe(`${origin}/first.svg`);
+      expect($('.link-card__thumbnail')).toHaveLength(0);
       expect($('.link-card__favicon').attr('src')).toBe(
         `${origin}/favicon.svg`,
       );
@@ -290,7 +286,7 @@ describe('取得失敗とキャッシュ', () => {
   );
 
   test.each(['http', 'non-image', 'throw', 'disk'])(
-    '画像の失敗 (%s) はリモート参照に戻す',
+    'Thumbnail failures (%s) omit the thumbnail and preserve favicon fallback',
     async (failure) => {
       if (failure === 'http') {
         imageStatus = 404;
@@ -307,13 +303,73 @@ describe('取得失敗とキャッシュ', () => {
       const $ = load(
         await render(`<${origin}/full>`, linkCard({ fetch, cacheDirectory })),
       );
-      expect($('.link-card__image').attr('src')).toBe(`${origin}/first.svg`);
+      expect($('.link-card__thumbnail')).toHaveLength(0);
       expect($('.link-card__favicon').attr('src')).toBe(
         `${origin}/favicon.svg`,
       );
       expect(
         (await readdir(directory)).filter((name) => name.endsWith('.svg')),
       ).toEqual([]);
+    },
+  );
+
+  test.each(['redirected-403', 'timeout', 'missing-type', 'html'])(
+    'Failed OG image (%s) has the same markup as an absent OG image',
+    async (failure) => {
+      const withoutImageFetch: typeof globalThis.fetch = async (
+        input,
+        init,
+      ) => {
+        const response = await fetch(input, init);
+        if (String(input) !== `${origin}/full`) return response;
+        return new Response(
+          (await response.text()).replace(
+            /<meta property="og:image"[^>]*>/g,
+            '',
+          ),
+          { headers: response.headers },
+        );
+      };
+      const noImage = await render(
+        `<${origin}/full>`,
+        linkCard({ fetch: withoutImageFetch, cacheDirectory: directory }),
+      );
+      const imageFetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+        if (String(input) !== `${origin}/first.svg`) return fetch(input, init);
+        if (failure === 'timeout') {
+          throw new DOMException('Timed out', 'TimeoutError');
+        }
+        const response = new Response(svg, {
+          status: failure === 'redirected-403' ? 403 : 200,
+          headers:
+            failure === 'missing-type'
+              ? {}
+              : {
+                  'content-type':
+                    failure === 'html' || failure === 'redirected-403'
+                      ? 'text/html'
+                      : 'image/svg+xml',
+                },
+        });
+        if (failure === 'redirected-403') {
+          Object.defineProperty(response, 'redirected', { value: true });
+        }
+        return response;
+      });
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          fetch: imageFetch,
+          cacheDirectory: directory,
+        }),
+      );
+      expect(html).toBe(noImage);
+      expect(
+        imageFetch.mock.calls.filter(
+          ([url]) => String(url) === `${origin}/first.svg`,
+        ),
+      ).toHaveLength(1);
+      expect(console.warn).toHaveBeenCalled();
     },
   );
 
