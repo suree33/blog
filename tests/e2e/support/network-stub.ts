@@ -7,7 +7,7 @@
  *
  * ## 目的
  *
- * リンクカード（`remark-link-card-plus`）はビルド時に外部サイトの OGP・favicon・
+ * リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・
  * OG 画像を取得する。取得結果はネットワーク状態や時刻、相手サイトの変更（403 / 429
  * を含む）で変わるため、そのままではページ全体のビジュアルリグレッションが決定的に
  * ならない。このプリロードはビルド中の localhost 以外への HTTP(S) をすべて、
@@ -37,8 +37,8 @@
  * - それ以外: URL から決まる og:title / og:description / og:image / favicon を持つ HTML
  *
  * og:image と favicon の URL は予約済み TLD `.invalid` 配下（`*.e2e-stub.invalid`）に
- * する。`remark-link-card-plus` は画像 URL の SHA-256 をファイル名にして
- * `public/remark-link-card-plus/` にキャッシュするため、実在 URL と衝突しない
+ * する。`linkCard()` は画像 URL の SHA-256 をファイル名にして
+ * `public/link-card-images/` にキャッシュするため、実在 URL と衝突しない
  * スタブ URL を使えば、ローカルに残った本物のキャッシュが結果を変えることはない。
  * ビルドで書き出されたスタブ画像は、プロセス終了時に同ディレクトリから削除する
  * （public/ を汚さず、以降の本番ビルドにスタブ画像が紛れ込まないようにするため）。
@@ -67,7 +67,7 @@ const PATCH_UNDICI = Symbol.for('blog.e2e.networkStub.patchUndici');
 const LINK_CARD_CACHE_DIR = path.join(
   process.cwd(),
   'public',
-  'remark-link-card-plus',
+  'link-card-images',
 );
 const IMAGE_EXTENSION_PATTERN = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp)$/i;
 
@@ -477,7 +477,7 @@ process.on('exit', () => {
   if (servedImageUrls.size === 0) {
     return;
   }
-  // remark-link-card-plus は decodeURI(url.href) の SHA-256 をファイル名に使う。
+  // linkCard() は decodeURI(url.href) の SHA-256 をファイル名に使う。
   const hashes = new Set(
     [...servedImageUrls].flatMap((url) => {
       try {

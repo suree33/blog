@@ -3,10 +3,8 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createMarkdownProcessor } from '@astrojs/markdown-remark';
 import { load } from 'cheerio';
 import openGraph from 'open-graph-scraper';
-import remarkLinkCard from 'remark-link-card-plus';
 import { markdownToHtml } from 'satteri';
 import {
   afterAll,
@@ -48,11 +46,6 @@ let imageBody = svg;
 let imageThrows = false;
 let requests: string[];
 let fetch: typeof globalThis.fetch;
-const legacyFiles = new Set<string>();
-const legacyDirectory = path.join(
-  process.cwd(),
-  'public/remark-link-card-plus',
-);
 
 beforeAll(async () => {
   server = createServer((request, response) => {
@@ -89,8 +82,6 @@ beforeAll(async () => {
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Missing port');
   origin = `http://127.0.0.1:${address.port}`;
-  for (const file of await readdir(legacyDirectory).catch(() => []))
-    legacyFiles.add(file);
 });
 
 beforeEach(async () => {
@@ -138,23 +129,28 @@ afterAll(async () => {
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
-  for (const file of await readdir(legacyDirectory).catch(() => [])) {
-    if (!legacyFiles.has(file)) await rm(path.join(legacyDirectory, file));
-  }
 });
 
 function normalized(html: string) {
-  const $ = load(
-    html
-      .replaceAll('remark-link-card-plus__', 'link-card__')
-      .replaceAll('/remark-link-card-plus/', '/link-card-images/'),
-  );
+  const $ = load(html);
   $('*')
     .contents()
     .each((_, node) => {
       if (node.type === 'text' && !node.data.trim()) $(node).remove();
     });
-  return $('body').html();
+  let result = $('body').html()?.replaceAll(origin, 'http://127.0.0.1:PORT');
+  for (const name of [
+    'favicon.svg',
+    'first.svg',
+    'http-image-favicon.svg',
+    'http-image-first.svg',
+    'throw-image-favicon.svg',
+    'throw-image-first.svg',
+  ]) {
+    const hash = createHash('sha256').update(`${origin}/${name}`).digest('hex');
+    result = result?.replaceAll(hash, name.replace('.svg', ''));
+  }
+  return result;
 }
 
 async function render(
@@ -179,13 +175,8 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     if (route === '/http-image') imageStatus = 404;
     if (route === '/throw-image') imageThrows = true;
     const markdown = `<${origin}${route}>`;
-    const legacy = await createMarkdownProcessor({
-      remarkPlugins: [[remarkLinkCard, { cache: true }]],
-      syntaxHighlight: false,
-    });
-    const oldHtml = (await legacy.render(markdown)).code;
     const newHtml = await render(markdown);
-    expect(normalized(newHtml)).toEqual(normalized(oldHtml));
+    expect(normalized(newHtml)).toMatchSnapshot();
     const $ = load(newHtml);
     expect($('.link-card__container')).toHaveLength(1);
     expect($('.link-card__content').text()).not.toContain('bad()');
@@ -217,19 +208,15 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     () => '',
   ])('URL の対象判定 %#', async (fixture) => {
     const markdown = fixture(`${origin}/full`);
-    const legacy = await createMarkdownProcessor({
-      remarkPlugins: [[remarkLinkCard, { cache: true }]],
-      syntaxHighlight: false,
-    });
-    expect(normalized(await render(markdown))).toEqual(
-      normalized((await legacy.render(markdown)).code),
-    );
+    expect(normalized(await render(markdown))).toMatchSnapshot();
   });
 
   test('CSS は接頭辞以外を変更しない', async () => {
-    const oldCss = await readFile('src/styles/remark-link-card.css', 'utf8');
     expect(await readFile('src/styles/link-card.css', 'utf8')).toBe(
-      oldCss.replaceAll('remark-link-card-plus__', 'link-card__'),
+      await readFile(
+        new URL('./fixtures/link-card.css', import.meta.url),
+        'utf8',
+      ),
     );
   });
 });
@@ -271,14 +258,8 @@ describe('取得失敗とキャッシュ', () => {
     async (route) => {
       googleThrows = true;
       const markdown = `<${origin}${route}>`;
-      const legacy = await createMarkdownProcessor({
-        remarkPlugins: [[remarkLinkCard, { cache: true }]],
-        syntaxHighlight: false,
-      });
       const html = await render(markdown);
-      expect(normalized(html)).toEqual(
-        normalized((await legacy.render(markdown)).code),
-      );
+      expect(normalized(html)).toMatchSnapshot();
       const $ = load(html);
       expect($('.link-card__container')).toHaveLength(0);
       expect($('p > a').attr('href')).toBe(`${origin}${route}`);

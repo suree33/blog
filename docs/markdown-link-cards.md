@@ -1,9 +1,9 @@
 # Sätteri 用リンクカード
 
 `src/lib/markdown/link-card.ts` は、Sätteri の mdast プラグイン `linkCard()` を提供します。
-現在のサイトは引き続き unified と `remark-link-card-plus` を使用します。
-このプラグインはテストからのみ実行し、`src/styles/link-card.css` も読み込みません。
-レンダラーの切り替え、コードタイトル、Callout の移行は対象外です。
+`astro.config.mjs` の Sätteri プロセッサの `mdastPlugins` に `linkCard()` を登録しています。
+`src/styles/global.css` は `src/styles/link-card.css` を読み込みます。
+コードタイトルは Shiki transformer、Callout は別の HAST プラグインで処理します。
 
 ## 対象と HTML
 
@@ -22,7 +22,7 @@ favicon はページ内の指定を優先し、相対 URL はページの origin
 ## 取得とキャッシュ
 
 メタデータは旧プラグインと同じ `open-graph-scraper@6.13.0` で取得します。
-現在の main の `remark-link-card-plus@0.8.2` は OGS に `{ url, timeout: 10 }` を渡します。
+以前使用していた `remark-link-card-plus@0.8.2` は OGS に `{ url, timeout: 10 }` を渡していました。
 OGS の単位は秒なので、メタデータ取得の既定値も同じ **10 秒**にしています。
 Google favicon の HEAD と画像 GET は、旧実装と同じ `AbortSignal.timeout(10000)`（10 秒）です。
 同じ URL の処理中の Promise と結果を
@@ -58,17 +58,13 @@ SVG は Content-Type、それ以外は `file-type` で形式を判定します�
 
 `src/lib/markdown/link-card.test.ts` はループバック HTTP サーバーと注入した fetch、
 一時ディレクトリを使用し、外部サイトにはアクセスしません。
-旧プラグインも同じ HTML を解析するよう OGS の URL 取得部分だけを差し替えます。
-OGS は undici を直接使い、公開 IP 検証でループバックを拒否するためです。
-Vitest は旧プラグインを inline 化して、その依存先にも同じモックを適用します。
-HTML のメタデータ解析自体は両実装とも実際の OGS を通します。
-Google HEAD の例外、画像 GET の例外、有効な画像を返す 404 応答も旧実装と比較します。
-CSS は接頭辞の置換後にファイル全体が一致することを検証します。
+OGS の URL 取得だけをモックし、HTML のメタデータ解析は実際の OGS を通します。
+旧プラグインの出力は削除前にスナップショットとして保存しました。
+Google HEAD の例外、画像 GET の例外、有効な画像を返す 404 応答も固定 HTML と比較します。
+CSS は接頭辞を置換した旧 CSS の fixture とファイル全体を比較します。
 
 ```sh
 pnpm run test:unit -- src/lib/markdown/link-card.test.ts
 ```
 
-HTML 構造の比較であり、ブラウザ上の見た目は検証しません。
-将来の組み込み時には `astro.config.mjs` の processor と CSS の読み込みを別途変更し、
-既存記事とブラウザ上の表示を確認してください。
+単体テストは HTML 構造を比較します。ブラウザ上の見た目は全ページのビジュアル回帰テストで検証します。

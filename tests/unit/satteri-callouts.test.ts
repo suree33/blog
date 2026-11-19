@@ -1,14 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { createMarkdownProcessor } from '@astrojs/markdown-remark';
 import { load } from 'cheerio';
-import rehypeCallouts from 'rehype-callouts';
 import { markdownToHtml } from 'satteri';
 import { describe, expect, test } from 'vitest';
 import { satteriCallouts } from '../../src/lib/satteri-callouts';
-
-const unified = await createMarkdownProcessor({
-  rehypePlugins: [rehypeCallouts],
-});
 
 function render(markdown: string) {
   const { html } = markdownToHtml(markdown, {
@@ -33,16 +27,17 @@ describe('Sätteri Callout', () => {
       expect(samples).toHaveLength(types.length);
 
       for (const [index, sample] of samples.entries()) {
-        const $old = load((await unified.render(sample)).code, {}, false);
         const $new = load(render(sample), {}, false);
-        const original = $old('.callout');
         const replacement = $new('.callout');
 
-        expect(original).toHaveLength(1);
         expect(replacement).toHaveLength(1);
         expect(replacement.attr('data-callout')).toBe(types[index]);
-        expect(replacement.attr()).toEqual(original.attr());
-        expect(replacement.html()).toBe(original.html());
+        expect(replacement.attr()).toEqual({
+          class: 'callout',
+          'data-callout': types[index],
+          'data-collapsible': 'false',
+        });
+        expect(replacement.html()).toMatchSnapshot(`${slug}-${index}`);
       }
     },
   );

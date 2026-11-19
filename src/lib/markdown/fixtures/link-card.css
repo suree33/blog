@@ -1,5 +1,5 @@
 /* ブレークポイント: 60ch（Tailwindcss/Typographyのproseのmax-widthを参考に） */
-.remark-link-card-plus__container {
+.link-card__container {
   --padding-x: 1rem;
   --padding-y: 0.7rem;
   --border-radius: calc(0.5rem - 1px);
@@ -9,7 +9,7 @@
   @apply mb-5 w-full;
 }
 
-.remark-link-card-plus__card {
+.link-card__card {
   @apply grid grid-cols-[1fr_116px] gap-4;
   @apply no-underline;
 
@@ -18,7 +18,7 @@
   }
 }
 
-.remark-link-card-plus__main {
+.link-card__main {
   @apply flex flex-col justify-center font-normal;
   @apply max-w-full min-w-full;
   @apply col-1;
@@ -26,36 +26,36 @@
   @apply rounded-tl-(--border-radius) rounded-bl-(--border-radius);
 }
 
-.remark-link-card-plus__content {
+.link-card__content {
 }
 
-.remark-link-card-plus__title {
+.link-card__title {
   @apply text-base leading-5 font-bold;
   @apply text-(--tw-prose-headings);
   @apply line-clamp-2 text-ellipsis;
 }
 
-.remark-link-card-plus__description {
+.link-card__description {
   @apply text-xs text-gray-500 dark:text-gray-400;
   @apply mt-1 mb-3;
 
   @apply line-clamp-1 text-ellipsis;
 }
 
-.remark-link-card-plus__meta {
+.link-card__meta {
   @apply flex items-center gap-2;
 }
 
-.remark-link-card-plus__favicon {
+.link-card__favicon {
   @apply m-0 mt-0.5;
 }
 
-.remark-link-card-plus__url {
+.link-card__url {
   @apply text-xs text-gray-600 dark:text-gray-300;
   @apply line-clamp-1 text-ellipsis;
 }
 
-.remark-link-card-plus__thumbnail {
+.link-card__thumbnail {
   @apply col-2 aspect-square;
 
   @media (min-width: 60ch) {
@@ -63,7 +63,7 @@
   }
 }
 
-.remark-link-card-plus__image {
+.link-card__image {
   @apply m-0 h-full w-full object-cover;
   @apply rounded-tr-(--border-radius) rounded-br-(--border-radius);
 }

@@ -97,7 +97,7 @@ Markdownブログ記事専用のレイアウトです。ProseArticleLayoutを拡
 - **日付表示**: 公開日・更新日の表示（アイコン付き）
 - **画像対応**: Frontmatterで指定した画像の表示
 - **説明文表示**: 記事の概要を強調表示
-- **Callout対応**: rehype-callouts プラグインのスタイル設定
+- **Callout対応**: Sätteri 用ローカルプラグインのスタイル設定
 
 ### Frontmatter対応プロパティ
 
@@ -177,5 +177,5 @@ pubDate: '2024-01-01';
 ### プラグイン依存
 
 - **astro-icon**: アイコン表示
-- **rehype-callouts**: Callout機能
+- **satteriCallouts**: Callout機能（`src/lib/satteri-callouts.ts`）
 - **@tailwindcss/typography**: Proseスタイリング
