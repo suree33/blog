@@ -3,7 +3,15 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import config from '@/config.json';
 import '@styles/global.css';
-const { pageTitle, ogimage, description } = Astro.props;
+
+interface Props {
+  pageTitle?: string;
+  ogimage?: string;
+  description?: string;
+  ogType?: 'website' | 'article';
+}
+
+const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
 ---
 
 <html lang="ja" class="scroll-smooth">
@@ -44,7 +52,7 @@ const { pageTitle, ogimage, description } = Astro.props;
         pageTitle ? pageTitle + ' — ' + config.siteName : config.siteName
       }
     />
-    <meta property="og:type" content="article" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:url" content={Astro.url} />
     <meta
       property="og:description"
@@ -54,7 +62,7 @@ const { pageTitle, ogimage, description } = Astro.props;
       property="og:image"
       content={ogimage ? config.url + ogimage : config.url + config.ogImage}
     />
-    <meta property="og:locale" content="ja-JP" />
+    <meta property="og:locale" content="ja_JP" />
     <!-- Google Analytics -->
     <!-- Google tag (gtag.js) -->
     <script

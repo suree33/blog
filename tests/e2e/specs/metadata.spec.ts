@@ -1,5 +1,5 @@
 import { expect, test } from '../fixtures/test';
-import { routes } from '../utils/routes';
+import { routes, sampleTag } from '../utils/routes';
 
 const site = 'https://sur33.com';
 const defaultImage = '/ogimage/ogimage-default.png';
@@ -30,6 +30,14 @@ const cases = [
   },
 ];
 
+const openGraphTypes = [
+  [routes.home, 'website'],
+  [`${routes.about}/`, 'website'],
+  [`${routes.tagsBase}${encodeURIComponent(sampleTag)}/`, 'website'],
+  [routes.notFound, 'website'],
+  [`${routes.sampleArticle}/`, 'article'],
+] as const;
+
 test.describe('ページのメタデータ', () => {
   test.skip(
     ({ browserName, isMobile }) => browserName !== 'chromium' || isMobile,
@@ -56,6 +64,21 @@ test.describe('ページのメタデータ', () => {
         'content',
         site + image,
       );
+    });
+  }
+
+  for (const [path, type] of openGraphTypes) {
+    test(`${decodeURI(path)} の OGP の種別と言語が正しい`, async ({ page }) => {
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+
+      const head = page.locator('head');
+      await expect
+        .soft(head.locator('meta[property="og:type"]'), `og:type は ${type}`)
+        .toHaveAttribute('content', type);
+      await expect(
+        head.locator('meta[property="og:locale"]'),
+        'og:locale は ja_JP',
+      ).toHaveAttribute('content', 'ja_JP');
     });
   }
 });

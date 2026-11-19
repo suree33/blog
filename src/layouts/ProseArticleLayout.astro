@@ -1,20 +1,19 @@
 ---
 import type { MarkdownHeading } from 'astro';
+import type { ComponentProps } from 'astro/types';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import TableOfContents from '@components/TableOfContents.astro';
 import { cn } from '@lib/utils';
 
-interface Props {
+interface Props extends ComponentProps<typeof BaseLayout> {
   pageTitle: string;
-  ogimage?: string;
-  description?: string;
   tocHeadings?: MarkdownHeading[];
 }
 
-const { pageTitle, ogimage, description, tocHeadings } = Astro.props;
+const { tocHeadings, ...baseProps } = Astro.props;
 ---
 
-<BaseLayout pageTitle={pageTitle} ogimage={ogimage} description={description}>
+<BaseLayout {...baseProps}>
   <div
     class={cn(
       'mt-10 px-4 mb-16 w-full flex justify-center',
