@@ -10,6 +10,36 @@ import { HOME_URL_REGEX } from '../utils/regex';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
+  test('モバイルメニューの開閉で本文スクロールをロック・復元する', async ({
+    homePage,
+    isDesktop,
+    page,
+  }) => {
+    test.skip(isDesktop, 'モバイルビューポートのみ');
+    await homePage.goto();
+
+    const body = page.locator('body');
+    const header = homePage.header;
+    await expect(header.hamburger).toHaveAttribute('aria-expanded', 'false');
+    await expect(body).not.toHaveCSS('overflow', 'hidden');
+
+    // 初回の start クラス除去と、2 回目以降のトグルを両方通す。
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await header.openMobileMenu();
+      await expect(body).toHaveCSS('overflow', 'hidden');
+      await expect(header.aboutLink).toBeVisible();
+
+      await header.hamburger.click();
+
+      await expect(header.hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(header.aboutLink).toBeHidden();
+      await expect
+        .poll(() => body.evaluate((element) => element.style.overflow))
+        .toBe('unset');
+      await expect(body).toHaveCSS('overflow', 'visible');
+    }
+  });
+
   test('ヘッダーの Blog リンクでホームに遷移する', async ({
     aboutPage,
     isDesktop,
