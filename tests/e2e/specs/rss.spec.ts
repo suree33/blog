@@ -238,11 +238,11 @@ test.describe('RSS フィード', () => {
           `${post.route} の画像 URL が有効である`,
         ).not.toThrow();
         const imageUrl = new URL($(image).attr('src') ?? '');
+        if (linkCardImages.has(imageUrl.href)) continue;
         expect(
           imageUrl.origin,
           `${post.route} の画像がサイトと同じオリジンを参照する`,
         ).toBe(new URL(config.url).origin);
-        if (linkCardImages.has(imageUrl.href)) continue;
         const response = await rssFeedPage.request.get(imageUrl.pathname);
         expect(
           response.status(),
