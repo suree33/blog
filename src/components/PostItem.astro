@@ -14,7 +14,10 @@ const tags = post.frontmatter.tags?.slice(0, 2) ?? [];
         {tags.map((tag: string) => (
           <div class="inline-flex text-sm">{tag}</div>
         ))}
-        <time class="text-sm" datetime="{formatDate(post.frontmatter.pubDate)}">
+        <time
+          class="text-sm"
+          datetime={new Date(post.frontmatter.pubDate).toISOString()}
+        >
           {formatDate(post.frontmatter.pubDate)}
         </time>
       </div>
