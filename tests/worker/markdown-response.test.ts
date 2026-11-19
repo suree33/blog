@@ -177,7 +177,7 @@ for (const { accept, markdown } of negotiationCases) {
       assetCall.url.pathname,
       markdown ? '/posts/example.md' : '/posts/example',
     );
-    assert.equal(response.headers.get('Vary'), markdown ? 'Accept' : null);
+    assert.equal(response.headers.get('Vary'), 'Accept');
   });
 }
 
@@ -243,6 +243,23 @@ for (const { url, assetUrl } of pathCases) {
   });
 }
 
+const htmlVaryCases: { url: string; vary: string | null }[] = [
+  { url: 'https://example.com/posts/example', vary: 'Accept' },
+  { url: 'https://example.com/posts/example/?a=1', vary: 'Accept' },
+  { url: 'https://example.com/posts/', vary: null },
+  { url: 'https://example.com/posts/example.html', vary: null },
+  { url: 'https://example.com/tags/example', vary: null },
+];
+
+for (const { url, vary } of htmlVaryCases) {
+  test(`HTML response on ${url} has Vary ${JSON.stringify(vary)}`, async () => {
+    const { response, assetCall } = await fetchPost('text/html', { url });
+
+    assert.equal(assetCall.url.href, url);
+    assert.equal(response.headers.get('Vary'), vary);
+  });
+}
+
 const assetStatusCases: { status: number; statusText: string }[] = [
   { status: 404, statusText: 'Not Found' },
   { status: 500, statusText: 'Internal Server Error' },
@@ -276,11 +293,13 @@ const varyCases: { vary: string | null; expected: string }[] = [
 ];
 
 for (const { vary, expected } of varyCases) {
-  test(`existing Vary ${JSON.stringify(vary)} becomes ${JSON.stringify(expected)}`, async () => {
-    const { response } = await fetchPost('text/markdown', {
-      assets: { headers: vary === null ? {} : { Vary: vary } },
-    });
+  for (const accept of ['text/markdown', 'text/html']) {
+    test(`existing Vary ${JSON.stringify(vary)} becomes ${JSON.stringify(expected)} for Accept ${accept}`, async () => {
+      const { response } = await fetchPost(accept, {
+        assets: { headers: vary === null ? {} : { Vary: vary } },
+      });
 
-    assert.equal(response.headers.get('Vary'), expected);
-  });
+      assert.equal(response.headers.get('Vary'), expected);
+    });
+  }
 }
