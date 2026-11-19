@@ -31,6 +31,9 @@ const height = 'calc(' + width + ' * 0.45)';
     &:not(.start) {
       .line {
         animation-duration: 0.5s;
+        @media (prefers-reduced-motion: reduce) {
+          animation-duration: 0s;
+        }
         animation-fill-mode: forwards;
         animation-direction: alternate;
         &:first-child {

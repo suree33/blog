@@ -56,6 +56,23 @@ test.describe('ナビゲーション', () => {
     }
   });
 
+  test('ヘッダーとフッターのナビゲーションを名前で区別できる', async ({
+    homePage,
+    isDesktop,
+  }) => {
+    await homePage.goto();
+    if (!isDesktop) {
+      await homePage.header.openMobileMenu();
+    }
+
+    await expect
+      .soft(homePage.header.root.getByRole('navigation'))
+      .toHaveAccessibleName('ヘッダー');
+    await expect
+      .soft(homePage.footer.root.getByRole('navigation'))
+      .toHaveAccessibleName('フッター');
+  });
+
   test('画面幅を広げるとモバイルメニューを閉じて本文スクロールを復元する', async ({
     homePage,
     page,

@@ -35,11 +35,27 @@ const { class: classList } = Astro.props;
    * 'light' でも 'dark' でもない場合は null を返す
    */
   const getStoredTheme = (): ThemeState => {
-    const storedTheme = localStorage.getItem('theme') ?? '';
-    if (isTheme(storedTheme)) {
-      return storedTheme;
+    try {
+      const storedTheme = localStorage.getItem('theme') ?? '';
+      if (isTheme(storedTheme)) {
+        return storedTheme;
+      }
+    } catch {
+      // 保存領域が使えない場合はシステム設定に従う。
     }
     return null;
+  };
+
+  const storeTheme = (theme: ThemeState) => {
+    try {
+      if (theme === null) {
+        window.localStorage.removeItem('theme');
+      } else {
+        window.localStorage.setItem('theme', theme);
+      }
+    } catch {
+      // 保存できなくてもページ内の切り替えは続ける。
+    }
   };
 
   /**
@@ -65,19 +81,19 @@ const { class: classList } = Astro.props;
     if (theme === 'dark') {
       html.classList.add('dark');
       html.style.colorScheme = 'dark';
-      window.localStorage.setItem('theme', 'dark');
+      storeTheme('dark');
       return;
     }
 
     if (theme === 'light') {
       html.classList.add('light');
       html.style.colorScheme = 'light';
-      window.localStorage.setItem('theme', 'light');
+      storeTheme('light');
       return;
     }
 
     html.style.colorScheme = 'light dark';
-    window.localStorage.removeItem('theme');
+    storeTheme(null);
   };
 
   /**

@@ -16,6 +16,7 @@ const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
 ---
 
 <ProseArticleLayout
+  ogType="article"
   pageTitle={frontmatter.title}
   ogimage={typeof ogimage === 'string' ? ogimage : ogimage?.src}
   description={frontmatter.description}
