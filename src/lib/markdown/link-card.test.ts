@@ -164,7 +164,7 @@ async function render(
   return (await markdownToHtml(markdown, { mdastPlugins: [plugin] })).html;
 }
 
-describe('remark-link-card-plus 0.8.1 との HTML 互換性', () => {
+describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
   test.each([
     '/full',
     '/no-image',
@@ -364,7 +364,7 @@ describe('取得失敗とキャッシュ', () => {
     expect(requests).toEqual([`GET ${origin}/full`]);
   });
 
-  test('既定のタイムアウトは旧 0.8.1 と同じく OGS が 10000 秒、HEAD と画像が 10000 ミリ秒', async () => {
+  test('既定のタイムアウトは旧 0.8.2 と同じく OGS が 10 秒、HEAD と画像が 10000 ミリ秒', async () => {
     const signalTimeout = vi.spyOn(AbortSignal, 'timeout');
     await render(
       `<${origin}/no-favicon>`,
@@ -372,18 +372,18 @@ describe('取得失敗とキャッシュ', () => {
     );
     expect(openGraph).toHaveBeenCalledWith({
       url: `${origin}/no-favicon`,
-      timeout: 10_000,
+      timeout: 10,
     });
     expect(signalTimeout.mock.calls.map(([timeout]) => timeout)).toEqual([
       10_000, 10_000, 10_000,
     ]);
   });
 
-  test('注入する fetch のメタデータも既定は 10000 秒', async () => {
+  test('注入する fetch のメタデータも既定は 10 秒', async () => {
     const signalTimeout = vi.spyOn(AbortSignal, 'timeout');
     await render(`<${origin}/no-favicon>`);
     expect(signalTimeout.mock.calls.map(([timeout]) => timeout)).toEqual([
-      10_000_000, 10_000, 10_000, 10_000,
+      10_000, 10_000, 10_000, 10_000,
     ]);
   });
 
