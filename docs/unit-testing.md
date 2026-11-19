@@ -4,7 +4,7 @@
 
 - `pnpm run test:unit`: 全ユニットテストを一度実行（CI 向け）
 - `pnpm run test:unit:watch`: 変更を監視して再実行
-- `pnpm run test:unit -- tests/unit/markdown.test.ts`: Markdown 回帰テストだけ実行
+- `pnpm run test:unit tests/unit/markdown.test.ts`: Markdown 回帰テストだけ実行
 
 `pnpm install --frozen-lockfile` の後に実行します。ブラウザのインストールや事前ビルドは不要です。
 
@@ -42,3 +42,9 @@ Container API は実験的 API のため、Astro 更新時は互換性にも注�
 
 CI では既存の Lint ジョブで実行します。pre-commit の既存チェック（format、lint、build）は
 変更していないため、コミット前には `pnpm run test:unit` も実行してください。
+
+## Callout 移行テスト
+
+`tests/unit/satteri-callouts.test.ts` は既存記事の Callout を抜き出し、
+unified と Sätteri の出力 HTML を比較します。
+本番の組み込み手順は [Markdown の Callout](./markdown-callouts.md) を参照してください。
