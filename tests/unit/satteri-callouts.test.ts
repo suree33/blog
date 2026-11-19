@@ -18,7 +18,7 @@ function render(markdown: string) {
 }
 
 function postCallouts(slug: string) {
-  const file = new URL(`../../src/pages/posts/${slug}.md`, import.meta.url);
+  const file = new URL(`../../src/content/posts/${slug}.md`, import.meta.url);
   return readFileSync(file, 'utf8').match(/^> \[![^\n]+(?:\n>[^\n]*)*/gm) ?? [];
 }
 

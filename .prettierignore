@@ -7,7 +7,7 @@ pnpm-lock.yaml
 .cursor/
 .worktrees/
 .wt/
-src/pages/posts/.obsidian/
+src/content/posts/.obsidian/
 
 # do not format any md/mdx files
 *.md

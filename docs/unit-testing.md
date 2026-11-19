@@ -21,7 +21,7 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
 `tests/unit/markdown.test.ts` は現在の unified ベースの Markdown 設定をそのまま使います。
 テスト専用のレンダラーや Sätteri 設定への切り替えは行いません。
 
-- `src/pages/posts/**/*.md` を列挙し、Astro がページとして扱わない `_` 始まりのテンプレートと
+- `src/content/posts/**/*.md` を列挙し、Astro がページとして扱わない `_` 始まりのテンプレートと
   `.obsidian/` を除外します。記事追加時に一覧の手動更新は不要です。
 - 各記事を Astro Container API でレイアウトごと描画し、タイトル、記事本文、公開日、
   ヘッダー、フッター、見出し ID と目次リンクの対応を検証します。
@@ -35,6 +35,10 @@ Callout、リンクカードの個別テストは含みません。
 記事内にある場合は通常どおり処理されるため、リンクカードのメタデータ取得には
 本番ビルドと同じくネットワークとプラグインのキャッシュを使用します。
 外部サイトの応答内容はアサートしません。
+
+`tests/unit/raw-markdown-endpoint.test.ts` は公開記事ソースの読み込みと layout 行の除去、公開記事が空の場合、`filePath` がない場合の明示的なエラー、読み込みエラーの伝播を検証します。
+
+`tests/unit/post-schema.test.ts` は init-post の title・description・tags が空欄（YAML の null）でも読み込めること、既存の frontmatter 型に正規化されること、不正な型は拒否することを検証します。
 
 ## Sätteri リンクカードの単体テスト
 

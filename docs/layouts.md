@@ -145,7 +145,7 @@ interface Frontmatter {
 
 ### 使用例
 
-`src/pages/posts/` 配下の Markdown では `astro.config.mjs` の remark プラグインにより `MarkdownPostLayout` が自動適用されるため、frontmatter に `layout` を書く必要はありません。個別記事で別レイアウトを使いたい場合は、従来どおり `layout` を明示するとその指定が優先されます。
+`src/content/posts/` の `posts` コレクションを `src/pages/posts/[slug].astro` が `render()` し、見出しと frontmatter を `MarkdownPostLayout` に渡します。`layout` は不要です。`getPublishedPosts()` は `draft: true` を除外し、一覧・タグ・RSS・raw Markdown・記事ルートで共有します。下書きのルートは生成されず、sitemap にも入りません。
 
 ```astro
 ---
@@ -163,7 +163,7 @@ pubDate: '2024-01-01';
 
 - **一般的なページ**: `BaseLayout` を使用
 - **文章中心のページ**: `ProseArticleLayout` を使用
-- **ブログ記事**: `MarkdownPostLayout` を使用（`src/pages/posts/` 配下の Markdown には自動適用）
+- **ブログ記事**: `MarkdownPostLayout` を使用（`src/content/posts/` 配下の Markdown には自動適用）
 
 ### カスタマイズ
 

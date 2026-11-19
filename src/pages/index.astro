@@ -1,22 +1,9 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PostItem from '@components/PostItem.astro';
-import type { MarkdownInstance } from 'astro';
+import { getPublishedPosts } from '@lib/posts';
 
-interface Frontmatter {
-  title: string;
-  pubDate: string;
-  draft?: boolean;
-  // Add other frontmatter fields you might have
-}
-
-const posts = await Promise.all(
-  Object.values(
-    import.meta.glob<MarkdownInstance<Frontmatter>>('./posts/*.{md,mdx}', {
-      eager: true,
-    }),
-  ),
-);
+const posts = await getPublishedPosts();
 const pageTitle = 'Blog';
 ---
 
@@ -25,7 +12,6 @@ const pageTitle = 'Blog';
     <div class="container">
       <ul class="grid grid-cols-1 flex-col gap-4 gap-y-2 sm:gap-y-4">
         {posts
-          .filter((post) => !post.frontmatter.draft)
           .sort((a, b) => {
             return (
               new Date(b.frontmatter.pubDate).getTime() -
