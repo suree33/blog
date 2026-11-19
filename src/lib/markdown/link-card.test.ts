@@ -313,7 +313,7 @@ describe('取得失敗とキャッシュ', () => {
     },
   );
 
-  test.each(['redirected-403', 'timeout', 'missing-type', 'html'])(
+  test.each(['redirected-403', 'timeout', 'missing-type-html', 'html'])(
     'Failed OG image (%s) has the same markup as an absent OG image',
     async (failure) => {
       const withoutImageFetch: typeof globalThis.fetch = async (
@@ -339,18 +339,23 @@ describe('取得失敗とキャッシュ', () => {
         if (failure === 'timeout') {
           throw new DOMException('Timed out', 'TimeoutError');
         }
-        const response = new Response(svg, {
-          status: failure === 'redirected-403' ? 403 : 200,
-          headers:
-            failure === 'missing-type'
-              ? {}
-              : {
-                  'content-type':
-                    failure === 'html' || failure === 'redirected-403'
-                      ? 'text/html'
-                      : 'image/svg+xml',
-                },
-        });
+        const response = new Response(
+          failure === 'missing-type-html'
+            ? Buffer.from('<html>Not an image</html>')
+            : svg,
+          {
+            status: failure === 'redirected-403' ? 403 : 200,
+            headers:
+              failure === 'missing-type-html'
+                ? {}
+                : {
+                    'content-type':
+                      failure === 'html' || failure === 'redirected-403'
+                        ? 'text/html'
+                        : 'image/svg+xml',
+                  },
+          },
+        );
         if (failure === 'redirected-403') {
           Object.defineProperty(response, 'redirected', { value: true });
         }
@@ -370,6 +375,32 @@ describe('取得失敗とキャッシュ', () => {
         ),
       ).toHaveLength(1);
       expect(console.warn).toHaveBeenCalled();
+    },
+  );
+
+  test.each([undefined, 'application/octet-stream'])(
+    'Detected PNG thumbnails are kept with Content-Type %s',
+    async (contentType) => {
+      const png = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+        'base64',
+      );
+      const imageFetch: typeof globalThis.fetch = async (input, init) =>
+        String(input) === `${origin}/first.svg`
+          ? new Response(png, {
+              headers: contentType ? { 'content-type': contentType } : {},
+            })
+          : fetch(input, init);
+      const $ = load(
+        await render(
+          `<${origin}/full>`,
+          linkCard({ fetch: imageFetch, cacheDirectory: directory }),
+        ),
+      );
+      expect($('.link-card__image').attr('src')).toMatch(
+        /^\/link-card-images\/.+\.png$/,
+      );
+      expect($('.link-card__favicon')).toHaveLength(1);
     },
   );
 

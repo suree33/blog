@@ -110,15 +110,17 @@ export function linkCard(options: LinkCardOptions) {
         signal: AbortSignal.timeout(timeout),
       });
       const contentType = response.headers.get('content-type') ?? '';
-      if (thumbnail) {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        if (!contentType.toLowerCase().startsWith('image/')) {
-          throw new Error('Not an image');
-        }
-      }
+      if (thumbnail && !response.ok) throw new Error(`HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
       const detectedType = await fileTypeFromBuffer(buffer);
       if (detectedType && !detectedType.mime.startsWith('image/')) {
+        throw new Error('Not an image');
+      }
+      if (
+        thumbnail &&
+        !contentType.toLowerCase().startsWith('image/') &&
+        !detectedType?.mime.startsWith('image/')
+      ) {
         throw new Error('Not an image');
       }
       const extension = contentType.startsWith('image/svg+xml')
