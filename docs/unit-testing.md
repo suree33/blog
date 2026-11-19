@@ -16,6 +16,19 @@ Node 環境で `src/lib/**/*.test.ts` と `tests/unit/**/*.test.ts` のみを実
 `tests/worker/` は Node.js Test Runner、`tests/e2e/` は Playwright の対象です。
 `src/pages/` にテストを置くとルートになるため、ここには置きません。
 
+## Worker 統合テスト
+
+`pnpm run build:ci && pnpm run test:integration` で実行します。ビルド済みの
+`dist/` が必須です。`vitest.integration.config.ts` は Astro 設定を読み込まず、
+`tests/integration/` だけを実行するため、ユニットテストとは独立しています。
+
+Wrangler の公式 `createTestHarness` API で実際の `wrangler.toml` と静的アセットを
+起動し、代表記事の HTML / Markdown 振り分け、Content-Type、Vary、静的 CSS、
+未知の URL の 404 を検証します。`assets.not_found_handling = "404-page"` により、
+通常の未知の URL と Worker 配下の未知の記事 URL は、サイトの `dist/404.html` を
+ステータス 404 で返します。
+CI の独立した「Worker integration tests」ジョブでもビルド後に実行します。
+
 ## Markdown 回帰テスト
 
 `tests/unit/markdown.test.ts` は現在の unified ベースの Markdown 設定をそのまま使います。
