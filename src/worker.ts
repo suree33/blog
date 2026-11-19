@@ -16,6 +16,7 @@ interface AcceptPreference {
 
 // Both the HTML and the Markdown variants are served as UTF-8.
 const VARIANT_PARAMETERS = new Set(['charset=utf-8']);
+const QUOTED_VALUE = /^([^=]+=)"(.*)"$/;
 
 const parseQValue = (parameters: string[]) => {
   const quality = parameters.find((parameter) => parameter.startsWith('q='));
@@ -39,7 +40,7 @@ const parseAcceptHeader = (acceptHeader: string | null): AcceptPreference[] =>
     .map((mediaRange, order) => {
       const [mediaType, ...parameters] = mediaRange
         .split(';')
-        .map((part) => part.trim().toLowerCase());
+        .map((part) => part.trim().toLowerCase().replace(QUOTED_VALUE, '$1$2'));
       const qIndex = parameters.findIndex((parameter) =>
         parameter.startsWith('q='),
       );
