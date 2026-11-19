@@ -89,6 +89,7 @@ function renderCard(data: CardData) {
 export function linkCard(options: LinkCardOptions = {}) {
   const fetch = options.fetch ?? globalThis.fetch;
   const timeout = options.timeout ?? 10_000;
+  const metadataTimeout = options.timeout ?? 10_000_000;
   const directory =
     options.cacheDirectory ??
     path.join(process.cwd(), 'public/link-card-images');
@@ -142,7 +143,7 @@ export function linkCard(options: LinkCardOptions = {}) {
     try {
       if (options.fetch) {
         const response = await fetch(url, {
-          signal: AbortSignal.timeout(timeout),
+          signal: AbortSignal.timeout(metadataTimeout),
           headers: { Origin: url.href, Accept: 'text/html' },
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -154,8 +155,9 @@ export function linkCard(options: LinkCardOptions = {}) {
         );
         return (await openGraph({ html })).result;
       }
-      return (await openGraph({ url: url.href, timeout: timeout / 1000 }))
-        .result;
+      return (
+        await openGraph({ url: url.href, timeout: metadataTimeout / 1000 })
+      ).result;
     } catch (error) {
       warn(url.href, error);
       return undefined;

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createMarkdownProcessor } from '@astrojs/markdown-remark';
 import { load } from 'cheerio';
-import type openGraph from 'open-graph-scraper';
+import openGraph from 'open-graph-scraper';
 import remarkLinkCard from 'remark-link-card-plus';
 import { markdownToHtml } from 'satteri';
 import {
@@ -26,12 +26,12 @@ const nativeFetch = globalThis.fetch;
 vi.mock('open-graph-scraper', async (importOriginal) => {
   const original = await importOriginal<{ default: typeof openGraph }>();
   return {
-    default: async (options: Parameters<typeof original.default>[0]) => {
+    default: vi.fn(async (options: Parameters<typeof original.default>[0]) => {
       if (!options.url) return original.default(options);
       const response = await globalThis.fetch(options.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return original.default({ html: await response.text() });
-    },
+    }),
   };
 });
 
@@ -91,6 +91,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  vi.mocked(openGraph).mockClear();
   directory = await mkdtemp(path.join(tmpdir(), 'link-card-'));
   requests = [];
   googleStatus = 200;
@@ -341,7 +342,42 @@ describe('取得失敗とキャッシュ', () => {
     expect(requests).toEqual([`GET ${origin}/full`]);
   });
 
-  test('外部通信にタイムアウトの signal を渡す', async () => {
+  test('既定のタイムアウトは旧 0.8.1 と同じく OGS が 10000 秒、HEAD と画像が 10000 ミリ秒', async () => {
+    const signalTimeout = vi.spyOn(AbortSignal, 'timeout');
+    await render(
+      `<${origin}/no-favicon>`,
+      linkCard({ cacheDirectory: directory }),
+    );
+    expect(openGraph).toHaveBeenCalledWith({
+      url: `${origin}/no-favicon`,
+      timeout: 10_000,
+    });
+    expect(signalTimeout.mock.calls.map(([timeout]) => timeout)).toEqual([
+      10_000, 10_000, 10_000,
+    ]);
+  });
+
+  test('注入する fetch のメタデータも既定は 10000 秒', async () => {
+    const signalTimeout = vi.spyOn(AbortSignal, 'timeout');
+    await render(`<${origin}/no-favicon>`);
+    expect(signalTimeout.mock.calls.map(([timeout]) => timeout)).toEqual([
+      10_000_000, 10_000, 10_000, 10_000,
+    ]);
+  });
+
+  test('明示したタイムアウトは OGS に秒単位で渡す', async () => {
+    await render(
+      `<${origin}/no-favicon>`,
+      linkCard({ timeout: 100, cacheDirectory: directory }),
+    );
+    expect(openGraph).toHaveBeenCalledWith({
+      url: `${origin}/no-favicon`,
+      timeout: 0.1,
+    });
+  });
+
+  test('明示したタイムアウトを注入する fetch にも渡す', async () => {
+    const signalTimeout = vi.spyOn(AbortSignal, 'timeout');
     await render(
       `<${origin}/no-favicon>`,
       linkCard({ fetch, timeout: 100, cacheDirectory: directory }),
@@ -354,5 +390,8 @@ describe('取得失敗とキャッシュ', () => {
     expect(requests).toContain(
       'HEAD https://www.google.com/s2/favicons?domain=127.0.0.1',
     );
+    expect(signalTimeout.mock.calls.map(([timeout]) => timeout)).toEqual([
+      100, 100, 100, 100,
+    ]);
   });
 });
