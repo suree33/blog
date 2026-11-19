@@ -3,12 +3,20 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { load } from 'cheerio';
 import { describe, expect, test } from 'vitest';
 import type { PostFrontmatter } from '../../src/types/Post';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import * as codeTitlesFixture from './fixtures/code-titles.md';
 
+const layouts = import.meta.glob<AstroComponentFactory>(
+  '../../src/layouts/MarkdownPostLayout.astro',
+  { eager: true, import: 'default' },
+);
+const MarkdownPostLayout =
+  layouts['../../src/layouts/MarkdownPostLayout.astro'];
+
 const posts = import.meta.glob<MarkdownInstance<PostFrontmatter>>([
-  '../../src/pages/posts/**/*.md',
-  '!../../src/pages/posts/**/_*.md',
-  '!../../src/pages/posts/.obsidian/**',
+  '../../src/content/posts/**/*.md',
+  '!../../src/content/posts/**/_*.md',
+  '!../../src/content/posts/.obsidian/**',
 ]);
 
 describe('全 Markdown 記事のレンダリング', () => {
@@ -20,7 +28,9 @@ describe('全 Markdown 記事のレンダリング', () => {
     test(path, async () => {
       const post = await importPost();
       const container = await AstroContainer.create();
-      const html = await container.renderToString(post.Content, {
+      const html = await container.renderToString(MarkdownPostLayout, {
+        props: { frontmatter: post.frontmatter, headings: post.getHeadings() },
+        slots: { default: await container.renderToString(post.Content) },
         request: new Request(new URL(post.url ?? '/', 'https://sur33.com')),
       });
       const $ = load(html);
@@ -60,7 +70,7 @@ describe('全 Markdown 記事のレンダリング', () => {
 });
 
 async function articleBody(slug: string) {
-  const post = await posts[`../../src/pages/posts/${slug}.md`]();
+  const post = await posts[`../../src/content/posts/${slug}.md`]();
   return load(await post.compiledContent());
 }
 

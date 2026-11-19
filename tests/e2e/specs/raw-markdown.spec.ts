@@ -66,7 +66,7 @@ test.describe('raw Markdown エンドポイント', () => {
 
     const source = await readFile(
       new URL(
-        `../../../src/pages${routes.sampleArticleMarkdown}`,
+        `../../../src/content${routes.sampleArticleMarkdown}`,
         import.meta.url,
       ),
       'utf8',

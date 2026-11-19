@@ -73,8 +73,8 @@ def main() -> int:
         return 1
 
     root = Path(args.root).resolve()
-    template_path = root / "src/pages/posts/template/_blog-post.md"
-    output_path = root / f"src/pages/posts/{slug}.md"
+    template_path = root / "src/content/posts/template/_blog-post.md"
+    output_path = root / f"src/content/posts/{slug}.md"
 
     if not template_path.exists():
         print(f"[ERROR] Template not found: {template_path}")

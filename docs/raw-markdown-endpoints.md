@@ -19,12 +19,12 @@
 
 Raw Markdown の生成は `src/pages/posts/[slug].md.ts` で実装しています。
 
-- `import.meta.glob('./*.md', { query: '?raw', import: 'default', eager: true })` で `src/pages/posts/` 直下の記事 Markdown を文字列として読み込む
+- `getPublishedPosts()` で `posts` コレクションの公開記事のみ取得し、`filePath` から元の Markdown を文字列として読み込む
 - `getStaticPaths()` で記事ごとの `slug` を列挙し、静的ビルド時に `/posts/[slug].md` を生成する
 - 読み込んだ Markdown の frontmatter から `layout` 行を除去する
 - `GET` は raw Markdown を返し、Worker が最終レスポンスの `Content-Type` を `text/markdown; charset=utf-8` に正規化する
 
-`template/_blog-post.md` や画像ディレクトリ配下のファイルは、`./*.md` の対象外です。
+`template/_blog-post.md` や画像ディレクトリ配下のファイルは、コレクションの glob の対象外です。
 
 通常の記事 URL への content negotiation は `src/worker.ts` で実装しています。
 

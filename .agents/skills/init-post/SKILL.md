@@ -1,11 +1,11 @@
 ---
 name: init-post
-description: src/pages/posts/template/_blog-post.md を使って新規ブログ記事 Markdown を初期化する。ブログ記事の下書きを作る依頼、slug・title・description・tags を指定して記事ファイルを生成する依頼、日付入り frontmatter を素早く作る依頼で使用する。
+description: src/content/posts/template/_blog-post.md を使って新規ブログ記事 Markdown を初期化する。ブログ記事の下書きを作る依頼、slug・title・description・tags を指定して記事ファイルを生成する依頼、日付入り frontmatter を素早く作る依頼で使用する。
 ---
 
 # Init Post
 
-このスキルでは、テンプレート `src/pages/posts/template/_blog-post.md` から `src/pages/posts/<slug>.md` を生成する。`pubDate` は指定日付または当日で埋め、`title` `description` `tags` を同時に設定する。
+このスキルでは、テンプレート `src/content/posts/template/_blog-post.md` から `src/content/posts/<slug>.md` を生成する。`pubDate` は指定日付または当日で埋め、`title` `description` `tags` を同時に設定する。
 
 ## 実行手順
 
@@ -29,7 +29,7 @@ python3 .agents/skills/init-post/scripts/init_post.py \
   --date 2026-02-14
 ```
 
-4. 生成先 `src/pages/posts/<slug>.md` を確認し、必要に応じて本文を追記する。
+4. 生成先 `src/content/posts/<slug>.md` を確認し、必要に応じて本文を追記する。
 
 ## コマンド仕様
 
@@ -46,7 +46,7 @@ python3 .agents/skills/init-post/scripts/init_post.py \
 ## 実装メモ
 
 - テンプレート内の `pubDate: {{date}}` を置換する。
-- `src/pages/posts/` 配下の記事 Markdown は `astro.config.mjs` の remark プラグインで `MarkdownPostLayout` が自動適用されるため、テンプレートに `layout` は書かない。
+- `src/content/posts/` 配下の記事 Markdown は `src/pages/posts/[slug].astro` で `MarkdownPostLayout` が自動適用されるため、テンプレートに `layout` は書かない。
 - 既存ファイルがある場合は `--force` が無ければ失敗させる。
 
 ## リソース

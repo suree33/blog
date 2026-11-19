@@ -1,6 +1,4 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '@astrojs/markdown-remark';
 import { load } from 'cheerio';
 import config from '../../../src/config.json' with { type: 'json' };
@@ -10,30 +8,47 @@ import { routes, sampleArticleTitle } from '../utils/routes';
 const routeOf = (link: string) =>
   decodeURI(new URL(link).pathname).replace(/^\/|\/$/g, '');
 
-const pagesDir = new URL('../../../src/pages/', import.meta.url);
-const publishedPosts = readdirSync(pagesDir, {
-  recursive: true,
-  withFileTypes: true,
-})
-  .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-  .flatMap((entry) => {
-    const file = `${entry.parentPath}/${entry.name}`;
-    const { frontmatter, content } = parseFrontmatter(
-      readFileSync(file, 'utf8'),
-    );
-    if (!frontmatter.title || !frontmatter.pubDate) return [];
-    return [
-      {
-        title: String(frontmatter.title),
-        // Astro と同じ YAML パーサーを使い、日付のみの値も UTC のまま比較する。
-        pubDate: new Date(frontmatter.pubDate).toUTCString(),
-        route: relative(fileURLToPath(pagesDir), file)
-          .replace(/\.md$/, '')
-          .replace(/(^|\/)index$/, ''),
-        imageCount: [...content.matchAll(/!\[[^\]]*\]\([^)]+\)/g)].length,
-      },
-    ];
-  });
+const sourceDirectories = [
+  {
+    directory: new URL('../../../src/content/posts/', import.meta.url),
+    collection: true,
+  },
+  {
+    directory: new URL('../../../src/pages/', import.meta.url),
+    collection: false,
+  },
+  {
+    directory: new URL('../fixtures/posts/', import.meta.url),
+    collection: true,
+  },
+];
+const publishedPosts = sourceDirectories.flatMap(({ directory, collection }) =>
+  readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+    .flatMap((entry) => {
+      const { frontmatter, content } = parseFrontmatter(
+        readFileSync(new URL(entry.name, directory), 'utf8'),
+      );
+      if (frontmatter.draft === true) return [];
+      if (!collection && (!frontmatter.title || !frontmatter.pubDate))
+        return [];
+      const pubDate =
+        collection && frontmatter.pubDate instanceof Date
+          ? frontmatter.pubDate.toISOString().slice(0, 10)
+          : frontmatter.pubDate;
+      return [
+        {
+          title: String(frontmatter.title ?? ''),
+          // Astro と同じ YAML パーサーを使い、日付のみの値も UTC のまま比較する。
+          pubDate: new Date(pubDate).toUTCString(),
+          route: `${collection ? 'posts/' : ''}${entry.name}`
+            .replace(/\.md$/, '')
+            .replace(/(^|\/)index$/, ''),
+          imageCount: [...content.matchAll(/!\[[^\]]*\]\([^)]+\)/g)].length,
+        },
+      ];
+    }),
+);
 
 /**
  * `/rss.xml` RSS フィードの E2E 検証。
@@ -44,9 +59,7 @@ const publishedPosts = readdirSync(pagesDir, {
  * 期待仕様（`src/pages/rss.xml.ts` 参考）:
  * - `@astrojs/rss` が `Content-Type: application/xml` で応答する。
  * - `<channel>` に `config.siteName`・`config.description`・`<language>ja-jp</language>` が含まれる。
- * - 各 `<item>` は `title` と `pubDate` frontmatter を持つ記事のみ（`hasRequiredFrontmatter`）。
- *   `title` または `pubDate` が未設定の記事（例: 記事テンプレート）はフィードから除外される。
- *   本リポジトリに draft 扱いは存在せず、上記 frontmatter 条件のみで絞り込む。
+ * - 公開記事と既存の standalone Markdown ページを含む。draft とテンプレートは除外する。
  */
 test.describe('RSS フィード', () => {
   test.beforeEach(({ browserName }) => {
@@ -96,7 +109,7 @@ test.describe('RSS フィード', () => {
     );
     expect(
       items.map((item) => routeOf(item.link)).sort(),
-      'RSS の記事集合が title と pubDate を持つソースの記事集合と一致する',
+      'RSS の記事集合が公開記事と standalone ページの集合と一致する',
     ).toEqual(publishedPosts.map((post) => post.route).sort());
     for (const post of publishedPosts) {
       const item = items.find((item) => routeOf(item.link) === post.route);
@@ -288,8 +301,6 @@ test.describe('RSS フィード', () => {
       items.length,
       'RSS フィードに記事が 1 件以上含まれる',
     ).toBeGreaterThan(0);
-    // hasRequiredFrontmatter (title + pubDate) を通過した記事だけが並ぶため、
-    // 全 item が title・link を持つ。
     for (const item of items) {
       expect(
         item.title,
