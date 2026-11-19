@@ -10,6 +10,88 @@ import { expect, test } from '../fixtures/test';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('目次 (TOC)', () => {
+  const nestedArticle = '/posts/setup-obsidian-livesync';
+
+  test('h3 の目次リンクは本文の ID を参照し h2 より字下げされる', async ({
+    articlePage,
+    page,
+  }) => {
+    await page.goto(nestedArticle);
+
+    const headings = articlePage.root.locator('h2, h3');
+    await expect(articlePage.toc.links).toHaveText(
+      await headings.allTextContents(),
+    );
+    const subheadings = articlePage.root.getByRole('heading', { level: 3 });
+    expect(await subheadings.count()).toBeGreaterThan(0);
+    const parentItem = articlePage.toc
+      .link('Self-hosted LiveSync')
+      .locator('..');
+    const parentPadding = await parentItem.evaluate((item) =>
+      Number.parseFloat(getComputedStyle(item).paddingLeft),
+    );
+
+    for (const heading of await subheadings.all()) {
+      const id = (await heading.getAttribute('id')) ?? '';
+      expect(id).toBeTruthy();
+      const link = articlePage.toc.root.getByRole('link', {
+        name: (await heading.textContent()) ?? '',
+        exact: true,
+      });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute('href', `#${id}`);
+      await expect(link).toHaveAttribute('data-toc-id', id);
+      const padding = await link
+        .locator('..')
+        .evaluate((item) =>
+          Number.parseFloat(getComputedStyle(item).paddingLeft),
+        );
+      expect(padding, 'h3 の項目は h2 より字下げされる').toBeGreaterThan(
+        parentPadding,
+      );
+    }
+  });
+
+  for (const { name, id, level } of [
+    { name: 'Self-hosted LiveSync', id: 'self-hosted-livesync', level: 2 },
+    { name: '1. CouchDBの設定', id: '1-couchdbの設定', level: 3 },
+  ]) {
+    test(`h${level} へのフラグメント付き URL の初期表示で見出しへ移動し current になる`, async ({
+      articlePage,
+      page,
+    }) => {
+      await page.goto(`${nestedArticle}#${encodeURIComponent(id)}`);
+
+      const heading = articlePage.root.getByRole('heading', {
+        name,
+        level,
+        exact: true,
+      });
+      await expect(heading).toHaveAttribute('id', id);
+      await expect(heading).toBeInViewport();
+      await expect
+        .poll(() =>
+          heading.evaluate((element) => {
+            const top = element.getBoundingClientRect().top;
+            const margin = Number.parseFloat(
+              getComputedStyle(element).scrollMarginTop,
+            );
+            return Math.abs(top - margin);
+          }),
+        )
+        .toBeLessThanOrEqual(2);
+      await expect(articlePage.toc.currentLink).toHaveCount(1);
+      await expect(articlePage.toc.link(name)).toHaveAttribute(
+        'aria-current',
+        'location',
+      );
+      await expect(articlePage.toc.link(name).locator('..')).toHaveAttribute(
+        'data-target-state',
+        'current',
+      );
+    });
+  }
+
   test('見出しを持つ記事で目次ナビゲーションが表示される', async ({
     articlePage,
   }) => {

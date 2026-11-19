@@ -34,6 +34,14 @@ git hook list pre-commit --show-scope
 
 最初の失敗で処理を終了し、コミットを中止します。検査対象はステージ済みファイルだけでなく作業ツリー全体です。Playwright E2E は実行時間とブラウザ・フォント依存が大きいため、GitHub Actions だけで実行します。
 
+## テスト
+
+`install.sh` / `uninstall.sh` / `pre-commit.sh` の挙動は次のコマンドで検証します。GitHub Actions の Lint ジョブでも実行されます。
+
+```bash
+pnpm run test:git-hooks
+```
+
 ## 無効化と解除
 
 この clone で一時的に無効化する場合:

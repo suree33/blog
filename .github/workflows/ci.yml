@@ -46,6 +46,11 @@ jobs:
       - name: Run unit tests
         run: pnpm run test:unit
 
+      - name: Run git hook tests
+        run: |
+          git --version
+          pnpm run test:git-hooks
+
   build:
     name: Build
     runs-on: ubuntu-latest
