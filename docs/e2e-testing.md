@@ -10,6 +10,8 @@ Astro のビルド結果を `astro preview` で起動し、スモークテスト
 
 ## コマンド
 
+Markdown の全記事描画と生成 HTML の回帰検証は [Vitest ユニットテスト](./unit-testing.md) で実行します。
+
 - `pnpm run test:e2e`: ヘッドレスで全 E2E テストを実行
 - `pnpm run test:worker`: Worker の公開 HTTP レスポンス境界を Node.js Test Runner で検証
 - `pnpm run test:e2e:headed`: ブラウザを表示して実行
