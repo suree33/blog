@@ -21,11 +21,22 @@ const posts = defineCollection({
   }),
   schema: z.object({
     layout: z.string().optional(),
-    title: z.string(),
+    title: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? ''),
     pubDate: date,
     updatedDate: date.optional(),
-    description: z.string().optional(),
-    tags: z.array(z.string()).optional(),
+    description: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined)
+      .optional(),
+    tags: z
+      .array(z.string())
+      .nullish()
+      .transform((value) => value ?? undefined)
+      .optional(),
     draft: z.boolean().optional(),
     ogimage: z.union([z.string(), image]).optional(),
     image: image.optional(),

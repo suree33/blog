@@ -38,6 +38,8 @@ Callout、リンクカードの個別テストは含みません。
 
 `tests/unit/raw-markdown-endpoint.test.ts` は公開記事ソースの読み込みと layout 行の除去、公開記事が空の場合、`filePath` がない場合の明示的なエラー、読み込みエラーの伝播を検証します。
 
+`tests/unit/post-schema.test.ts` は init-post の title・description・tags が空欄（YAML の null）でも読み込めること、既存の frontmatter 型に正規化されること、不正な型は拒否することを検証します。
+
 これは HTML 構造の回帰テストであり、CSS の可視性やブラウザ上の配色、JavaScript の操作は
 検証しません。それらは [Playwright E2E](./e2e-testing.md) が担当します。
 Container API は実験的 API のため、Astro 更新時は互換性にも注意してください。
