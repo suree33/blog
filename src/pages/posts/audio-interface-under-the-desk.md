@@ -5,7 +5,6 @@ tags:
   - ガジェット
   - DIY
 description: オーディオインターフェースを両面テープで机の下に設置するために、突っ張り棒を使って仮固定しました。
-layout: '@layouts/MarkdownPostLayout.astro'
 ---
 
 ## オーディオインターフェースを机の裏に設置したい

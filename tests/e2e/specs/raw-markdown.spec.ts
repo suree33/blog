@@ -71,15 +71,17 @@ test.describe('raw Markdown エンドポイント', () => {
       ),
       'utf8',
     );
-    const [, frontmatter] = source.split(/^---$/m, 2);
-    const layoutLine = /^layout:[^\n]+\n/m;
-    expect(frontmatter, '代表記事の frontmatter に layout 行がある').toMatch(
-      layoutLine,
-    );
+    const sourceLines = source.split('\n');
+    const frontmatterEnd = sourceLines.indexOf('---', 1);
+    const expectedBody = sourceLines
+      .filter(
+        (line, index) => index >= frontmatterEnd || !line.startsWith('layout:'),
+      )
+      .join('\n');
     expect(
       body,
       'raw Markdown は layout 行だけを除いた記事ソースと一致する',
-    ).toBe(source.replace(layoutLine, ''));
+    ).toBe(expectedBody);
   });
 
   test('存在しない記事の .md URL は HTTP 404 を返す', async ({ request }) => {
