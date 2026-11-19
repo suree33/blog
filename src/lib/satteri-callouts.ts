@@ -63,7 +63,9 @@ function div(
   return element('div', { className: [className], ...properties }, children);
 }
 
-function splitTitle(children: Child[]): [title: Child[], body: Child[]] {
+function splitTitle(
+  children: Child[],
+): [title: Child[], body: Child[]] | undefined {
   const title: Child[] = [];
   for (const [index, child] of children.entries()) {
     if (child.type === 'element' && child.tagName === 'br') {
@@ -73,7 +75,16 @@ function splitTitle(children: Child[]): [title: Child[], body: Child[]] {
         body[0] = text(first.value.replace(/^\n/, ''));
       return [title, body];
     }
-    if (child.type === 'text') {
+    if (child.type === 'element') {
+      const split = splitTitle(child.children);
+      if (split) {
+        const [before, after] = split;
+        if (before.length) title.push({ ...child, children: before });
+        const body = children.slice(index + 1);
+        if (after.length) body.unshift({ ...child, children: after });
+        return [title, body];
+      }
+    } else if (child.type === 'text') {
       const newline = child.value.indexOf('\n');
       if (newline !== -1) {
         if (newline > 0) title.push(text(child.value.slice(0, newline)));
@@ -81,11 +92,9 @@ function splitTitle(children: Child[]): [title: Child[], body: Child[]] {
         const rest = children.slice(index + 1);
         return [title, remaining ? [text(remaining), ...rest] : rest];
       }
-      if (!child.value) continue;
     }
     title.push(child);
   }
-  return [title, []];
 }
 
 export const satteriCallouts = defineHastPlugin({
@@ -106,10 +115,9 @@ export const satteriCallouts = defineHastPlugin({
       const callout = callouts.get(type);
       if (!callout) return;
 
-      const [title, body] = splitTitle([
-        text(first.value.slice(marker[0].length)),
-        ...inline,
-      ]);
+      const afterMarker = first.value.slice(marker[0].length);
+      const content = afterMarker ? [text(afterMarker), ...inline] : inline;
+      const [title, body] = splitTitle(content) ?? [content, []];
       const icon = element(
         'svg',
         {

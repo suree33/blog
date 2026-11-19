@@ -77,6 +77,14 @@ describe('Sätteri Callout', () => {
     expect($('.callout-content > ul > li').text()).toBe('項目');
   });
 
+  test('タイトルと本文にまたがる強調を改行で分ける', () => {
+    const $ = load(render('> [!NOTE] **タイトル\n> 本文**\n> 後続'));
+
+    expect($('.callout-title-text strong').text()).toBe('タイトル');
+    expect($('.callout-content strong').text()).toBe('本文');
+    expect($('.callout-content p').text()).toBe('本文\n後続');
+  });
+
   test('Callout が入れ子でも描画する', () => {
     const $ = load(render('> [!NOTE]\n> 外側\n>\n> > [!INFO]\n> > 内側'));
 
