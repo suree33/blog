@@ -247,14 +247,25 @@ describe('取得失敗とキャッシュ', () => {
     expect(await readdir(directory)).toEqual([]);
   });
 
-  test('Google HEAD が例外でも縮退カードを残す', async () => {
-    googleThrows = true;
-    const $ = load(await render(`<${origin}/error>`));
-    expect($('.link-card__title').text()).toBe('127.0.0.1');
-    expect($('.link-card__description').text()).toBe('');
-    expect($('.link-card__favicon, .link-card__thumbnail')).toHaveLength(0);
-    expect(console.warn).toHaveBeenCalled();
-  });
+  test.each(['/error', '/no-favicon'])(
+    'Google HEAD の例外では旧実装と同じ通常リンクを残す (%s)',
+    async (route) => {
+      googleThrows = true;
+      const markdown = `<${origin}${route}>`;
+      const legacy = await createMarkdownProcessor({
+        remarkPlugins: [[remarkLinkCard, { cache: true }]],
+        syntaxHighlight: false,
+      });
+      const html = await render(markdown);
+      expect(normalized(html)).toEqual(
+        normalized((await legacy.render(markdown)).code),
+      );
+      const $ = load(html);
+      expect($('.link-card__container')).toHaveLength(0);
+      expect($('p > a').attr('href')).toBe(`${origin}${route}`);
+      expect(console.warn).toHaveBeenCalled();
+    },
+  );
 
   test('Google HEAD が非 OK なら favicon を省略する', async () => {
     googleStatus = 404;

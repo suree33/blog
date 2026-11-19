@@ -92,7 +92,7 @@ export function linkCard(options: LinkCardOptions = {}) {
   const directory =
     options.cacheDirectory ??
     path.join(process.cwd(), 'public/link-card-images');
-  const cards = new Map<string, Promise<string>>();
+  const cards = new Map<string, Promise<string | undefined>>();
   const images = new Map<string, Promise<string>>();
   const warn = (url: string, error: unknown) =>
     console.warn(`[link-card] ${url}: ${String(error)}`);
@@ -183,6 +183,7 @@ export function linkCard(options: LinkCardOptions = {}) {
         if (response.ok) favicon = fallback;
       } catch (error) {
         warn(fallback, error);
+        return undefined;
       }
     }
     const ogImage = og?.ogImage?.[0]?.url;
@@ -221,7 +222,9 @@ export function linkCard(options: LinkCardOptions = {}) {
         });
         cards.set(key, pending);
       }
-      ctx.replaceNode(node, { type: 'html', value: await pending });
+      const html = await pending;
+      if (html !== undefined)
+        ctx.replaceNode(node, { type: 'html', value: html });
     },
   });
 }
