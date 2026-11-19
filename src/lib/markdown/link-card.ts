@@ -110,10 +110,13 @@ export function linkCard(options: LinkCardOptions) {
         signal: AbortSignal.timeout(timeout),
       });
       const contentType = response.headers.get('content-type') ?? '';
-      if (thumbnail && !response.ok) throw new Error(`HTTP ${response.status}`);
       const buffer = Buffer.from(await response.arrayBuffer());
       const detectedType = await fileTypeFromBuffer(buffer);
       if (detectedType && !detectedType.mime.startsWith('image/')) {
+        if (thumbnail) {
+          warn(url, new Error('Not an image'));
+          return undefined;
+        }
         throw new Error('Not an image');
       }
       if (
@@ -121,7 +124,8 @@ export function linkCard(options: LinkCardOptions) {
         !contentType.toLowerCase().startsWith('image/') &&
         !detectedType?.mime.startsWith('image/')
       ) {
-        throw new Error('Not an image');
+        warn(url, new Error('Not an image'));
+        return undefined;
       }
       const extension = contentType.startsWith('image/svg+xml')
         ? 'svg'
@@ -133,7 +137,7 @@ export function linkCard(options: LinkCardOptions) {
       return `/link-card-images/${filename}`;
     } catch (error) {
       warn(url, error);
-      return thumbnail ? undefined : url;
+      return url;
     }
   }
 

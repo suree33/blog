@@ -182,10 +182,14 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     expect($('.link-card__content').text()).not.toContain('bad()');
     if (route === '/http-image') {
       expect(requests).toContain(`GET ${origin}/http-image-first.svg`);
-      expect($('.link-card__thumbnail')).toHaveLength(0);
+      expect($('.link-card__image').attr('src')).toMatch(
+        /^\/link-card-images\/.+\.svg$/,
+      );
     }
     if (route === '/throw-image') {
-      expect($('.link-card__thumbnail')).toHaveLength(0);
+      expect($('.link-card__image').attr('src')).toBe(
+        `${origin}/throw-image-first.svg`,
+      );
     }
     expect($('.link-card__image').attr('src') ?? '').not.toContain(
       'second.svg',
@@ -207,8 +211,14 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     expect(normalized(await render(markdown))).toMatchSnapshot();
   });
 
-  test('CSS は接頭辞以外を変更しない', async () => {
-    expect(await readFile('src/styles/link-card.css', 'utf8')).toBe(
+  test('Thumbnail card CSS stays unchanged', async () => {
+    const css = await readFile('src/styles/link-card.css', 'utf8');
+    expect(
+      css.replace(
+        /\n\.link-card__card:not\(:has\(\.link-card__thumbnail\)\) \{[\s\S]*?\n\}\n/,
+        '',
+      ),
+    ).toBe(
       await readFile(
         new URL('./fixtures/link-card.css', import.meta.url),
         'utf8',
@@ -285,8 +295,8 @@ describe('取得失敗とキャッシュ', () => {
     },
   );
 
-  test.each(['http', 'non-image', 'throw', 'disk'])(
-    'Thumbnail failures (%s) omit the thumbnail and preserve favicon fallback',
+  test.each(['http', 'non-image', 'throw', 'timeout', 'read', 'disk'])(
+    'Thumbnail failures (%s) preserve remote fallback only for transient errors',
     async (failure) => {
       if (failure === 'http') {
         imageStatus = 404;
@@ -301,19 +311,51 @@ describe('取得失敗とキャッシュ', () => {
         await writeFile(cacheDirectory, 'not a directory');
       }
       const $ = load(
-        await render(`<${origin}/full>`, linkCard({ fetch, cacheDirectory })),
+        await render(
+          `<${origin}/full>`,
+          linkCard({
+            fetch: async (input, init) => {
+              if (String(input) === `${origin}/first.svg`) {
+                if (failure === 'timeout')
+                  throw new DOMException('Timed out', 'TimeoutError');
+                if (failure === 'read') {
+                  const response = new Response(svg, {
+                    headers: { 'content-type': 'image/svg+xml' },
+                  });
+                  vi.spyOn(response, 'arrayBuffer').mockRejectedValue(
+                    new Error('Read failed'),
+                  );
+                  return response;
+                }
+              }
+              return fetch(input, init);
+            },
+            cacheDirectory,
+          }),
+        ),
       );
-      expect($('.link-card__thumbnail')).toHaveLength(0);
-      expect($('.link-card__favicon').attr('src')).toBe(
-        `${origin}/favicon.svg`,
-      );
-      expect(
-        (await readdir(directory)).filter((name) => name.endsWith('.svg')),
-      ).toEqual([]);
+      if (['throw', 'timeout', 'read', 'disk'].includes(failure))
+        expect($('.link-card__image').attr('src')).toBe(`${origin}/first.svg`);
+      else expect($('.link-card__thumbnail')).toHaveLength(0);
+      if (['timeout', 'read'].includes(failure)) {
+        expect($('.link-card__favicon').attr('src')).toMatch(
+          /^\/link-card-images\/.+\.svg$/,
+        );
+        expect(
+          (await readdir(directory)).filter((name) => name.endsWith('.svg')),
+        ).toHaveLength(1);
+      } else {
+        expect($('.link-card__favicon').attr('src')).toBe(
+          `${origin}/favicon.svg`,
+        );
+        expect(
+          (await readdir(directory)).filter((name) => name.endsWith('.svg')),
+        ).toEqual([]);
+      }
     },
   );
 
-  test.each(['redirected-403', 'timeout', 'missing-type-html', 'html'])(
+  test.each(['redirected-403', 'missing-type-html', 'html'])(
     'Failed OG image (%s) has the same markup as an absent OG image',
     async (failure) => {
       const withoutImageFetch: typeof globalThis.fetch = async (

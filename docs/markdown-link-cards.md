@@ -54,7 +54,7 @@ integration は毎回の `astro:build:done` で、画像をフックの `dir` �
 この loader は、データストア内の描画済み HTML が参照する画像を読み込み前に確認します。
 1 つでも画像がなければ、公開 API の `store.clear()` でコレクションを消してから `glob()` を実行し、記事を再描画します。
 旧 `public/link-card-images/` 方式からの移行時や画像キャッシュだけが失われた場合も、自動で画像を再取得します。
-取得失敗時のリモートサムネイル URL が古い HTML に残っている場合も、記事を再描画します。リモート favicon は対象外です。
+リモートサムネイル URL が HTML に残っている場合は、次のビルドで記事を再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。リモート favicon は対象外です。
 integration の追加だけで Astro がデータストアを無効化するとは想定していません。
 
 関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、
@@ -63,10 +63,10 @@ integration の追加だけで Astro がデータストアを無効化すると�
 - メタデータ取得失敗: ホスト名をタイトルにし、説明は空、サムネイルなしのカードを生成します。
 - Google HEAD が非 OK: 旧実装と同じく favicon を省略します。
 - Google HEAD が例外（タイムアウトを含む）: 旧実装と同じく段落を変換せず、通常のリンクを残します。
-- OG 画像の GET はリダイレクト後の応答が 2xx で、Content-Type が `image/` で始まるか、`file-type` が画像 MIME と判定した場合だけ保存します。
-  HTTP エラー、通信・読み取り・保存の例外（タイムアウトを含む）、Content-Type と本文のどちらからも画像と判定できない応答、
-  `file-type` が非画像 MIME と判定した本文では、画像がない場合と同じ HTML を生成します。
-  再試行やブラウザ風ヘッダーによる再取得は行いません。
+- OG 画像は HTTP ステータスにかかわらず、Content-Type が `image/` で始まるか、`file-type` が画像 MIME と判定した場合に保存します。
+  `file-type` が非画像 MIME と判定した本文や、Content-Type と本文のどちらからも画像と判定できない応答では、サムネイル要素を省略します。
+  通信・読み取り・保存の例外（タイムアウトを含む）では、従来どおりリモート URL を参照します。
+  同じビルド内の再試行やブラウザ風ヘッダーによる再取得は行いません。
 - favicon の取得失敗時は、従来どおりリモート URL を参照します。
 - 不明な形式でも画像 Content-Type なら、従来どおり `.png` として保存します。
 

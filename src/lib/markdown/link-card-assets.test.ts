@@ -90,6 +90,8 @@ test.each(['image', 'favicon'])(
     } as unknown as LoaderContext;
     await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
     expect(clear).toHaveBeenCalledTimes(kind === 'image' ? 1 : 0);
+    await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+    expect(clear).toHaveBeenCalledTimes(kind === 'image' ? 2 : 0);
   },
 );
 
