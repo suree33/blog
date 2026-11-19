@@ -215,7 +215,7 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
     const css = await readFile('src/styles/link-card.css', 'utf8');
     expect(
       css.replace(
-        /\n\.link-card__card:not\(:has\(\.link-card__thumbnail\)\) \{[\s\S]*?\n\}\n/,
+        /\n\.link-card__card:not\(:has\(\.link-card__thumbnail\)\) \.link-card__main \{[\s\S]*?\n\}\n/,
         '',
       ),
     ).toBe(

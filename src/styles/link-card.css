@@ -26,11 +26,18 @@
   @apply rounded-tl-(--border-radius) rounded-bl-(--border-radius);
 }
 
-.link-card__card:not(:has(.link-card__thumbnail)) {
-  @apply grid-cols-1;
+.link-card__card:not(:has(.link-card__thumbnail)) .link-card__main {
+  /* Preserve the original grid's intrinsic sizing while filling its empty track. */
+  width: calc(100% + 116px + 1rem);
+  max-width: none;
+  padding-right: var(--padding-x);
+  /* Cancel the added padding's intrinsic contribution. */
+  margin-right: calc(-1 * var(--padding-x));
+  border-top-right-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
 
-  .link-card__main {
-    @apply rounded-tr-(--border-radius) rounded-br-(--border-radius) pr-(--padding-x);
+  @media (min-width: 60ch) {
+    width: calc(100% + 220px + 1rem);
   }
 }
 

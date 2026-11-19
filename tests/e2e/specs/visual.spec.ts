@@ -54,6 +54,46 @@ test.describe('ビジュアルリグレッション', () => {
     ).toHaveScreenshot('header.png', screenshotOptions);
   });
 
+  test('no-thumbnail cards fill their width without resizing article metadata', async ({
+    articlePage,
+    page,
+  }) => {
+    await articlePage.goto();
+    const card = page.locator('.link-card__card').first();
+    await card.evaluate((element) => {
+      if (!element.querySelector('.link-card__thumbnail')) {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'link-card__thumbnail';
+        element.append(thumbnail);
+      }
+    });
+    const metadataWidth = await articlePage.metadata.root.evaluate(
+      (element) => element.getBoundingClientRect().width,
+    );
+    await card
+      .locator('.link-card__thumbnail')
+      .evaluateAll((elements) =>
+        elements.forEach((element) => element.remove()),
+      );
+    await expect
+      .poll(() =>
+        card.evaluate((element) =>
+          Math.abs(
+            element.getBoundingClientRect().width -
+              (element
+                .querySelector('.link-card__main')
+                ?.getBoundingClientRect().width ?? 0),
+          ),
+        ),
+      )
+      .toBeLessThan(1);
+    expect(
+      await articlePage.metadata.root.evaluate(
+        (element) => element.getBoundingClientRect().width,
+      ),
+    ).toBe(metadataWidth);
+  });
+
   test('ホームのサンプル記事リスト項目', async ({ homePage }) => {
     await homePage.goto();
 
