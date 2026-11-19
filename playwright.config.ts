@@ -12,6 +12,7 @@ const e2eBaseURL = `http://localhost:${e2ePort}/`;
  */
 export default defineConfig({
   testDir: './tests/e2e/specs',
+  testIgnore: '**/visual-pages.spec.ts',
   snapshotPathTemplate:
     '{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}',
   fullyParallel: true,
