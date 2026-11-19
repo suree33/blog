@@ -6,16 +6,11 @@ import icon from 'astro-icon';
 import { defineConfig } from 'astro/config';
 import rehypeCallouts from 'rehype-callouts';
 import remarkLinkCard from 'remark-link-card-plus';
-import process from 'node:process';
 
 import { codeTitleTransformer } from './src/lib/code-title.ts';
 
 // https://astro.build/config
 export default defineConfig({
-  cacheDir:
-    process.env.E2E_DRAFT_FIXTURE === 'true'
-      ? './node_modules/.astro-e2e'
-      : './node_modules/.astro',
   site: 'https://sur33.com/',
   redirects: {
     '/posts': '/',

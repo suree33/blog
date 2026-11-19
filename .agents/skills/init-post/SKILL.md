@@ -46,7 +46,6 @@ python3 .agents/skills/init-post/scripts/init_post.py \
 ## 実装メモ
 
 - テンプレート内の `pubDate: {{date}}` を置換する。
-- テンプレートは `draft: true` で作成する。公開時に削除または `false` にする。`template/` は collection glob の対象外。
 - `src/content/posts/` 配下の記事 Markdown は `src/pages/posts/[slug].astro` で `MarkdownPostLayout` が自動適用されるため、テンプレートに `layout` は書かない。
 - 既存ファイルがある場合は `--force` が無ければ失敗させる。
 

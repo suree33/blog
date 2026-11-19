@@ -36,6 +36,8 @@ Callout、リンクカードの個別テストは含みません。
 本番ビルドと同じくネットワークとプラグインのキャッシュを使用します。
 外部サイトの応答内容はアサートしません。
 
+`tests/unit/raw-markdown-endpoint.test.ts` は公開記事ソースの読み込みと layout 行の除去、公開記事が空の場合、`filePath` がない場合の明示的なエラー、読み込みエラーの伝播を検証します。
+
 これは HTML 構造の回帰テストであり、CSS の可視性やブラウザ上の配色、JavaScript の操作は
 検証しません。それらは [Playwright E2E](./e2e-testing.md) が担当します。
 Container API は実験的 API のため、Astro 更新時は互換性にも注意してください。

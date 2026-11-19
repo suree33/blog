@@ -8,14 +8,17 @@ import { readFile } from 'node:fs/promises';
  */
 export const getStaticPaths = (async () =>
   Promise.all(
-    (await getPublishedPosts()).map(async (post) => ({
-      params: { slug: post.id },
-      props: {
-        body: removeLayoutFrontmatter(
-          await readFile(post.filePath ?? '', 'utf8'),
-        ),
-      },
-    })),
+    (await getPublishedPosts()).map(async (post) => {
+      if (!post.filePath) {
+        throw new Error(`Missing source filePath for post "${post.id}"`);
+      }
+      return {
+        params: { slug: post.id },
+        props: {
+          body: removeLayoutFrontmatter(await readFile(post.filePath, 'utf8')),
+        },
+      };
+    }),
   )) satisfies GetStaticPaths;
 
 export const GET = (({ props }) => {
