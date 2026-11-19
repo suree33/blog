@@ -9,9 +9,13 @@ const MARKDOWN_POSTS_PATH_PATTERN = /^\/posts\/[^/]+\.md$/;
 
 interface AcceptPreference {
   mediaType: string;
+  parameters: string[];
   q: number;
   order: number;
 }
+
+// Both the HTML and the Markdown variants are served as UTF-8.
+const VARIANT_PARAMETERS = new Set(['charset=utf-8']);
 
 const parseQValue = (parameters: string[]) => {
   const quality = parameters.find((parameter) => parameter.startsWith('q='));
@@ -36,9 +40,13 @@ const parseAcceptHeader = (acceptHeader: string | null): AcceptPreference[] =>
       const [mediaType, ...parameters] = mediaRange
         .split(';')
         .map((part) => part.trim().toLowerCase());
+      const qIndex = parameters.findIndex((parameter) =>
+        parameter.startsWith('q='),
+      );
 
       return {
         mediaType,
+        parameters: qIndex === -1 ? parameters : parameters.slice(0, qIndex),
         q: parseQValue(parameters),
         order,
       };
@@ -51,12 +59,20 @@ const matchesMediaType = (preference: AcceptPreference, mediaType: string) => {
 
   return (
     (preferenceType === '*' || preferenceType === type) &&
-    (preferenceSubtype === '*' || preferenceSubtype === subtype)
+    (preferenceSubtype === '*' || preferenceSubtype === subtype) &&
+    preference.parameters.every((parameter) =>
+      VARIANT_PARAMETERS.has(parameter),
+    )
   );
 };
 
-const specificity = (mediaType: string) =>
-  mediaType.split('/').filter((part) => part.length > 0 && part !== '*').length;
+const specificity = ({ mediaType, parameters }: AcceptPreference) => {
+  const concreteParts = mediaType
+    .split('/')
+    .filter((part) => part.length > 0 && part !== '*');
+
+  return concreteParts.length + parameters.length;
+};
 
 const bestPreferenceFor = (
   preferences: AcceptPreference[],
@@ -66,9 +82,7 @@ const bestPreferenceFor = (
     .filter((preference) => matchesMediaType(preference, mediaType))
     .sort(
       (a, b) =>
-        specificity(b.mediaType) - specificity(a.mediaType) ||
-        b.q - a.q ||
-        a.order - b.order,
+        specificity(b) - specificity(a) || b.q - a.q || a.order - b.order,
     )[0];
 
 const prefersMarkdown = (acceptHeader: string | null) => {
