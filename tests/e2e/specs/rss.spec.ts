@@ -3,8 +3,12 @@ import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '@astrojs/markdown-remark';
 import { load } from 'cheerio';
+import config from '../../../src/config.json' with { type: 'json' };
 import { expect, test } from '../fixtures/test';
 import { routes, sampleArticleTitle } from '../utils/routes';
+
+const routeOf = (link: string) =>
+  decodeURI(new URL(link).pathname).replace(/^\/|\/$/g, '');
 
 const pagesDir = new URL('../../../src/pages/', import.meta.url);
 const publishedPosts = readdirSync(pagesDir, {
@@ -87,8 +91,6 @@ test.describe('RSS フィード', () => {
     rssFeedPage,
   }) => {
     const { items } = await rssFeedPage.content();
-    const routeOf = (link: string) =>
-      decodeURI(new URL(link).pathname).replace(/^\/|\/$/g, '');
     expect(publishedPosts.length, 'ソースに公開記事が存在する').toBeGreaterThan(
       0,
     );
@@ -164,9 +166,7 @@ test.describe('RSS フィード', () => {
       }
     }
     const sample = items.find(
-      (item) =>
-        new URL(item.link).pathname.replace(/\/$/, '') ===
-        routes.articleWithCodeBlock,
+      (item) => routeOf(item.link) === routes.articleWithCodeBlock.slice(1),
     );
     if (!sample) throw new Error('代表記事が RSS にありません');
     const $ = load(sample.content);
@@ -190,11 +190,7 @@ test.describe('RSS フィード', () => {
       0,
     );
     for (const post of imagePosts) {
-      const item = items.find(
-        (item) =>
-          decodeURI(new URL(item.link).pathname).replace(/^\/|\/$/g, '') ===
-          post.route,
-      );
+      const item = items.find((item) => routeOf(item.link) === post.route);
       if (!item) throw new Error(`${post.route} が RSS にありません`);
       const $ = load(item.content);
       expect(
@@ -210,6 +206,20 @@ test.describe('RSS フィード', () => {
           () => new URL($(image).attr('src') ?? ''),
           `${post.route} の画像 URL が有効である`,
         ).not.toThrow();
+        const imageUrl = new URL($(image).attr('src') ?? '');
+        expect(
+          imageUrl.origin,
+          `${post.route} の画像がサイトと同じオリジンを参照する`,
+        ).toBe(new URL(config.url).origin);
+        const response = await rssFeedPage.request.get(imageUrl.pathname);
+        expect(
+          response.status(),
+          `${post.route} の画像 ${imageUrl.pathname} が 200 を返す`,
+        ).toBe(200);
+        expect(
+          response.headers()['content-type'],
+          `${post.route} の画像 ${imageUrl.pathname} が画像形式で配信される`,
+        ).toMatch(/^image\//i);
       }
     }
   });
