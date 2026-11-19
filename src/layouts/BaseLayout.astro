@@ -12,7 +12,12 @@ const { pageTitle, ogimage, description } = Astro.props;
     <script is:inline>
       // FOUC抑止のためにテーマ初期化
       (() => {
-        const storedTheme = window.localStorage.getItem('theme');
+        let storedTheme = null;
+        try {
+          storedTheme = window.localStorage.getItem('theme');
+        } catch {
+          // 保存領域が使えない場合はシステム設定に従う。
+        }
         const html = document.documentElement;
 
         html.classList.remove('light', 'dark');

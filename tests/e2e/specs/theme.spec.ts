@@ -21,6 +21,71 @@ test.describe('テーマトグル', () => {
     await page.emulateMedia({ colorScheme: 'light' });
   });
 
+  test('localStorage が使えなくてもダーク → ライト → システムを循環する', async ({
+    homePage,
+    isDesktop,
+    page,
+  }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'localStorage', {
+        get() {
+          throw new DOMException('Access is denied', 'SecurityError');
+        },
+      });
+    });
+
+    await homePage.goto();
+    const html = page.locator('html');
+    expect(pageErrors, '読み込み時にページエラーが発生しない').toEqual([]);
+    await expect(html, '初期状態ではシステム設定を使う').not.toHaveAttribute(
+      'class',
+      DARK,
+    );
+    await expect(html, '初期状態ではライトを明示しない').not.toHaveAttribute(
+      'class',
+      LIGHT,
+    );
+    await expect(html, '初期状態では両方の配色に対応する').toHaveCSS(
+      'color-scheme',
+      'light dark',
+    );
+
+    // モバイルではメニューを開いてからトグルを操作する。
+    if (!isDesktop) {
+      await homePage.header.openMobileMenu();
+    }
+    await homePage.header.toggleTheme();
+    await expect(html, '1 回目はダークになる').toHaveAttribute('class', DARK);
+    await expect(html, 'ダークの配色を適用する').toHaveCSS(
+      'color-scheme',
+      'dark',
+    );
+
+    await homePage.header.toggleTheme();
+    await expect(html, '2 回目はライトになる').toHaveAttribute('class', LIGHT);
+    await expect(html, 'ライトの配色を適用する').toHaveCSS(
+      'color-scheme',
+      'light',
+    );
+
+    await homePage.header.toggleTheme();
+    await expect(html, '3 回目はダークを解除する').not.toHaveAttribute(
+      'class',
+      DARK,
+    );
+    await expect(html, '3 回目はライトを解除する').not.toHaveAttribute(
+      'class',
+      LIGHT,
+    );
+    await expect(html, 'システムの配色に戻る').toHaveCSS(
+      'color-scheme',
+      'light dark',
+    );
+    expect(pageErrors, '切り替え後もページエラーが発生しない').toEqual([]);
+  });
+
   test('ダーク → ライト → システムを循環し、リロード後も永続化する', async ({
     homePage,
     isDesktop,
