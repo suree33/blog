@@ -41,7 +41,20 @@ export const GET = (async () => {
       description: post.frontmatter.description || '',
       pubDate: new Date(post.frontmatter.pubDate),
       link: post.url,
-      content: sanitizeHtml(await post.compiledContent()),
+      content: sanitizeHtml(await post.compiledContent(), {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+        transformTags: {
+          img: (tagName, attribs) => ({
+            tagName,
+            attribs: {
+              ...attribs,
+              ...(attribs.src && {
+                src: new URL(attribs.src, config.url).href,
+              }),
+            },
+          }),
+        },
+      }),
     })),
   );
 

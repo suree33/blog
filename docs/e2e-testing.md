@@ -12,6 +12,8 @@ Astro のビルド結果を `astro preview` で起動し、スモークテスト
 
 Markdown の全記事描画と生成 HTML の回帰検証は [Vitest ユニットテスト](./unit-testing.md) で実行します。
 
+RSS は `pnpm run test:e2e tests/e2e/specs/rss.spec.ts --project=chromium` で検証します。実ビルドの XML をパースし、ソースの frontmatter から列挙した公開記事との集合一致、全記事の本文・公開日、危険な HTML の除去、見出し・段落・リンク・コード・画像の保持、XSL 処理命令と配信を確認します。日付は Astro の frontmatter パーサーで読み取り UTC で比較します。RSS の画像はサニタイズ時に許可し、フィードリーダーでも参照できる絶対 URL にします（[Astro RSS ドキュメント](https://docs.astro.build/en/recipes/rss/)）。
+
 - `pnpm run test:e2e`: ヘッドレスで全 E2E テストを実行
 - `pnpm run test:worker`: Worker の公開 HTTP レスポンス境界を Node.js Test Runner で検証
 - `pnpm run test:e2e:headed`: ブラウザを表示して実行
