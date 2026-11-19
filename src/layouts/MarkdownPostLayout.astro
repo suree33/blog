@@ -8,12 +8,13 @@ import TableOfContents from '@components/TableOfContents.astro';
 type Props = MarkdownLayoutProps<PostFrontmatter>;
 
 const { frontmatter, headings } = Astro.props;
+const { ogimage } = frontmatter;
 const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
 ---
 
 <ProseArticleLayout
   pageTitle={frontmatter.title}
-  ogimage={frontmatter.ogimage && frontmatter.ogimage.src}
+  ogimage={typeof ogimage === 'string' ? ogimage : ogimage?.src}
   description={frontmatter.description}
   tocHeadings={tocHeadings}
 >
