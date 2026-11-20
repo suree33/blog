@@ -14,6 +14,15 @@ BaseLayout.astro (基本レイアウト)
 
 ## BaseLayout.astro
 
+### Canonical page links
+
+Internal HTML page links use trailing slashes to match Cloudflare Static Assets
+without a redirect. `getPublishedPosts()` and `getPublishedStandalonePages()` in
+`src/lib/posts.ts` supply canonical URLs to listings and RSS. Tag links in
+`PostMetadata.astro` and links written in Markdown must follow the same convention.
+File endpoints such as `/rss.xml` and `/posts/example.md`, fragment links, and
+external URLs are unchanged. This does not change Astro's URL policy or the Worker.
+
 サイト全体の基本HTMLテンプレートを提供するレイアウトです。
 
 ### 主な機能

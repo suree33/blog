@@ -9,7 +9,7 @@ export async function getPublishedPosts() {
     .map((post) => ({
       ...post,
       frontmatter: post.data,
-      url: `/posts/${post.id}`,
+      url: `/posts/${post.id}/`,
     }));
 }
 
@@ -19,5 +19,10 @@ export async function getPublishedStandalonePages() {
       eager: true,
     }),
   );
-  return pages.filter(({ frontmatter }) => frontmatter.draft !== true);
+  return pages
+    .filter(({ frontmatter }) => frontmatter.draft !== true)
+    .map((page) => ({
+      ...page,
+      url: page.url && !page.url.endsWith('/') ? `${page.url}/` : page.url,
+    }));
 }
