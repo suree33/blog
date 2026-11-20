@@ -1,8 +1,7 @@
 ---
 export const prerender = true;
-import PostItem from '@components/PostItem.astro';
+import PostList from '@components/PostList.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import type { Post } from '@/types/Post';
 import { getPublishedPosts, getPublishedStandalonePages } from '@lib/posts';
 
 export async function getStaticPaths() {
@@ -50,25 +49,9 @@ if (!tag) {
 ---
 
 <BaseLayout pageTitle={tag}>
-  <div class="mt-10 flex w-full justify-center sm:px-4">
-    <div class="container">
-      <h1 class="mt-6 mb-10 text-center text-2xl text-black dark:text-white">
-        {tag}のタグが付いた記事
-      </h1>
-      <ul class="grid grid-cols-1 flex-col gap-4 gap-y-2 sm:gap-y-4">
-        {posts &&
-          posts
-            .sort((a: Post, b: Post) => {
-              return (
-                new Date(b.frontmatter.pubDate).getTime() -
-                new Date(a.frontmatter.pubDate).getTime()
-              );
-            })
-            .map(
-              (post: Post) =>
-                post.url !== undefined && <PostItem post={post} />,
-            )}
-      </ul>
-    </div>
-  </div>
+  <PostList posts={posts ?? []} requireUrl>
+    <h1 class="mt-6 mb-10 text-center text-2xl text-black dark:text-white">
+      {tag}のタグが付いた記事
+    </h1>
+  </PostList>
 </BaseLayout>
