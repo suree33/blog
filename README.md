@@ -44,6 +44,36 @@ pnpm run build
 pnpm run preview
 ```
 
+### テスト
+
+ユニットテスト・Worker 統合テストの詳細は [ユニットテスト](docs/unit-testing.md) を参照してください。
+
+```bash
+pnpm run test:unit        # ユニットテストを一度実行
+pnpm run test:unit:watch  # 変更を監視して再実行
+pnpm run test:worker      # Worker の HTTP レスポンスを検証（Node.js Test Runner）
+pnpm run build:ci && pnpm run test:integration  # ビルド済みアセットを使う Worker 統合テスト
+pnpm run test:git-hooks   # Git hooks の動作を検証
+```
+
+Git hooks の詳細は [Git hooks](docs/git-hooks.md) を参照してください。
+E2E テストの初回実行前にブラウザをインストールします。
+
+```bash
+pnpm exec playwright install chromium firefox webkit
+```
+
+```bash
+pnpm run test:e2e                # ヘッドレスで全 E2E テストを実行
+pnpm run test:e2e:headed         # ブラウザを表示して実行
+pnpm run test:e2e:ui             # Playwright UI モードで実行
+pnpm run test:e2e:update         # コンポーネントのスナップショットを更新
+pnpm run test:e2e:visual         # 全ページのフルページ比較
+pnpm run test:e2e:visual:update  # フルページのベースラインを更新
+```
+
+フルページ比較は専用 Linux コンテナで実行します。実行環境や構成の詳細は [E2E テスト](docs/e2e-testing.md) を参照してください。
+
 ## 記事の書き方
 
 記事は `src/content/posts/` に Markdown で置きます。Astro の `posts` コンテンツコレクションから記事を読み込み、`src/pages/posts/[slug].astro` で共通のレイアウトを適用するので、記事の frontmatter に `layout` は不要です。
