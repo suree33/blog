@@ -78,8 +78,11 @@ export const toggleHamburgerMenu = (
     });
 
   hamburger.addEventListener('click', () => {
-    const isOpen = hamburger.hasAttribute('data-active');
-    return isOpen ? closeMenu() : openMenu();
+    if (hamburger.hasAttribute('data-active')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
   });
 };
 
