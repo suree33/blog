@@ -26,6 +26,15 @@
   @apply rounded-tl-(--border-radius) rounded-bl-(--border-radius);
 }
 
+.link-card__card:not(:has(.link-card__thumbnail))
+  :is(.link-card__content, .link-card__meta) {
+  width: calc(100% + 116px + 1rem - var(--padding-x));
+
+  @media (min-width: 60ch) {
+    width: calc(100% + 220px + 1rem - var(--padding-x));
+  }
+}
+
 .link-card__content {
 }
 

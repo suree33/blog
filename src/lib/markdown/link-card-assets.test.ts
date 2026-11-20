@@ -28,26 +28,32 @@ test.each(['empty', 'present', 'missing'])(
       await mkdir(directory, { recursive: true });
       await writeFile(new URL(filename, directory), '<svg/>');
     }
-    const clear = vi.fn();
+    const remove = vi.fn();
     const context = {
       config: { cacheDir },
       store: {
-        values: () =>
+        entries: () =>
           state === 'empty'
-            ? []
+            ? [['unaffected', { rendered: { html: '<p>Unchanged</p>' } }]]
             : [
-                {
-                  rendered: {
-                    html: `<img src="/link-card-images/${filename}">`,
+                [
+                  'affected',
+                  {
+                    rendered: {
+                      html: `<img src="/link-card-images/${filename}">`,
+                    },
                   },
-                },
+                ],
+                ['unaffected', { rendered: { html: '<p>Unchanged</p>' } }],
               ],
-        clear,
+        delete: remove,
       },
       logger: { info: vi.fn() },
     } as unknown as LoaderContext;
     const load = vi.fn(async () => {
-      expect(clear).toHaveBeenCalledTimes(state === 'missing' ? 1 : 0);
+      expect(remove.mock.calls).toEqual(
+        state === 'missing' ? [['affected']] : [],
+      );
     });
     await withLinkCardImages({ name: 'fixture', load }).load(context);
     expect(load).toHaveBeenCalledWith(context);
@@ -57,7 +63,7 @@ test.each(['empty', 'present', 'missing'])(
 test('loader propagates rendering errors', async () => {
   const context = {
     config: { cacheDir },
-    store: { values: () => [] },
+    store: { entries: () => [] },
   } as unknown as LoaderContext;
   const error = new Error('render failed');
   await expect(
@@ -69,6 +75,37 @@ test('loader propagates rendering errors', async () => {
     }).load(context),
   ).rejects.toBe(error);
 });
+
+test.each(['image', 'favicon'])(
+  'loader migrates remote thumbnails but preserves remote favicons (%s)',
+  async (kind) => {
+    const remove = vi.fn();
+    const context = {
+      config: { cacheDir },
+      store: {
+        entries: () => [
+          [
+            'affected',
+            {
+              rendered: {
+                html: `<img src="https://example.com/image.png" class="link-card__${kind}">`,
+              },
+            },
+          ],
+          ['unaffected', { rendered: { html: '<p>Unchanged</p>' } }],
+        ],
+        delete: remove,
+      },
+      logger: { info: vi.fn() },
+    } as unknown as LoaderContext;
+    await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+    expect(remove.mock.calls).toEqual(kind === 'image' ? [['affected']] : []);
+    await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+    expect(remove.mock.calls).toEqual(
+      kind === 'image' ? [['affected'], ['affected']] : [],
+    );
+  },
+);
 
 test.each([false, true])(
   'build hook copies assets on every build (empty: %s)',

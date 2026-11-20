@@ -90,11 +90,14 @@ export function linkCard(options: LinkCardOptions) {
   const fetch = options.fetch ?? globalThis.fetch;
   const timeout = options.timeout ?? 10_000;
   const cards = new Map<string, Promise<string | undefined>>();
-  const images = new Map<string, Promise<string>>();
+  const images = new Map<string, Promise<string | undefined>>();
   const warn = (url: string, error: unknown) =>
     console.warn(`[link-card] ${url}: ${String(error)}`);
 
-  async function cacheImage(url: string): Promise<string> {
+  async function cacheImage(
+    url: string,
+    thumbnail: boolean,
+  ): Promise<string | undefined> {
     try {
       const directory = options.cacheDirectory;
       const hash = createHash('sha256').update(decodeURI(url)).digest('hex');
@@ -106,11 +109,23 @@ export function linkCard(options: LinkCardOptions) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(timeout),
       });
-      const buffer = Buffer.from(await response.arrayBuffer());
       const contentType = response.headers.get('content-type') ?? '';
+      const buffer = Buffer.from(await response.arrayBuffer());
       const detectedType = await fileTypeFromBuffer(buffer);
       if (detectedType && !detectedType.mime.startsWith('image/')) {
+        if (thumbnail) {
+          warn(url, new Error('Not an image'));
+          return undefined;
+        }
         throw new Error('Not an image');
+      }
+      if (
+        thumbnail &&
+        !contentType.toLowerCase().startsWith('image/') &&
+        !detectedType?.mime.startsWith('image/')
+      ) {
+        warn(url, new Error('Not an image'));
+        return undefined;
       }
       const extension = contentType.startsWith('image/svg+xml')
         ? 'svg'
@@ -126,11 +141,12 @@ export function linkCard(options: LinkCardOptions) {
     }
   }
 
-  function image(url: string) {
-    let pending = images.get(url);
+  function image(url: string, thumbnail = false) {
+    const key = `${thumbnail}:${url}`;
+    let pending = images.get(key);
     if (!pending) {
-      pending = cacheImage(url);
-      images.set(url, pending);
+      pending = cacheImage(url, thumbnail);
+      images.set(key, pending);
     }
     return pending;
   }
@@ -187,7 +203,7 @@ export function linkCard(options: LinkCardOptions) {
     const [faviconSrc, imageSrc] = await Promise.all([
       favicon ? image(new URL(favicon).href) : undefined,
       ogImage && URL.canParse(ogImage)
-        ? image(new URL(ogImage).href)
+        ? image(new URL(ogImage).href, true)
         : undefined,
     ]);
     return renderCard({
