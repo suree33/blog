@@ -20,10 +20,12 @@ export function withLinkCardImages(loader: Loader): Loader {
       for (const [id, entry] of context.store.entries()) {
         const html = entry.rendered?.html ?? '';
         if (
-          /<img src="https?:\/\/[^" ]+" class="link-card__image"/.test(html)
+          /<img src="https?:\/\/[^" ]+" class="link-card__(?:image|favicon)"/.test(
+            html,
+          )
         ) {
           context.logger.info(
-            `Rebuilding content with remote link card thumbnails: ${id}`,
+            `Rebuilding content with remote link card images: ${id}`,
           );
           context.store.delete(id);
           continue;

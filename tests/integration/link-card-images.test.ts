@@ -119,12 +119,59 @@ test('clean, cached, and missing-image builds preserve HTML and assets; dev serv
         expect(result.stdout).not.toContain('Fixture metadata:');
       else
         expect(result.stdout).toContain(
-          'Rebuilding content with remote link card thumbnails: card',
+          'Rebuilding content with remote link card images: card',
         );
       if (retry !== 'failed')
         expect(
           await readFile(path.join(root, 'output/index.html'), 'utf8'),
         ).toBe(baseline);
+    }
+    const faviconHash = createHash('sha256')
+      .update('https://example.com/favicon.svg')
+      .digest('hex');
+    await rm(path.join(root, `cache/link-card-images/${faviconHash}.svg`));
+    for (const favicon of [
+      'transient',
+      'transient',
+      'svg',
+      'cached',
+      'html',
+      'warm',
+    ]) {
+      if (favicon === 'html')
+        await rm(path.join(root, `cache/link-card-images/${faviconHash}.svg`));
+      const result = await exec(
+        process.execPath,
+        [cli, 'build', '--root', root],
+        {
+          cwd: repository,
+          env: {
+            ...env,
+            FIXTURE_FAVICON: favicon,
+            FIXTURE_FAIL_UNAFFECTED: 'true',
+          },
+        },
+      );
+      expect(result.stdout).not.toContain(
+        'Fixture metadata: https://unaffected.example.com/',
+      );
+      const html = await readFile(path.join(root, 'output/index.html'), 'utf8');
+      if (favicon === 'transient')
+        expect(html).toContain('src="https://example.com/favicon.svg"');
+      else if (favicon === 'svg' || favicon === 'cached') {
+        expect(html).toContain(`src="/link-card-images/${faviconHash}.svg"`);
+        expect(
+          await readFile(
+            path.join(root, `cache/link-card-images/${faviconHash}.svg`),
+            'utf8',
+          ),
+        ).toContain('<?xml');
+      } else {
+        expect(html).not.toContain('class="link-card__favicon"');
+        expect(html).toContain('class="link-card__image"');
+      }
+      if (favicon === 'warm' || favicon === 'cached')
+        expect(result.stdout).not.toContain('Fixture metadata:');
     }
     const server = spawn(
       process.execPath,
@@ -156,7 +203,9 @@ test('clean, cached, and missing-image builds preserve HTML and assets; dev serv
       });
       const page = await fetch(origin);
       expect(page.status, `${serverOutput}\n${await page.text()}`).toBe(200);
-      for (const source of sources) {
+      for (const source of sources.filter(
+        (source) => !source.includes(faviconHash),
+      )) {
         const response = await fetch(`${origin}${source}`);
         expect(response.status).toBe(200);
         expect(response.headers.get('content-type')).toBe('image/svg+xml');
