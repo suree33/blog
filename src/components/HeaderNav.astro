@@ -1,9 +1,11 @@
 ---
 import HeaderNavItem from '@components/HeaderNavItem.astro';
+import { navItems } from '@lib/navigation';
 const { class: classList } = Astro.props;
 ---
 
 <nav class={classList} aria-label="ヘッダー">
-  <HeaderNavItem path="/" title="Blog" />
-  <HeaderNavItem path="/about/" title="About" />
+  {navItems.map((item) => (
+    <HeaderNavItem {...item} />
+  ))}
 </nav>
