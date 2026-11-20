@@ -77,7 +77,7 @@ test('loader propagates rendering errors', async () => {
 });
 
 test.each(['image', 'favicon'])(
-  'loader migrates remote thumbnails but preserves remote favicons (%s)',
+  'loader retries only entries with remote card images (%s)',
   async (kind) => {
     const remove = vi.fn();
     const context = {
@@ -99,11 +99,9 @@ test.each(['image', 'favicon'])(
       logger: { info: vi.fn() },
     } as unknown as LoaderContext;
     await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
-    expect(remove.mock.calls).toEqual(kind === 'image' ? [['affected']] : []);
+    expect(remove.mock.calls).toEqual([['affected']]);
     await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
-    expect(remove.mock.calls).toEqual(
-      kind === 'image' ? [['affected'], ['affected']] : [],
-    );
+    expect(remove.mock.calls).toEqual([['affected'], ['affected']]);
   },
 );
 

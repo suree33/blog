@@ -11,9 +11,17 @@ const cards = createLinkCards({
       process.env.FIXTURE_FAIL_IMAGE === 'true'
     )
       throw new Error('Transient image failure');
+    if (url === 'https://example.com/favicon.svg') {
+      if (process.env.FIXTURE_FAVICON === 'transient')
+        throw new Error('Transient favicon failure');
+      if (process.env.FIXTURE_FAVICON === 'html')
+        return new Response('<html>Not an image</html>', {
+          headers: { 'content-type': 'text/html' },
+        });
+    }
     if (url.endsWith('.svg')) {
       return new Response(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
+        '<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>',
         {
           headers: { 'content-type': 'image/svg+xml' },
         },

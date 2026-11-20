@@ -16,7 +16,7 @@
 HTML の構造・属性は旧プラグインと同じで、クラスの接頭辞だけを
 `remark-link-card-plus__` から `link-card__` に変更しています。
 タイトル・説明・表示ホスト名は `sanitize-html` の既定設定で無害化し、属性値はエスケープします。
-最初の OG 画像をサムネイルとして使います。画像がない場合や取得に失敗した場合は、サムネイル要素を省略します。
+最初の OG 画像をサムネイルとして使います。画像がない場合や応答が画像でないと確認できた場合は、サムネイル要素を省略します。
 favicon はページ内の指定を優先し、相対 URL はページの origin を基準に解決します。
 指定がない場合は Google s2 の favicon URL を HEAD で確認します。
 
@@ -36,7 +36,7 @@ favicon と OG 画像は Astro の `config.cacheDir` 配下の `link-card-images
 パスは `astro:config:done` で受け取る設定から解決し、作業ディレクトリには依存しません。
 名前は `decodeURI` した画像 URL の SHA-256 と画像形式の拡張子です。
 既存ファイルがあればダウンロードを省略します。
-SVG は Content-Type、それ以外は `file-type` で形式を判定します。
+SVG は Content-Type と本文のルート要素、それ以外は `file-type` で形式を判定します。
 画像の Content-Type だが形式を判定できない場合は、旧プラグイン同様 `.png` にします。
 
 ### Astro のビルドキャッシュと開発サーバー
@@ -54,7 +54,7 @@ integration は毎回の `astro:build:done` で、画像をフックの `dir` �
 この loader は、データストア内の描画済み HTML が参照する画像を読み込み前に確認します。
 画像がない記事だけを公開 API の `store.delete(id)` で削除してから `glob()` を実行し、その記事を再描画します。他の記事のキャッシュは残します。
 旧 `public/link-card-images/` 方式からの移行時や画像キャッシュだけが失われた場合も、自動で画像を再取得します。
-リモートサムネイル URL が HTML に残っている場合も、その記事だけを次のビルドで再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。リモート favicon は対象外です。
+リモートのサムネイルや favicon の URL が HTML に残っている場合も、その記事だけを次のビルドで再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。
 integration の追加だけで Astro がデータストアを無効化するとは想定していません。
 
 関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、
@@ -63,12 +63,12 @@ integration の追加だけで Astro がデータストアを無効化すると�
 - メタデータ取得失敗: ホスト名をタイトルにし、説明は空、サムネイルなしのカードを生成します。
 - Google HEAD が非 OK: 旧実装と同じく favicon を省略します。
 - Google HEAD が例外（タイムアウトを含む）: 旧実装と同じく段落を変換せず、通常のリンクを残します。
-- OG 画像は HTTP ステータスにかかわらず、Content-Type が `image/` で始まるか、`file-type` が画像 MIME と判定した場合に保存します。
-  `file-type` が非画像 MIME と判定した本文や、Content-Type と本文のどちらからも画像と判定できない応答では、サムネイル要素を省略します。
+- OG 画像と favicon は HTTP ステータスにかかわらず、Content-Type が `image/` で始まるか、`file-type` が画像 MIME と判定した場合に保存します。
+  SVG は `file-type` が `application/xml` や `text/xml` と判定する場合もあります。XML と判定した場合や形式を判定できない場合は、Content-Type が `image/svg+xml` か、本文のルート要素が `<svg>` なら `.svg` として保存します。
+  空の本文、HTML、SVG 以外の XML、その他の非画像応答では、該当するサムネイル要素や favicon の `<img>` を省略します。HTML や SVG 以外の XML は、Content-Type が `image/svg+xml` でも保存しません。
   通信・読み取り・保存の例外（タイムアウトを含む）では、従来どおりリモート URL を参照します。
   同じビルド内の再試行やブラウザ風ヘッダーによる再取得は行いません。
-- favicon の取得失敗時は、従来どおりリモート URL を参照します。
-- 不明な形式でも画像 Content-Type なら、従来どおり `.png` として保存します。
+- SVG 以外の不明な形式でも画像 Content-Type なら、従来どおり `.png` として保存します。
 
 ## テスト用オプション
 
@@ -87,6 +87,8 @@ OGS の URL 取得だけをモックし、HTML のメタデータ解析は実際
 旧プラグインの出力は削除前にスナップショットとして保存しました。
 Google HEAD の例外、画像 GET の例外、有効な画像を返す 404 応答も固定 HTML と比較します。
 OG 画像のリダイレクト後の 403、タイムアウト、Content-Type の欠落・非画像応答は fetch をモックして検証します。
+favicon も非画像応答の省略、通信・読み取り・保存の例外時のリモート URL、有効な画像を返す非 2xx 応答を検証します。非画像応答で favicon を省略した HTML は、既存の favicon なしの HTML と比較します。
+SVG は XML 宣言・コメント・DOCTYPE、Content-Type の欠落や別形式の指定を含め、サムネイルと favicon の両方で検証します。HTML や SVG 以外の XML を SVG と誤認しないことも確認します。
 CSS は接頭辞を置換した旧 CSS の fixture とファイル全体を比較します。
 
 ```sh
@@ -97,6 +99,7 @@ pnpm exec vitest run --config vitest.integration.config.ts tests/integration/lin
 `link-card-assets.test.ts` は loader の再描画判定と画像コピーの空・正常・エラーケースを検証します。
 `tests/integration/link-card-images.test.ts` は外部通信をモックした Astro サイトをビルドし、
 初回・キャッシュあり・画像キャッシュ欠落の各状態で HTML と画像を確認します。
+リモート favicon が残る記事だけを再描画し、通信例外時は次のビルドで再試行すること、非画像応答を受けたら favicon を省略して再試行が止まることも確認します。
 同じサイトを開発サーバーでも起動し、画像の GET・HEAD と存在しない画像の 404 を確認します。
 
 単体テストは HTML 構造を比較します。ブラウザ上の見た目は全ページのビジュアル回帰テストで検証します。

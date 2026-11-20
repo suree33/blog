@@ -228,6 +228,188 @@ describe('remark-link-card-plus 0.8.2 との HTML 互換性', () => {
 });
 
 describe('取得失敗とキャッシュ', () => {
+  test.each([
+    ['untyped root', undefined, svg],
+    ['XML declaration', 'application/xml', `<?xml version="1.0"?>${svg}`],
+    ['text XML', 'text/xml', `<?xml version="1.0"?>${svg}`],
+    ['octet stream', 'application/octet-stream', `<?xml version="1.0"?>${svg}`],
+    ['SVG content type', 'image/svg+xml', `<?xml version="1.0"?>${svg}`],
+    ['case-insensitive content type', 'IMAGE/SVG+XML; charset=utf-8', svg],
+    [
+      'comment and doctype',
+      undefined,
+      `\uFEFF<?xml version="1.0"?><!-- logo --><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/SVG/DTD/svg10.dtd">${svg}`,
+    ],
+  ])(
+    'SVG thumbnails and favicons are cached as SVG (%s)',
+    async (_name, contentType, body) => {
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory: directory,
+          fetch: async (input, init) =>
+            String(input).endsWith('.svg')
+              ? new Response(Buffer.from(body ?? ''), {
+                  status: 404,
+                  headers: contentType ? { 'content-type': contentType } : {},
+                })
+              : fetch(input, init),
+        }),
+      );
+      const $ = load(html);
+      for (const selector of ['.link-card__image', '.link-card__favicon']) {
+        const source = $(selector).attr('src');
+        expect(source).toMatch(/^\/link-card-images\/.+\.svg$/);
+        expect(
+          await readFile(
+            path.join(directory, path.basename(source ?? '')),
+            'utf8',
+          ),
+        ).toBe(body);
+      }
+    },
+  );
+
+  test.each([
+    ['HTML', '<html><body>Not an image</body></html>'],
+    ['nested SVG', `<html><body>${svg}</body></html>`],
+    ['XML', '<?xml version="1.0"?><feed><title>Not SVG</title></feed>'],
+    ['empty', ''],
+    ['PDF', '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF'],
+  ])(
+    'Non-SVG bodies are omitted even when labeled SVG (%s)',
+    async (_name, body) => {
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory: directory,
+          fetch: async (input, init) =>
+            String(input).endsWith('.svg')
+              ? new Response(Buffer.from(body), {
+                  headers: { 'content-type': 'image/svg+xml' },
+                })
+              : fetch(input, init),
+        }),
+      );
+      const $ = load(html);
+      expect($('.link-card__card')).toHaveLength(1);
+      expect($('.link-card__thumbnail, .link-card__favicon')).toHaveLength(0);
+      expect(await readdir(directory)).toEqual([]);
+    },
+  );
+
+  test.each(['html', 'missing-type', 'detected-pdf'])(
+    'Non-image favicon (%s) matches the existing no-favicon markup',
+    async (failure) => {
+      const noFavicon = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory: directory,
+          fetch: async (input, init) => {
+            if (String(input).startsWith('https://www.google.com/s2/favicons'))
+              return new Response(null, { status: 404 });
+            const response = await fetch(input, init);
+            if (String(input) !== `${origin}/full`) return response;
+            return new Response(
+              (await response.text()).replace(/<link rel="icon"[^>]*>/g, ''),
+              { headers: response.headers },
+            );
+          },
+        }),
+      );
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory: directory,
+          fetch: async (input, init) =>
+            String(input) === `${origin}/favicon.svg`
+              ? new Response(
+                  Buffer.from(
+                    failure === 'detected-pdf'
+                      ? '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF'
+                      : '<html>Not an image</html>',
+                  ),
+                  {
+                    status: 403,
+                    headers:
+                      failure === 'missing-type'
+                        ? {}
+                        : {
+                            'content-type':
+                              failure === 'detected-pdf'
+                                ? 'image/svg+xml'
+                                : 'text/html',
+                          },
+                  },
+                )
+              : fetch(input, init),
+        }),
+      );
+      expect(html).toBe(noFavicon);
+      expect(load(html)('.link-card__favicon')).toHaveLength(0);
+      expect(load(html)('.link-card__image')).toHaveLength(1);
+    },
+  );
+
+  test.each(['throw', 'timeout', 'read', 'disk'])(
+    'Transient favicon failure (%s) preserves the remote URL',
+    async (failure) => {
+      const cacheDirectory =
+        failure === 'disk' ? path.join(directory, 'file') : directory;
+      if (failure === 'disk')
+        await writeFile(cacheDirectory, 'not a directory');
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory,
+          fetch: async (input, init) => {
+            if (String(input) !== `${origin}/favicon.svg`)
+              return fetch(input, init);
+            if (failure === 'throw') throw new TypeError('Fetch failed');
+            if (failure === 'timeout')
+              throw new DOMException('Timed out', 'TimeoutError');
+            const response = new Response(svg, {
+              headers: { 'content-type': 'image/svg+xml' },
+            });
+            vi.spyOn(response, 'arrayBuffer').mockRejectedValue(
+              new Error('Read failed'),
+            );
+            return response;
+          },
+        }),
+      );
+      expect(load(html)('.link-card__favicon').attr('src')).toBe(
+        `${origin}/favicon.svg`,
+      );
+    },
+  );
+
+  test.each([undefined, 'application/octet-stream', 'image/png'])(
+    'Valid non-2xx PNG favicon is kept with Content-Type %s',
+    async (contentType) => {
+      const png = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+        'base64',
+      );
+      const html = await render(
+        `<${origin}/full>`,
+        linkCard({
+          cacheDirectory: directory,
+          fetch: async (input, init) =>
+            String(input) === `${origin}/favicon.svg`
+              ? new Response(png, {
+                  status: 404,
+                  headers: contentType ? { 'content-type': contentType } : {},
+                })
+              : fetch(input, init),
+        }),
+      );
+      expect(load(html)('.link-card__favicon').attr('src')).toMatch(
+        /^\/link-card-images\/.+\.png$/,
+      );
+    },
+  );
+
   test('不正な favicon URL は他のメタデータを保持して Google にフォールバックする', async () => {
     const $ = load(await render(`<${origin}/malformed-favicon>`));
     expect($('.link-card__title').text()).toBe('日本語 title & test');
@@ -287,9 +469,7 @@ describe('取得失敗とキャッシュ', () => {
       imageBody = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF';
       const $ = load(await render(`<${origin}/full>`));
       expect($('.link-card__thumbnail')).toHaveLength(0);
-      expect($('.link-card__favicon').attr('src')).toBe(
-        `${origin}/favicon.svg`,
-      );
+      expect($('.link-card__favicon')).toHaveLength(0);
       expect(await readdir(directory)).toEqual([]);
       expect(console.warn).toHaveBeenCalled();
     },
@@ -303,7 +483,10 @@ describe('取得失敗とキャッシュ', () => {
         imageType = 'text/html';
         imageBody = 'HTTP error';
       }
-      if (failure === 'non-image') imageType = 'text/html';
+      if (failure === 'non-image') {
+        imageType = 'text/html';
+        imageBody = '<html>Not an image</html>';
+      }
       if (failure === 'throw') imageThrows = true;
       const cacheDirectory =
         failure === 'disk' ? path.join(directory, 'file') : directory;
@@ -345,9 +528,12 @@ describe('取得失敗とキャッシュ', () => {
           (await readdir(directory)).filter((name) => name.endsWith('.svg')),
         ).toHaveLength(1);
       } else {
-        expect($('.link-card__favicon').attr('src')).toBe(
-          `${origin}/favicon.svg`,
-        );
+        if (['http', 'non-image'].includes(failure))
+          expect($('.link-card__favicon')).toHaveLength(0);
+        else
+          expect($('.link-card__favicon').attr('src')).toBe(
+            `${origin}/favicon.svg`,
+          );
         expect(
           (await readdir(directory)).filter((name) => name.endsWith('.svg')),
         ).toEqual([]);
@@ -382,9 +568,7 @@ describe('取得失敗とキャッシュ', () => {
           throw new DOMException('Timed out', 'TimeoutError');
         }
         const response = new Response(
-          failure === 'missing-type-html'
-            ? Buffer.from('<html>Not an image</html>')
-            : svg,
+          Buffer.from('<html>Not an image</html>'),
           {
             status: failure === 'redirected-403' ? 403 : 200,
             headers:

@@ -62,6 +62,21 @@ interface CardData {
   image?: string;
 }
 
+function rootElement(buffer: Buffer) {
+  let root: string | undefined;
+  sanitizeHtml(buffer.toString('utf8'), {
+    allowedTags: [],
+    allowedAttributes: {},
+    transformTags: {
+      '*': (tagName, attribs) => {
+        root ??= tagName;
+        return { tagName, attribs };
+      },
+    },
+  });
+  return root;
+}
+
 function renderCard(data: CardData) {
   let hostname = data.url.hostname;
   try {
@@ -94,10 +109,7 @@ export function linkCard(options: LinkCardOptions) {
   const warn = (url: string, error: unknown) =>
     console.warn(`[link-card] ${url}: ${String(error)}`);
 
-  async function cacheImage(
-    url: string,
-    thumbnail: boolean,
-  ): Promise<string | undefined> {
+  async function cacheImage(url: string): Promise<string | undefined> {
     try {
       const directory = options.cacheDirectory;
       const hash = createHash('sha256').update(decodeURI(url)).digest('hex');
@@ -109,25 +121,41 @@ export function linkCard(options: LinkCardOptions) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(timeout),
       });
-      const contentType = response.headers.get('content-type') ?? '';
+      const contentType = (
+        response.headers.get('content-type') ?? ''
+      ).toLowerCase();
       const buffer = Buffer.from(await response.arrayBuffer());
-      const detectedType = await fileTypeFromBuffer(buffer);
-      if (detectedType && !detectedType.mime.startsWith('image/')) {
-        if (thumbnail) {
-          warn(url, new Error('Not an image'));
-          return undefined;
-        }
-        throw new Error('Not an image');
+      if (buffer.length === 0) {
+        warn(url, new Error('Not an image'));
+        return undefined;
       }
+      const detectedType = await fileTypeFromBuffer(buffer);
+      const xmlOrUnknown =
+        !detectedType ||
+        ['application/xml', 'text/xml'].includes(detectedType.mime);
+      const root = xmlOrUnknown ? rootElement(buffer) : undefined;
+      const svg =
+        xmlOrUnknown &&
+        (root === 'svg' ||
+          (!root &&
+            buffer.length > 0 &&
+            contentType.startsWith('image/svg+xml')));
       if (
-        thumbnail &&
-        !contentType.toLowerCase().startsWith('image/') &&
-        !detectedType?.mime.startsWith('image/')
+        (root && root !== 'svg') ||
+        (detectedType && !detectedType.mime.startsWith('image/') && !svg)
       ) {
         warn(url, new Error('Not an image'));
         return undefined;
       }
-      const extension = contentType.startsWith('image/svg+xml')
+      if (
+        !contentType.startsWith('image/') &&
+        !detectedType?.mime.startsWith('image/') &&
+        !svg
+      ) {
+        warn(url, new Error('Not an image'));
+        return undefined;
+      }
+      const extension = svg
         ? 'svg'
         : (detectedType?.ext ??
           (contentType.startsWith('image/') ? 'png' : undefined));
@@ -141,12 +169,11 @@ export function linkCard(options: LinkCardOptions) {
     }
   }
 
-  function image(url: string, thumbnail = false) {
-    const key = `${thumbnail}:${url}`;
-    let pending = images.get(key);
+  function image(url: string) {
+    let pending = images.get(url);
     if (!pending) {
-      pending = cacheImage(url, thumbnail);
-      images.set(key, pending);
+      pending = cacheImage(url);
+      images.set(url, pending);
     }
     return pending;
   }
@@ -203,7 +230,7 @@ export function linkCard(options: LinkCardOptions) {
     const [faviconSrc, imageSrc] = await Promise.all([
       favicon ? image(new URL(favicon).href) : undefined,
       ogImage && URL.canParse(ogImage)
-        ? image(new URL(ogImage).href, true)
+        ? image(new URL(ogImage).href)
         : undefined,
     ]);
     return renderCard({
