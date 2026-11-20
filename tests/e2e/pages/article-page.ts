@@ -1,6 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
-import { Header } from '../components/header';
-import { Footer } from '../components/footer';
+import { SitePage } from './site-page';
 import { PostMetadata } from '../components/post-metadata';
 import { TableOfContents } from '../components/toc';
 import { routes, sampleArticleTitle } from '../utils/routes';
@@ -12,21 +11,16 @@ import { routes, sampleArticleTitle } from '../utils/routes';
  * （とそのタイトル）を渡すことで、他の記事もテストできる。
  * 期待タイトルは内部で保持し、`heading` が遷移先のルートと同期するようにする。
  */
-export class ArticlePage {
-  readonly page: Page;
+export class ArticlePage extends SitePage {
   readonly root: Locator;
-  readonly header: Header;
-  readonly footer: Footer;
   readonly metadata: PostMetadata;
   readonly toc: TableOfContents;
 
   private currentTitle: string = sampleArticleTitle;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     this.root = page.getByRole('article');
-    this.header = new Header(page);
-    this.footer = new Footer(page);
     this.metadata = new PostMetadata(page);
     this.toc = new TableOfContents(page);
   }

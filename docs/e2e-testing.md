@@ -48,6 +48,7 @@ tests/e2e/
 │   ├── post-metadata.ts      # 記事メタデータ
 │   └── toc.ts                # 目次 (TOC)
 ├── pages/                    # ページオブジェクト
+│   ├── site-page.ts          # ヘッダー・フッターを持つページの共通基底クラス
 │   ├── home-page.ts          # ホーム (/)
 │   ├── about-page.ts         # About (/about)
 │   ├── article-page.ts       # 記事ページ
@@ -150,6 +151,7 @@ export const sampleArticleDescription =
 
 ### ページオブジェクト (`tests/e2e/pages/`)
 
+- `site-page.ts`: `page`、`header`、`footer` を保持する共通基底クラス。`HomePage`、`AboutPage`、`ArticlePage`、`TagPage`、`NotFoundPage` が継承する。`RssFeedPage` はヘッダーとフッターを持たないため継承しない
 - `home-page.ts`: `goto()`、`header`、`footer`、`postList`
 - `about-page.ts`: `goto()`、`header`、`footer`、`heading`
 - `article-page.ts`: `goto(route, title)`、`header`、`footer`、`metadata`、`toc`、`heading`
