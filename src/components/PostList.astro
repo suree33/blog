@@ -5,10 +5,9 @@ import type { Post } from '@/types/Post';
 
 interface Props {
   posts: Post[];
-  requireUrl?: boolean;
 }
 
-const { posts, requireUrl = false } = Astro.props;
+const { posts } = Astro.props;
 ---
 
 <div class="mt-10 flex w-full justify-center sm:px-4">
@@ -16,8 +15,7 @@ const { posts, requireUrl = false } = Astro.props;
     <slot />
     <ul class="grid grid-cols-1 flex-col gap-4 gap-y-2 sm:gap-y-4">
       {sortPostsByDateDescending(posts).map(
-        (post) =>
-          (!requireUrl || post.url !== undefined) && <PostItem post={post} />,
+        (post) => post.url !== undefined && <PostItem post={post} />,
       )}
     </ul>
   </div>

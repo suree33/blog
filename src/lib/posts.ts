@@ -3,12 +3,12 @@ import type { MarkdownInstance } from 'astro';
 import type { PostFrontmatter } from '@/types/Post';
 
 export function sortPostsByDateDescending<
-  T extends { frontmatter: { pubDate?: string } },
+  T extends { frontmatter: { pubDate: string } },
 >(posts: readonly T[]): T[] {
   return [...posts].sort(
     (a, b) =>
-      new Date(b.frontmatter.pubDate as string).getTime() -
-      new Date(a.frontmatter.pubDate as string).getTime(),
+      new Date(b.frontmatter.pubDate).getTime() -
+      new Date(a.frontmatter.pubDate).getTime(),
   );
 }
 

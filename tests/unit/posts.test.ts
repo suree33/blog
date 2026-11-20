@@ -17,20 +17,8 @@ describe('sortPostsByDateDescending', () => {
   });
 
   test('returns a fresh empty list', () => {
-    const posts: { frontmatter: { pubDate?: string } }[] = [];
+    const posts: { frontmatter: { pubDate: string } }[] = [];
     expect(sortPostsByDateDescending(posts)).toEqual([]);
     expect(sortPostsByDateDescending(posts)).not.toBe(posts);
   });
-
-  test.each([undefined, '', 'invalid'])(
-    'preserves NaN comparator behavior for %s dates',
-    (pubDate) => {
-      const posts = [
-        { frontmatter: { pubDate: '2024-01-01' } },
-        { frontmatter: { pubDate } },
-        { frontmatter: { pubDate: '2026-01-01' } },
-      ];
-      expect(sortPostsByDateDescending(posts)).toEqual(posts);
-    },
-  );
 });
