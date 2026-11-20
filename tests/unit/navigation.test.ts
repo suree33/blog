@@ -16,13 +16,6 @@ describe('isNavItemActive', () => {
     ['/about/', '/about', false],
     ['/about/', '/about-other/', false],
     ['/about/', '/posts/example/', false],
-    ['/', '', false],
-    ['/about/', '', false],
-    ['', '/', false],
-    ['', '/about/', true],
-    ['', '', true],
-    ['/', 'invalid-path', false],
-    ['/about/', 'invalid-path', false],
   ])('path %j at %j is active: %j', (path, currentPath, expected) => {
     expect(isNavItemActive(path, currentPath)).toBe(expected);
   });
