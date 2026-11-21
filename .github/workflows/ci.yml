@@ -6,8 +6,9 @@ on:
   pull_request:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # main への push は途中キャンセルせず、PR だけ古い実行を止める。
+  # PR は ref 単位のグループで古い実行を止める。push はコミットごとに別グループにし、
+  # 待機中の実行が新しい push に置き換えられて取り消されないようにする。
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
