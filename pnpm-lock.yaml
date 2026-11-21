@@ -288,7 +288,7 @@ importers:
         specifier: 17.14.0
         version: 17.14.0
       node:
-        specifier: runtime:^26.0.0
+        specifier: runtime:26.13.1
         version: runtime:26.13.1
       prettier:
         specifier: 3.10.1
