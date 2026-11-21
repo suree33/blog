@@ -50,7 +50,7 @@
     "open-graph-scraper": "6.13.0",
     "postcss-nesting": "^14.0.0",
     "sanitize-html": "^2.17.4",
-    "satteri": "0.11.6",
+    "satteri": "0.11.7",
     "sharp": "^0.35.0",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
