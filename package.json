@@ -79,11 +79,15 @@
     "vitest": "^5.1.0",
     "wrangler": "^4.69.0"
   },
-  "packageManager": "pnpm@12.21.0",
   "devEngines": {
     "runtime": {
       "name": "node",
       "version": "^24.0.0",
+      "onFail": "download"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.21.0",
       "onFail": "download"
     }
   }
