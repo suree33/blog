@@ -1,21 +1,18 @@
 ---
+import { isNavItemActive } from '@lib/navigation';
+import { cn } from '@lib/utils';
+
 const { path, title } = Astro.props;
 const { pathname: currentPath } = Astro.url;
-
-// ホームページかブログ記事ページの場合はホームリンクをアクティブに
-const isHomeActive = currentPath === '/' || currentPath.startsWith('/posts');
-
-// その他のページではパスが一致するか、現在のパスがそのパスで始まる場合（ルートパス以外）にアクティブに
-const isLinkActive =
-  (path === '/' && isHomeActive) ||
-  (path !== '/' && currentPath !== '/' && currentPath.startsWith(path));
+const isLinkActive = isNavItemActive(path, currentPath);
 ---
 
 <a
   href={path}
-  class={`text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white ${
-    isLinkActive ? 'font-medium text-gray-900 dark:text-white' : ''
-  }`}
+  class={cn(
+    'text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white',
+    { 'font-medium text-gray-900 dark:text-white': isLinkActive },
+  )}
 >
   {title}
 </a>
