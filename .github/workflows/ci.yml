@@ -80,29 +80,6 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
-  build-e2e:
-    name: Build for E2E
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - *checkout
-      - *setup-pnpm
-
-      - name: Build with E2E draft fixtures
-        env:
-          E2E_DRAFT_FIXTURE: 'true'
-        run: pnpm run build:ci
-
-      - name: Upload E2E build output
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: dist-e2e
-          path: dist/
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 1
-
   worker-integration:
     name: Worker integration tests
     needs: [build]
@@ -148,7 +125,6 @@ jobs:
 
   e2e-shard:
     name: E2E (${{ matrix.project }})
-    needs: [build-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -181,16 +157,8 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Download E2E build output
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: dist-e2e
-          path: dist
-
       - name: Run Playwright E2E tests
         env:
-          # build-e2e ジョブの dist/ を使い、webServer ではビルドせず preview だけ起動する。
-          E2E_PREBUILT: '1'
           PROJECT: ${{ matrix.project }}
           PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ strategy.job-index }}.zip
         run: pnpm exec playwright test --project="$PROJECT" --reporter=github,list,blob

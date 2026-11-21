@@ -1,13 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 const e2ePort = 4322;
 const e2eBaseURL = `http://localhost:${e2ePort}/`;
-const e2ePreviewCommand = `pnpm run preview --port ${e2ePort}`;
-// CI では build-e2e ジョブが `E2E_DRAFT_FIXTURE=true` でビルドした dist/ を配布するため、
-// `E2E_PREBUILT=1` のときはビルドを省いて preview だけを起動する。
-const e2eServerCommand =
-  process.env.E2E_PREBUILT === '1'
-    ? e2ePreviewCommand
-    : `E2E_DRAFT_FIXTURE=true pnpm run build:ci && ${e2ePreviewCommand}`;
 
 /**
  * Astro ブログの Playwright E2E 設定。
@@ -65,7 +58,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: e2eServerCommand,
+    command: `E2E_DRAFT_FIXTURE=true pnpm run build:ci && pnpm run preview --port ${e2ePort}`,
     url: e2eBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180 * 1000,

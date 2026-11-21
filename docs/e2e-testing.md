@@ -85,7 +85,7 @@ tests/e2e/
 ## `playwright.config.ts` の要点
 
 - `testDir`: `./tests/e2e/specs` を指定し、spec ファイルだけをテスト対象にします。
-- `webServer`: 通常は `E2E_DRAFT_FIXTURE=true build:ci`、フルページ専用の `playwright.visual.config.ts` は `build:e2e` でビルド後、`pnpm run preview --port 4322` を起動します。専用 config は既存サーバーを再利用しません。通常の開発サーバーが使う `4321` とは競合しません。`E2E_PREBUILT=1` のときは通常 config のビルドを省き、既存の `dist/` に対して `pnpm run preview --port 4322` だけを起動します（CI 用）。
+- `webServer`: 通常は `E2E_DRAFT_FIXTURE=true build:ci`、フルページ専用の `playwright.visual.config.ts` は `build:e2e` でビルド後、`pnpm run preview --port 4322` を起動します。専用 config は既存サーバーを再利用しません。通常の開発サーバーが使う `4321` とは競合しません。
 - `build:e2e`: `prebuild`（`pnpm lint`）を経由しない `astro build` を、`E2E_DRAFT_FIXTURE=true`、`TZ=UTC` と `NODE_OPTIONS=--import ./tests/e2e/support/network-stub.ts` 付きで実行します。ビルド時の外部 HTTP をスタブに置き換えるためです（後述の「ページ全体のビジュアルリグレッション」を参照）。本番用の `build` / `build:ci` は変更しません。
 - `reporter`: 通常は `list` で標準出力に進行を出し、`html` で `playwright-report/` を生成します。GitHub Actions 上では `github` reporter も追加し、失敗箇所を Actions の annotation として表示します。
 - `fullyParallel`: spec 内のテストも並列化します。`workers` は常に `undefined` とし、Playwright のデフォルト（論理 CPU コア数の半分）に任せます。
@@ -351,9 +351,8 @@ artifact の保持期間は 7 日です。テストが失敗した場合も調�
 
 ### ビルドの使い回しとキャッシュ
 
-- `build-e2e` ジョブが `E2E_DRAFT_FIXTURE=true pnpm run build:ci` を 1 回だけ実行し、`dist/` を `dist-e2e` artifact として配布します。各 E2E シャードはそれをダウンロードし、`E2E_PREBUILT=1` で preview だけを起動します。
 - `Build` ジョブの `dist/` は `dist` artifact として `Worker integration tests` に渡し、同じビルドを再実行しません。
-- フルページ VRT はビルドフラグが異なるため、従来どおり専用 config の `build:e2e` で自前ビルドします。
+- E2E シャードとフルページ VRT は、従来どおり各ジョブで Playwright の `webServer` がビルドします。E2E 用ビルドを別ジョブで 1 回にまとめると、シャードがそのジョブを待つぶん全体の所要時間が延びるためです。
 - pnpm ストアのキャッシュは全ジョブで復元しますが、保存（`save-cache`）は main への push 時の `Build` ジョブだけが行います。
 - `concurrency` は PR の古い実行だけをキャンセルし、main への push の実行はキャンセルしません。
 
