@@ -1,25 +1,19 @@
-export interface OgImage {
-  src: string;
-  alt?: string;
-}
-export interface Image {
-  src: string;
-  alt?: string;
-}
+import type { CollectionEntry } from 'astro:content';
 
-export interface PostFrontmatter {
-  layout?: string;
-  title: string;
-  pubDate: string;
-  updatedDate?: string;
-  description?: string;
-  tags?: string[];
-  draft?: boolean;
-  ogimage?: string | OgImage;
-  image?: Image;
-}
+export type PostFrontmatter = CollectionEntry<'posts'>['data'];
+
+export type StandalonePageFrontmatter = Omit<
+  PostFrontmatter,
+  'pubDate' | 'updatedDate'
+> & {
+  pubDate?: PostFrontmatter['pubDate'];
+  updatedDate?: PostFrontmatter['updatedDate'] | null;
+};
 
 export interface Post {
-  frontmatter: PostFrontmatter;
+  frontmatter: Pick<
+    PostFrontmatter,
+    'title' | 'pubDate' | 'description' | 'tags' | 'image'
+  >;
   url?: string;
 }

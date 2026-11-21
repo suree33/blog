@@ -1,5 +1,6 @@
 ---
 export const prerender = true;
+import type { InferGetStaticPropsType } from 'astro';
 import PostItem from '@components/PostItem.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import type { Post } from '@/types/Post';
@@ -31,8 +32,10 @@ export async function getStaticPaths() {
   ];
 
   return uniqueTags.map((tag) => {
-    const filteredPosts = posts.filter((post) =>
-      post.frontmatter.tags ? post.frontmatter.tags.includes(tag) : false,
+    const filteredPosts = posts.filter(
+      (post): post is typeof post & Post =>
+        post.frontmatter.pubDate !== undefined &&
+        (post.frontmatter.tags?.includes(tag) ?? false),
     );
     return {
       params: { tag },
@@ -40,6 +43,8 @@ export async function getStaticPaths() {
     };
   });
 }
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { tag } = Astro.params;
 const { posts } = Astro.props;
@@ -58,16 +63,13 @@ if (!tag) {
       <ul class="grid grid-cols-1 flex-col gap-4 gap-y-2 sm:gap-y-4">
         {posts &&
           posts
-            .sort((a: Post, b: Post) => {
+            .sort((a, b) => {
               return (
                 new Date(b.frontmatter.pubDate).getTime() -
                 new Date(a.frontmatter.pubDate).getTime()
               );
             })
-            .map(
-              (post: Post) =>
-                post.url !== undefined && <PostItem post={post} />,
-            )}
+            .map((post) => post.url !== undefined && <PostItem post={post} />)}
       </ul>
     </div>
   </div>
