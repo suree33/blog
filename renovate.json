@@ -5,6 +5,5 @@
     "config:js-app",
     ":automergeMinor",
     ":automergeDigest"
-  ],
-  "automergeStrategy": "squash"
+  ]
 }
