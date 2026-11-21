@@ -2,9 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "minimumReleaseAge": "3 days",
-  "enabledManagers": ["github-actions", "npm"],
-  "platformAutomerge": true,
-  "automergeType": "pr",
   "automergeStrategy": "squash",
   "lockFileMaintenance": {
     "enabled": true,
@@ -21,8 +18,7 @@
     },
     {
       "matchUpdateTypes": ["major"],
-      "minimumReleaseAge": "3 days",
-      "automerge": false
+      "minimumReleaseAge": "3 days"
     },
     {
       "description": "major 以外の更新は CI 通過後に自動マージする",
