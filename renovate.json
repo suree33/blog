@@ -1,25 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "minimumReleaseAge": "3 days",
+  "extends": ["config:best-practices"],
   "automergeStrategy": "squash",
   "lockFileMaintenance": {
-    "enabled": true,
     "automerge": true
   },
   "packageRules": [
-    {
-      "matchUpdateTypes": ["patch"],
-      "minimumReleaseAge": "1 day"
-    },
-    {
-      "matchUpdateTypes": ["minor"],
-      "minimumReleaseAge": "2 days"
-    },
-    {
-      "matchUpdateTypes": ["major"],
-      "minimumReleaseAge": "3 days"
-    },
     {
       "description": "major 以外の更新は CI 通過後に自動マージする",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
