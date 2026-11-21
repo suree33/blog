@@ -5,8 +5,12 @@
   "timezone": "Asia/Tokyo",
   "schedule": ["* 10 * * *"],
   "enabledManagers": ["github-actions", "npm"],
+  "platformAutomerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "automerge": true
   },
   "packageRules": [
     {
@@ -19,7 +23,13 @@
     },
     {
       "matchUpdateTypes": ["major"],
-      "minimumReleaseAge": "3 days"
+      "minimumReleaseAge": "3 days",
+      "automerge": false
+    },
+    {
+      "description": "major 以外の更新は CI 通過後に自動マージする",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
     },
     {
       "description": "Astro関連の minor/patch をまとめる",
