@@ -76,7 +76,7 @@
     "typescript-eslint": "8.73.0",
     "typescript-language-server": "6.1.0",
     "undici": "8.12.4",
-    "vitest": "5.1.0",
+    "vitest": "5.1.1",
     "wrangler": "4.164.0"
   },
   "devEngines": {
