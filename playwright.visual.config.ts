@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import config from './playwright.config';
+import config, { e2ePort } from './playwright.config';
 
 export default defineConfig({
   ...config,
@@ -16,8 +16,7 @@ export default defineConfig({
   ),
   webServer: {
     ...config.webServer,
-    command: 'pnpm run build:e2e && pnpm run preview --port 4322',
-    url: 'http://localhost:4322/',
+    command: `pnpm run build:e2e && pnpm run preview --port ${e2ePort}`,
     reuseExistingServer: false,
     timeout: 180_000,
   },
