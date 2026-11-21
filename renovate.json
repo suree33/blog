@@ -1,15 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices"],
-  "automergeStrategy": "squash",
-  "lockFileMaintenance": {
-    "automerge": true
-  },
-  "packageRules": [
-    {
-      "description": "major 以外の更新は CI 通過後に自動マージする",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    }
-  ]
+  "extends": [
+    "config:best-practices",
+    "config:js-app",
+    ":automergeMinor",
+    ":automergeDigest"
+  ],
+  "automergeStrategy": "squash"
 }
