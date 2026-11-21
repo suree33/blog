@@ -1,6 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
-import { Header } from '../components/header';
-import { Footer } from '../components/footer';
+import { SitePage } from './site-page';
 import { PostList } from '../components/post-list';
 import { routes, sampleTag } from '../utils/routes';
 import { escapeRegExp } from '../utils/regex';
@@ -12,18 +11,13 @@ import { escapeRegExp } from '../utils/regex';
  * 渡すことで、他のタグページもテストできる。期待タグ名は内部で保持し、`heading` が
  * 遷移先のタグと同期するようにする（タグページの `<h1>` は `{tag}のタグが付いた記事`）。
  */
-export class TagPage {
-  readonly page: Page;
-  readonly header: Header;
-  readonly footer: Footer;
+export class TagPage extends SitePage {
   readonly postList: PostList;
 
   private currentTag: string = sampleTag;
 
   constructor(page: Page) {
-    this.page = page;
-    this.header = new Header(page);
-    this.footer = new Footer(page);
+    super(page);
     this.postList = new PostList(page);
   }
 

@@ -1,22 +1,11 @@
-import { type Locator, type Page } from '@playwright/test';
-import { Header } from '../components/header';
-import { Footer } from '../components/footer';
+import { type Locator } from '@playwright/test';
+import { SitePage } from './site-page';
 import { routes } from '../utils/routes';
 
 /**
  * About ページ（`/about`）のページオブジェクト。
  */
-export class AboutPage {
-  readonly page: Page;
-  readonly header: Header;
-  readonly footer: Footer;
-
-  constructor(page: Page) {
-    this.page = page;
-    this.header = new Header(page);
-    this.footer = new Footer(page);
-  }
-
+export class AboutPage extends SitePage {
   async goto(): Promise<void> {
     await this.page.goto(routes.about);
   }
