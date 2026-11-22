@@ -51,7 +51,7 @@ Callout、リンクカードの個別テストは含みません。
 
 `tests/unit/raw-markdown-endpoint.test.ts` は公開記事ソースの読み込みと layout 行の除去、公開記事が空の場合、`filePath` がない場合の明示的なエラー、読み込みエラーの伝播を検証します。
 
-`tests/unit/post-schema.test.ts` は init-post の title・description・tags が空欄（YAML の null）でも読み込めること、既存の frontmatter 型に正規化されること、不正な型は拒否することを検証します。
+`tests/unit/post-schema.test.ts` は、記事の `title`、`description`、`tags`、`pubDate` が欠けているか空の場合と、画像オブジェクトに空でない `alt` がない場合に、スキーマが拒否することを検証します。`tests/unit/require-image-alt.test.ts` は、記事本文の Markdown 画像に代替テキストがない場合に、ファイル名と本文の行番号を含むエラーが出ることを検証します。
 
 ## Sätteri リンクカードの単体テスト
 

@@ -65,7 +65,7 @@ Self-hosted LiveSyncの設定ドキュメントに自動セットアップスク
    1. `# Install prerequesties` のセルを実行し、依存関係のインストールが行います。
    2. `Login up sign up` のセルを実行すると、fly.ioにログインするためのリンクが表示されます。表示されるリンクをクリックしてログインします。fly.ioのアカウントが無い場合は、ここでアカウントを作成します。
 
-      ![](./images/_fly.io_app_sign-up.png)
+      ![GitHub、Google、メールアドレスで登録できるFly.ioのアカウント作成画面](./images/_fly.io_app_sign-up.png)
 
       ログインすると、Google Colabのセルの実行結果に `successfully logged in as name@example.com` のように表示されます。
 

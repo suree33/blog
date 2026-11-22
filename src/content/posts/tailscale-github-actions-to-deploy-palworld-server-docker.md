@@ -63,7 +63,7 @@ Machinesからデプロイ先のサーバーを選択して、Machine settings >
 
 Tagsには、先ほど設定したタグを指定します。
 
-![](images/tailscale-oauth-clients.png)
+![TailscaleのOAuthクライアント設定でDevicesのCoreとKeysのAuth KeysにRead・Write権限とtag:ciを指定した画面](images/tailscale-oauth-clients.png)
 
 `Generate client` をクリックして、表示された `Client ID` と `Client Secret` を控えておきます。
 
@@ -121,7 +121,7 @@ git tag -a v1.0.0 -m "Release v1.0.0"
 git push --tags
 ```
 
-![](images/actions-deploy-palworld-server.png)
+![リリースv1.1.0の作成で起動したGitHub Actionsのデプロイが成功した画面](images/actions-deploy-palworld-server.png)
 
 あら便利。
 

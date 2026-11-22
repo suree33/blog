@@ -7,6 +7,7 @@ import { defineConfig } from 'astro/config';
 import process from 'node:process';
 
 import { createLinkCards } from './src/lib/markdown/link-card-assets.ts';
+import { requireImageAlt } from './src/lib/markdown/require-image-alt.ts';
 import { satteriCallouts } from './src/lib/satteri-callouts.ts';
 import { codeTitleTransformer } from './src/lib/code-title.ts';
 
@@ -24,7 +25,13 @@ export default defineConfig({
   },
   markdown: {
     processor: satteri({
-      mdastPlugins: [linkCards.plugin],
+      mdastPlugins: [
+        requireImageAlt(
+          new URL('./src/content/posts/', import.meta.url),
+          new URL('./tests/e2e/fixtures/posts/', import.meta.url),
+        ),
+        linkCards.plugin,
+      ],
       hastPlugins: [satteriCallouts],
     }),
     shikiConfig: {

@@ -14,7 +14,8 @@ const cases = [
   {
     path: `${routes.articleWithoutCodeBlock}/`,
     image: defaultImage,
-    description: defaultDescription,
+    description:
+      'ネスプレッソの受け皿に廃液を1週間放置したら、カビが生えてしまった。',
   },
   {
     path: '/posts/setup-obsidian-livesync/',

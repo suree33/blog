@@ -3,7 +3,8 @@ import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { withLinkCardImages } from './lib/markdown/link-card-assets';
 
-const image = z.object({ src: z.string(), alt: z.string().optional() });
+const requiredText = z.string().trim().min(1);
+const image = z.object({ src: z.string(), alt: requiredText });
 const date = z.union([
   z.string(),
   z.date().transform((value) => value.toISOString().slice(0, 10)),
@@ -25,22 +26,11 @@ const posts = defineCollection({
   ),
   schema: z.object({
     layout: z.string().optional(),
-    title: z
-      .string()
-      .nullish()
-      .transform((value) => value ?? ''),
-    pubDate: date,
+    title: requiredText,
+    pubDate: date.pipe(requiredText),
     updatedDate: date.optional(),
-    description: z
-      .string()
-      .nullish()
-      .transform((value) => value ?? undefined)
-      .optional(),
-    tags: z
-      .array(z.string())
-      .nullish()
-      .transform((value) => value ?? undefined)
-      .optional(),
+    description: requiredText,
+    tags: z.array(requiredText).min(1),
     draft: z.boolean().optional(),
     ogimage: z.union([z.string(), image]).optional(),
     image: image.optional(),

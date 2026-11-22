@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import json
 import re
 import sys
 from pathlib import Path
@@ -13,9 +14,9 @@ from pathlib import Path
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Create a new blog post markdown from template.")
     parser.add_argument("--slug", required=True, help="Output file slug (without .md)")
-    parser.add_argument("--title", default="", help="Post title")
-    parser.add_argument("--description", default="", help="Post description")
-    parser.add_argument("--tags", default="", help="Comma-separated tags")
+    parser.add_argument("--title", required=True, help="Post title")
+    parser.add_argument("--description", required=True, help="Post description")
+    parser.add_argument("--tags", required=True, help="Comma-separated tags")
     parser.add_argument("--date", default="", help="pubDate in YYYY-MM-DD format")
     parser.add_argument("--root", default=".", help="Repository root path")
     parser.add_argument("--force", action="store_true", help="Overwrite existing file")
@@ -43,22 +44,27 @@ def resolve_date(raw_date: str) -> str:
 def format_tags(raw_tags: str) -> str:
     tags = [tag.strip() for tag in raw_tags.split(",") if tag.strip()]
     if not tags:
-        return "tags: []"
+        raise ValueError("--tags must contain at least one tag")
     lines = ["tags:"]
-    lines.extend(f"  - {tag}" for tag in tags)
+    lines.extend(f"  - {json.dumps(tag, ensure_ascii=False)}" for tag in tags)
     return "\n".join(lines)
 
 
 def render_frontmatter(template: str, pub_date: str, title: str, description: str, tags: str) -> str:
     rendered = template.replace("pubDate: {{date}}", f"pubDate: {pub_date}")
-    rendered = re.sub(r"^title:\s*$", f"title: {title}", rendered, flags=re.MULTILINE)
     rendered = re.sub(
-        r"^description:\s*$",
-        f"description: {description}",
+        r"^title:[ \t]*$",
+        lambda _: f"title: {json.dumps(title, ensure_ascii=False)}",
         rendered,
         flags=re.MULTILINE,
     )
-    rendered = re.sub(r"^tags:\s*$", tags, rendered, flags=re.MULTILINE)
+    rendered = re.sub(
+        r"^description:[ \t]*$",
+        lambda _: f"description: {json.dumps(description, ensure_ascii=False)}",
+        rendered,
+        flags=re.MULTILINE,
+    )
+    rendered = re.sub(r"^tags:[ \t]*$", lambda _: tags, rendered, flags=re.MULTILINE)
     return rendered
 
 
@@ -68,6 +74,13 @@ def main() -> int:
     try:
         slug = normalize_slug(args.slug)
         pub_date = resolve_date(args.date)
+        title = args.title.strip()
+        description = args.description.strip()
+        if not title:
+            raise ValueError("--title must not be blank")
+        if not description:
+            raise ValueError("--description must not be blank")
+        tags = format_tags(args.tags)
     except ValueError as exc:
         print(f"[ERROR] {exc}")
         return 1
@@ -88,9 +101,9 @@ def main() -> int:
     content = render_frontmatter(
         template=template,
         pub_date=pub_date,
-        title=args.title.strip(),
-        description=args.description.strip(),
-        tags=format_tags(args.tags),
+        title=title,
+        description=description,
+        tags=tags,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

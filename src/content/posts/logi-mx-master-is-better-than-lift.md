@@ -5,6 +5,7 @@ tags:
   - ガジェット
   - マウス
   - Logi
+description: LogicoolのLiftを買って、仮想デスクトップを切り替えるときのジェスチャー操作をMX Master 3と比べてみました。
 ---
 
 ## Logicool MX Master
