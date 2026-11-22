@@ -15,6 +15,7 @@ import sharp from 'sharp';
 import { linkCard, type LinkCardOptions } from './link-card';
 
 const imageFilename = '[a-f0-9]{64}\\.[a-z0-9]+';
+const thumbnailVersion = 'thumbnail-440-webp-v1';
 
 function imageDirectory(config: Pick<AstroConfig, 'cacheDir'>) {
   return new URL('link-card-images/', config.cacheDir);
@@ -26,6 +27,8 @@ export function withLinkCardImages(loader: Loader): Loader {
     name: `link-card-images:${loader.name}`,
     async load(context) {
       const directory = imageDirectory(context.config);
+      const thumbnailsChanged =
+        context.meta.get('link-card-thumbnail') !== thumbnailVersion;
       for (const [id, entry] of context.store.entries()) {
         const html = entry.rendered?.html ?? '';
         if (
@@ -39,7 +42,10 @@ export function withLinkCardImages(loader: Loader): Loader {
           context.store.delete(id);
           continue;
         }
-        if (/class="link-card__image"(?![^>]*decoding="async")/.test(html)) {
+        if (
+          /class="link-card__image"(?![^>]*decoding="async")/.test(html) ||
+          (thumbnailsChanged && html.includes('class="link-card__image"'))
+        ) {
           context.logger.info(
             `Rebuilding content with unoptimized link card images: ${id}`,
           );
@@ -67,6 +73,7 @@ export function withLinkCardImages(loader: Loader): Loader {
         }
       }
       await loader.load(context);
+      context.meta.set('link-card-thumbnail', thumbnailVersion);
     },
   };
 }
@@ -85,7 +92,7 @@ export function createLinkCards(
         );
         const hash = createHash('sha256')
           .update(original)
-          .update('thumbnail-232-webp-v1')
+          .update(thumbnailVersion)
           .digest('hex');
         const filename = `${hash}.webp`;
         const output = new URL(filename, directory);
@@ -97,8 +104,8 @@ export function createLinkCards(
             await sharp(original)
               .rotate()
               .resize({
-                width: 232,
-                height: 232,
+                width: 440,
+                height: 440,
                 fit: 'inside',
                 withoutEnlargement: true,
               })

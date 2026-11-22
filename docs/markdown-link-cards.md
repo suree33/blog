@@ -40,11 +40,11 @@ SVG は Content-Type と本文のルート要素、それ以外は `file-type` �
 画像の Content-Type だが形式を判定できない場合は、旧プラグイン同様 `.png` にします。
 
 `createLinkCards()` は、保存済みの OG 画像から sharp で WebP サムネイルを生成します。
-縦横比を保って232×232px以内に縮小し、小さい画像は拡大しません。元の画像と favicon のキャッシュは残します。
+縦横比を保って440×440px以内に縮小し、小さい画像は拡大しません。元の画像と favicon のキャッシュは残します。
 変換後のファイル名は、元の画像のバイト列と変換設定の識別子から求めた SHA-256 に `.webp` を付けたものです。
 同じ変換済みファイルがあれば再利用します。変換に失敗した場合は警告を出し、元の画像を参照します。
 変換済みサムネイルには実際のピクセル寸法を `width`・`height` に設定し、`loading="lazy"` と `decoding="async"` を付けます。
-CSSの表示領域は変更しません。幅はモバイルで116px、広い画面で220pxなので、232pxの上限はモバイルの約2倍、広い画面の約1倍に相当します。
+CSSの表示領域は変更しません。幅はモバイルで116px、広い画面で220pxなので、440pxの上限なら広い画面でも約2倍のピクセル密度に対応できます。
 
 ### Astro のビルドキャッシュと開発サーバー
 
@@ -64,6 +64,7 @@ integration は毎回の `astro:build:done` で、画像をフックの `dir` �
 リモートのサムネイルや favicon の URL が HTML に残っている場合も、その記事だけを次のビルドで再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。
 integration の追加だけで Astro がデータストアを無効化するとは想定していません。
 変換前のサムネイルを含むキャッシュ済みHTMLも、その記事だけ再描画して新しい画像と属性へ移行します。
+変換設定の識別子が変わった場合も、サムネイルを含む記事を再描画します。
 
 関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、
 [Content Loader API](https://docs.astro.build/en/reference/content-loader-reference/)。

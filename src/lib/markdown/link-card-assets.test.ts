@@ -13,10 +13,12 @@ import { createLinkCards, withLinkCardImages } from './link-card-assets';
 const filename = `${'a'.repeat(64)}.svg`;
 let root: string;
 let cacheDir: URL;
+let meta: Map<string, string>;
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'link-card-assets-'));
   cacheDir = pathToFileURL(`${root}/custom-cache/`);
+  meta = new Map([['link-card-thumbnail', 'thumbnail-440-webp-v1']]);
 });
 
 afterEach(async () => {
@@ -33,6 +35,7 @@ test.each(['empty', 'present', 'missing'])(
     }
     const remove = vi.fn();
     const context = {
+      meta,
       config: { cacheDir },
       store: {
         entries: () =>
@@ -64,7 +67,9 @@ test.each(['empty', 'present', 'missing'])(
 );
 
 test('loader propagates rendering errors', async () => {
+  meta.set('link-card-thumbnail', 'thumbnail-232-webp-v1');
   const context = {
+    meta,
     config: { cacheDir },
     store: { entries: () => [] },
   } as unknown as LoaderContext;
@@ -77,6 +82,7 @@ test('loader propagates rendering errors', async () => {
       },
     }).load(context),
   ).rejects.toBe(error);
+  expect(meta.get('link-card-thumbnail')).toBe('thumbnail-232-webp-v1');
 });
 
 test.each(['image', 'favicon'])(
@@ -84,6 +90,7 @@ test.each(['image', 'favicon'])(
   async (kind) => {
     const remove = vi.fn();
     const context = {
+      meta,
       config: { cacheDir },
       store: {
         entries: () => [
@@ -200,11 +207,11 @@ test.each(['large', 'small', 'empty', 'unsupported', 'missing'])(
         const bytes = await readFile(new URL(source.slice(1), cacheDir));
         expect(await sharp(bytes).metadata()).toMatchObject({
           format: 'webp',
-          width: state === 'small' ? 32 : 232,
-          height: state === 'small' ? 16 : 232,
+          width: state === 'small' ? 32 : 440,
+          height: state === 'small' ? 16 : 440,
         });
-        expect(image.attr('width')).toBe(state === 'small' ? '32' : '232');
-        expect(image.attr('height')).toBe(state === 'small' ? '16' : '232');
+        expect(image.attr('width')).toBe(state === 'small' ? '32' : '440');
+        expect(image.attr('height')).toBe(state === 'small' ? '16' : '440');
         expect(image.attr('loading')).toBe('lazy');
         expect(image.attr('decoding')).toBe('async');
         expect(parseHtml(html)('.link-card__favicon').attr('src')).toMatch(
@@ -228,6 +235,7 @@ test('loader migrates legacy thumbnail HTML without invalidating optimized thumb
   await writeFile(new URL(filename, directory), '<svg/>');
   const remove = vi.fn();
   const context = {
+    meta,
     config: { cacheDir },
     store: {
       entries: () => [
@@ -255,3 +263,39 @@ test('loader migrates legacy thumbnail HTML without invalidating optimized thumb
   await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
   expect(remove.mock.calls).toEqual([['old']]);
 });
+
+test.each([undefined, 'thumbnail-232-webp-v1', 'thumbnail-440-webp-v1'])(
+  'loader migrates cached thumbnail settings (%s)',
+  async (version) => {
+    if (version) meta.set('link-card-thumbnail', version);
+    else meta.clear();
+    const directory = new URL('link-card-images/', cacheDir);
+    await mkdir(directory, { recursive: true });
+    await writeFile(new URL(filename, directory), '<svg/>');
+    const remove = vi.fn();
+    const context = {
+      meta,
+      config: { cacheDir },
+      store: {
+        entries: () => [
+          [
+            'thumbnail',
+            {
+              rendered: {
+                html: `<img src="/link-card-images/${filename}" class="link-card__image" decoding="async">`,
+              },
+            },
+          ],
+          ['unaffected', { rendered: { html: '<p>Unchanged</p>' } }],
+        ],
+        delete: remove,
+      },
+      logger: { info: vi.fn() },
+    } as unknown as LoaderContext;
+    await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+    expect(remove.mock.calls).toEqual(
+      version === 'thumbnail-440-webp-v1' ? [] : [['thumbnail']],
+    );
+    expect(meta.get('link-card-thumbnail')).toBe('thumbnail-440-webp-v1');
+  },
+);
