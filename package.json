@@ -59,7 +59,6 @@
   "devDependencies": {
     "@astrojs/language-server": "2.17.3",
     "@axe-core/playwright": "4.14.0",
-    "@eslint/compat": "2.1.1",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.1",
     "@types/sanitize-html": "2.16.2",
