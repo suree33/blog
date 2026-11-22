@@ -119,4 +119,15 @@ test.describe('axe-coreアクセシビリティ検査', () => {
       openMobileMenu: () => articlePage.header.openMobileMenu(),
     });
   });
+
+  test('タグ一覧', async ({ tagIndexPage }, testInfo) => {
+    skipUnsupportedProject(testInfo);
+
+    await scanPageForAccessibility({
+      page: tagIndexPage.page,
+      testInfo,
+      goto: () => tagIndexPage.goto(),
+      openMobileMenu: () => tagIndexPage.header.openMobileMenu(),
+    });
+  });
 });

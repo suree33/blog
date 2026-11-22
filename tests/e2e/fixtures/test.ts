@@ -3,6 +3,7 @@ import { HomePage } from '../pages/home-page';
 import { AboutPage } from '../pages/about-page';
 import { ArticlePage } from '../pages/article-page';
 import { TagPage } from '../pages/tag-page';
+import { TagIndexPage } from '../pages/tag-index-page';
 import { RssFeedPage } from '../pages/rss-feed-page';
 import { NotFoundPage } from '../pages/not-found-page';
 
@@ -18,6 +19,7 @@ export const test = base.extend<{
   aboutPage: AboutPage;
   articlePage: ArticlePage;
   tagPage: TagPage;
+  tagIndexPage: TagIndexPage;
   rssFeedPage: RssFeedPage;
   notFoundPage: NotFoundPage;
   isDesktop: boolean;
@@ -33,6 +35,9 @@ export const test = base.extend<{
   },
   tagPage: async ({ page }, use) => {
     await use(new TagPage(page));
+  },
+  tagIndexPage: async ({ page }, use) => {
+    await use(new TagIndexPage(page));
   },
   rssFeedPage: async ({ page, request }, use) => {
     await use(new RssFeedPage(page, request));
