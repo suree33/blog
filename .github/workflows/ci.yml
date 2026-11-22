@@ -156,6 +156,7 @@ jobs:
 
       - name: Run Playwright E2E tests
         env:
+          HOME: /root
           PROJECT: ${{ matrix.project }}
           PLAYWRIGHT_BLOB_OUTPUT_NAME: report-${{ strategy.job-index }}.zip
         run: pnpm exec playwright test --project="$PROJECT" --reporter=github,list,blob
