@@ -229,10 +229,13 @@ test.each(['large', 'small', 'empty', 'unsupported', 'missing'])(
   },
 );
 
-test('loader migrates legacy thumbnail HTML without invalidating optimized thumbnails', async () => {
+test('loader migrates thumbnails once and keeps failed-conversion fallbacks on warm loads', async () => {
+  meta.clear();
   const directory = new URL('link-card-images/', cacheDir);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL(filename, directory), '<svg/>');
+  const fallbackFilename = `${'b'.repeat(64)}.png`;
+  await writeFile(new URL(fallbackFilename, directory), 'invalid image');
   const remove = vi.fn();
   const context = {
     meta,
@@ -240,10 +243,10 @@ test('loader migrates legacy thumbnail HTML without invalidating optimized thumb
     store: {
       entries: () => [
         [
-          'old',
+          'fallback',
           {
             rendered: {
-              html: `<img src="/link-card-images/${filename}" class="link-card__image" alt="">`,
+              html: `<img src="/link-card-images/${fallbackFilename}" class="link-card__image" alt="">`,
             },
           },
         ],
@@ -260,8 +263,13 @@ test('loader migrates legacy thumbnail HTML without invalidating optimized thumb
     },
     logger: { info: vi.fn() },
   } as unknown as LoaderContext;
-  await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
-  expect(remove.mock.calls).toEqual([['old']]);
+  const loader = withLinkCardImages({ name: 'fixture', load: vi.fn() });
+  await loader.load(context);
+  expect(remove.mock.calls).toEqual([['fallback'], ['new']]);
+  expect(meta.get('link-card-thumbnail')).toBe('thumbnail-440-webp-v1');
+  remove.mockClear();
+  await loader.load(context);
+  expect(remove).not.toHaveBeenCalled();
 });
 
 test.each([undefined, 'thumbnail-232-webp-v1', 'thumbnail-440-webp-v1'])(

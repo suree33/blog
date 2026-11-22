@@ -42,10 +42,7 @@ export function withLinkCardImages(loader: Loader): Loader {
           context.store.delete(id);
           continue;
         }
-        if (
-          /class="link-card__image"(?![^>]*decoding="async")/.test(html) ||
-          (thumbnailsChanged && html.includes('class="link-card__image"'))
-        ) {
+        if (thumbnailsChanged && html.includes('class="link-card__image"')) {
           context.logger.info(
             `Rebuilding content with unoptimized link card images: ${id}`,
           );
