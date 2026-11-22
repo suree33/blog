@@ -50,7 +50,7 @@ function unquote(value: string): string {
  * ブロック形式（`tags:` + `  - タグ`）とフロー形式（`tags: [a, b]`）に対応する。
  * 値が空の `tags:` は、タグページと同様にタグなしとして扱う。
  */
-export function parseFrontmatterTags(markdown: string): string[] {
+function parseFrontmatterTags(markdown: string): string[] {
   const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(markdown)?.[1];
   if (!frontmatter) {
     return [];
