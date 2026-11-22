@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/test';
 import { HOME_URL_REGEX } from '../utils/regex';
+import { routes } from '../utils/routes';
 
 /**
  * ヘッダーとフッターのナビゲーションリンク。
@@ -10,16 +11,32 @@ import { HOME_URL_REGEX } from '../utils/regex';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
-  test('skip link moves keyboard focus to main', async ({ page }) => {
-    await page.goto('/');
-    await page.keyboard.press('Tab');
-    const skipLink = page.getByRole('link', { name: '本文へスキップ' });
-    await expect(skipLink).toBeFocused();
-    await expect(skipLink).toBeInViewport();
-    await expect(skipLink).toBeVisible();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('main#main-content')).toBeFocused();
-  });
+  for (const route of [routes.home, routes.sampleArticle]) {
+    test(`skip link moves keyboard focus to main on ${route}`, async ({
+      page,
+    }) => {
+      await page.goto(route);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.keyboard.press('Tab');
+      const skipLink = page.getByRole('link', { name: '本文へスキップ' });
+      await expect(skipLink).toBeFocused();
+      await expect(skipLink).toBeInViewport();
+      await expect(skipLink).toBeVisible();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('main#main-content')).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(page.locator('main :focus')).toBeVisible();
+      await expect
+        .poll(async () => {
+          const focused = await page.locator('main :focus').boundingBox();
+          const header = await page.locator('header').boundingBox();
+          return focused && header
+            ? focused.y - (header.y + header.height)
+            : -1;
+        })
+        .toBeGreaterThanOrEqual(0);
+    });
+  }
 
   test('モバイルメニューを開いている間はTab/Shift+Tabのフォーカスをメニュー内に留める', async ({
     homePage,

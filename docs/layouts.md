@@ -31,7 +31,9 @@ BaseLayout.astro (基本レイアウト)
 The first focusable element is the skip link, labeled `本文へスキップ`. It is
 visually hidden until focused, appears above the sticky header in both themes,
 and targets `<main id="main-content" tabindex="-1">` so activation moves keyboard
-focus to the content. Keep this link before the header.
+focus to the content. Keep this link before the header. The main target uses
+`scroll-mt-24 sm:scroll-mt-28`, matching article heading anchors, so the sticky
+header does not cover the first content link after activation and Tab.
 
 Each HTML page supplies exactly one nonempty `h1` inside `main`; the header logo
 is not a heading. The home page uses a visually hidden `Blog` heading to preserve

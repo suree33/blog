@@ -101,7 +101,11 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
       本文へスキップ
     </a>
     <Header />
-    <main id="main-content" tabindex="-1" class="grow">
+    <main
+      id="main-content"
+      tabindex="-1"
+      class="grow scroll-mt-24 sm:scroll-mt-28"
+    >
       <slot />
     </main>
     <Footer />
