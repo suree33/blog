@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { expect, test } from 'vitest';
+import sharp from 'sharp';
 
 const exec = promisify(execFile);
 const repository = fileURLToPath(new URL('../../', import.meta.url));
@@ -85,6 +86,9 @@ test('clean, cached, and missing-image builds preserve HTML and assets; dev serv
       .update('https://example.com/image.svg')
       .digest('hex');
     await rm(path.join(root, `cache/link-card-images/${imageHash}.svg`));
+    const thumbnail = sources.find((source) => source.endsWith('.webp'));
+    if (!thumbnail) throw new Error('Missing thumbnail source');
+    await rm(path.join(root, 'cache', thumbnail));
     const failed = await exec(
       process.execPath,
       [cli, 'build', '--root', root],
@@ -208,8 +212,10 @@ test('clean, cached, and missing-image builds preserve HTML and assets; dev serv
       )) {
         const response = await fetch(`${origin}${source}`);
         expect(response.status).toBe(200);
-        expect(response.headers.get('content-type')).toBe('image/svg+xml');
-        expect(await response.text()).toContain('<svg');
+        expect(response.headers.get('content-type')).toBe('image/webp');
+        expect(
+          await sharp(Buffer.from(await response.arrayBuffer())).metadata(),
+        ).toMatchObject({ format: 'webp', width: 1, height: 1 });
         const head = await fetch(`${origin}${source}`, { method: 'HEAD' });
         expect(head.status).toBe(200);
         expect(await head.text()).toBe('');
