@@ -44,6 +44,16 @@ pnpm run build
 pnpm run preview
 ```
 
+### Worker の型生成
+
+```bash
+pnpm run cf-typegen
+```
+
+`wrangler.toml` の設定（バインディング、`compatibility_date`）から Worker の型を `worker-configuration.d.ts` に生成します。
+生成した型は Worker 用の `tsconfig.worker.json` だけで読み込み、Astro のサイト側の型には混ぜません。
+`pnpm run lint` も最初にこのコマンドを実行するため、Wrangler の更新後に型が古いまま残ることはありません。
+
 ## 記事の書き方
 
 記事は `src/content/posts/` に Markdown で置きます。Astro の `posts` コンテンツコレクションから記事を読み込み、`src/pages/posts/[slug].astro` で共通のレイアウトを適用するので、記事の frontmatter に `layout` は不要です。
