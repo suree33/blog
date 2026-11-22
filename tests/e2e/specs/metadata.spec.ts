@@ -15,7 +15,7 @@ const cases = [
     path: `${routes.articleWithoutCodeBlock}/`,
     image: defaultImage,
     description:
-      'ネスプレッソの受け皿に廃液を1週間放置したら、カビが生えてしまった。',
+      'ネスプレッソを使ったあとの掃除、蒸し暑い時期はとくにサボらないほうがよさそう。',
   },
   {
     path: '/posts/setup-obsidian-livesync/',

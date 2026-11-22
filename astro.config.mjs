@@ -26,6 +26,7 @@ export default defineConfig({
   markdown: {
     processor: satteri({
       mdastPlugins: [
+        // Validate authored HTML before link cards generate decorative images.
         requireImageAlt(
           new URL('./src/content/posts/', import.meta.url),
           new URL('./tests/e2e/fixtures/posts/', import.meta.url),
