@@ -92,10 +92,9 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
       href="#main-content"
       class={cn(
         'sr-only focus:not-sr-only',
-        'focus:fixed focus:top-3 focus:left-3 focus:z-[100]',
-        'focus:rounded-lg focus:px-4 focus:py-3 focus:font-bold focus:shadow-lg',
-        'focus:bg-white focus:text-neutral-950 dark:focus:bg-neutral-900 dark:focus:text-white',
-        'focus:outline-2 focus:outline-offset-2 focus:outline-blue-700 dark:focus:outline-blue-300',
+        'focus:block focus:w-full focus:shrink-0 focus:px-4 focus:py-3 focus:text-center focus:font-bold',
+        'focus:bg-neutral-100 focus:text-neutral-950 dark:focus:bg-neutral-900 dark:focus:text-white',
+        'focus:outline-2 focus:-outline-offset-4 focus:outline-blue-700 dark:focus:outline-blue-300',
       )}
     >
       本文へスキップ

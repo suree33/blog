@@ -22,6 +22,22 @@ test.describe('ナビゲーション', () => {
       await expect(skipLink).toBeFocused();
       await expect(skipLink).toBeInViewport();
       await expect(skipLink).toBeVisible();
+      const skipBox = await skipLink.boundingBox();
+      expect(skipBox).not.toBeNull();
+      for (const link of await page.locator('header a').all()) {
+        if (!(await link.isVisible())) continue;
+        const box = await link.boundingBox();
+        expect(box).not.toBeNull();
+        if (skipBox && box) {
+          expect(
+            skipBox.x < box.x + box.width &&
+              skipBox.x + skipBox.width > box.x &&
+              skipBox.y < box.y + box.height &&
+              skipBox.y + skipBox.height > box.y,
+            `skip link must not overlap ${await link.getAttribute('href')}`,
+          ).toBe(false);
+        }
+      }
       await page.keyboard.press('Enter');
       await expect(page.locator('main#main-content')).toBeFocused();
       await page.keyboard.press('Tab');

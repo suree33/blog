@@ -29,7 +29,8 @@ BaseLayout.astro (基本レイアウト)
 ### Keyboard navigation and headings
 
 The first focusable element is the skip link, labeled `本文へスキップ`. It is
-visually hidden until focused, appears above the sticky header in both themes,
+visually hidden until focused, appears as a full-width bar in normal flow above
+the sticky header in both themes without covering its links,
 and targets `<main id="main-content" tabindex="-1">` so activation moves keyboard
 focus to the content. Keep this link before the header. The main target uses
 `scroll-mt-24 sm:scroll-mt-28`, matching article heading anchors, so the sticky
