@@ -25,26 +25,27 @@ export const GET = (async () => {
   const posts = await getPublishedPosts();
   const pages = await getPublishedStandalonePages();
   const container = await AstroContainer.create();
+  const pageItems = await Promise.all(
+    pages.map(async (page) => {
+      const { title, description, pubDate } = page.frontmatter;
+      if (!title || !pubDate) return;
+
+      return {
+        title,
+        description: description || '',
+        pubDate: new Date(pubDate),
+        link: page.url,
+        content: sanitizeHtml(await page.compiledContent(), sanitizeOptions),
+      };
+    }),
+  );
   return rss({
     title: config.siteName,
     description: config.description,
     site: import.meta.env.SITE,
     stylesheet: '/rss/styles.xsl',
     items: [
-      ...(await Promise.all(
-        pages
-          .filter(({ frontmatter }) => frontmatter.title && frontmatter.pubDate)
-          .map(async (post) => ({
-            title: post.frontmatter.title,
-            description: post.frontmatter.description || '',
-            pubDate: new Date(post.frontmatter.pubDate),
-            link: post.url,
-            content: sanitizeHtml(
-              await post.compiledContent(),
-              sanitizeOptions,
-            ),
-          })),
-      )),
+      ...pageItems.filter((item) => item !== undefined),
       ...(await Promise.all(
         posts.map(async (post) => {
           const { Content } = await render(post);

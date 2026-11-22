@@ -122,3 +122,6 @@ blob-report/
 
 # Amp orb portals
 .amp/portals/*
+
+# Obsidian vault settings
+.obsidian/

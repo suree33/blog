@@ -35,9 +35,6 @@
   }
 }
 
-.link-card__content {
-}
-
 .link-card__title {
   @apply text-base leading-5 font-bold;
   @apply text-(--tw-prose-headings);

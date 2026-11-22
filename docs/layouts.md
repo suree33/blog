@@ -49,6 +49,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 ```
 
+### 内部ページへのリンク
+
+内部のHTMLページへのリンクは、Cloudflare Static Assets がリダイレクトせずに配信するURLに合わせ、末尾に `/` を付けます。
+
+`src/lib/posts.ts` の `getPublishedPosts()` と `getPublishedStandalonePages()` は、一覧とRSSに末尾が `/` のURLを渡します。`PostMetadata.astro` のタグリンクとMarkdown内の内部ページへのリンクも、この形式にそろえます。
+
+`/rss.xml` や `/posts/example.md` などのファイルへのリンク、ページ内リンク、外部URLは変更しません。AstroのURLポリシーやWorkerの動作も変更しません。
+
 ## ProseArticleLayout.astro
 
 文章コンテンツに特化したレイアウトです。BaseLayoutを拡張しています。

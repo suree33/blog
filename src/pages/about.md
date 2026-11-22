@@ -50,4 +50,4 @@ interests:
 
 ## アイデア
 
-- [理想の家のアイデア](/dreamhouse)
+- [理想の家のアイデア](/dreamhouse/)
