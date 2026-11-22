@@ -31,6 +31,13 @@ export class Header {
       .filter({ visible: true });
   }
 
+  /** 「Tags」ナビゲーションリンク（可視判定の理由は `blogLink` を参照）。 */
+  get tagsLink(): Locator {
+    return this.root
+      .getByRole('link', { name: 'Tags' })
+      .filter({ visible: true });
+  }
+
   /** 「About」ナビゲーションリンク（可視判定の理由は `blogLink` を参照）。 */
   get aboutLink(): Locator {
     return this.root
