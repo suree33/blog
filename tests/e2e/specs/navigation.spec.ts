@@ -10,6 +10,17 @@ import { HOME_URL_REGEX } from '../utils/regex';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
+  test('skip link moves keyboard focus to main', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Tab');
+    const skipLink = page.getByRole('link', { name: '本文へスキップ' });
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeInViewport();
+    await expect(skipLink).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('main#main-content')).toBeFocused();
+  });
+
   test('モバイルメニューを開いている間はTab/Shift+Tabのフォーカスをメニュー内に留める', async ({
     homePage,
     page,

@@ -26,6 +26,18 @@ BaseLayout.astro (基本レイアウト)
 - **初期テーマ同期**: `<head>` のインラインスクリプトで localStorage のテーマを初回描画前に `<html>` へ反映し、OS テーマとの差分によるちらつきを防止
 - **共通コンポーネント**: Header、Footer の配置
 
+### Keyboard navigation and headings
+
+The first focusable element is the skip link, labeled `本文へスキップ`. It is
+visually hidden until focused, appears above the sticky header in both themes,
+and targets `<main id="main-content" tabindex="-1">` so activation moves keyboard
+focus to the content. Keep this link before the header.
+
+Each HTML page supplies exactly one nonempty `h1` inside `main`; the header logo
+is not a heading. The home page uses a visually hidden `Blog` heading to preserve
+the existing design. Article, About, tag, Dreamhouse and 404 pages retain their
+page titles as headings.
+
 ### Props
 
 ```typescript
