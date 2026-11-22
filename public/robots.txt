@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://sur33.com/sitemap-index.xml

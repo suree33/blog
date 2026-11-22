@@ -1,5 +1,11 @@
 ---
+import type { Post } from '@/types/Post';
 import { formatDate } from '@scripts/date';
+
+interface Props {
+  post: Post;
+}
+
 const { post } = Astro.props;
 const tags = post.frontmatter.tags?.slice(0, 2) ?? [];
 ---
@@ -11,7 +17,7 @@ const tags = post.frontmatter.tags?.slice(0, 2) ?? [];
   >
     <div>
       <div class="dot-separated flex flex-wrap text-neutral-500 dark:text-neutral-400">
-        {tags.map((tag: string) => (
+        {tags.map((tag) => (
           <div class="inline-flex text-sm">{tag}</div>
         ))}
         <time

@@ -268,7 +268,7 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 決定性のための対策:
 
-- **ビルド時ネットワークスタブ**: リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL は `*.e2e-stub.invalid` にするため、`public/link-card-images/` に残った本物のキャッシュとは衝突しません。ビルドで書き出したスタブ画像は終了時に同ディレクトリから削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
+- **ビルド時ネットワークスタブ**: リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL には `*.e2e-stub.invalid` を使います。E2E ビルドではスタブ画像を `node_modules/.astro-e2e/link-card-images/` に保存し、通常のキャッシュとは分けます。ビルドプロセスの終了時に同ディレクトリからスタブ画像を削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
 - **ビルド時のタイムゾーン**: 記事の日付はビルド時に整形されるため、`TZ=UTC` に固定します。
 - **ブラウザ側**: localhost 以外へのリクエスト（Google Analytics / Partytown など）は `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
 - **フォント**: `tests/e2e/styles/screenshot-pages.css` で本文を `Noto Sans CJK JP`、`code` / `pre` / `kbd` / `samp` を `Noto Sans Mono CJK JP` に固定します。等幅表示を保つことで、コードブロックの崩れも検出できます（どちらも `fonts-noto-cjk` に含まれます）。
@@ -348,6 +348,13 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 4. `playwright-report/` と `test-results/` を artifact としてアップロードする。
 
 artifact の保持期間は 7 日です。テストが失敗した場合も調査できるよう、アップロードステップには `if: ${{ !cancelled() }}` を付けています。
+
+### ビルドの使い回しとキャッシュ
+
+- `Build` ジョブの `dist/` は `dist` artifact として `Worker integration tests` に渡し、同じビルドを再実行しません。
+- E2E シャードとフルページ VRT は、従来どおり各ジョブで Playwright の `webServer` がビルドします。E2E 用ビルドを別ジョブで 1 回にまとめると、シャードがそのジョブを待つぶん全体の所要時間が延びるためです。
+- pnpm ストアのキャッシュは全ジョブで復元しますが、保存（`save-cache`）は main への push 時の `Build` ジョブだけが行います。
+- `concurrency` は、PR の実行では ref 単位のグループで新しい push が古い実行をキャンセルします。main への push の実行はコミット（`github.sha`）ごとに別グループになるため、実行中・待機中のどちらもキャンセルされません。
 
 ## レポートを URL で閲覧する (Cloudflare Workers プレビュー)
 
