@@ -1,10 +1,35 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { parseFrontmatter } from 'astro/markdown';
 import { defineMdastPlugin, markdownToHtml } from 'satteri';
-import { describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { requireImageAlt } from '../../src/lib/markdown/require-image-alt';
 
-const directory = new URL('file:///blog/posts/');
-const fileURL = new URL('post.md', directory);
-const mdastPlugins = [requireImageAlt(directory)];
+let directory: URL;
+let fileURL: URL;
+let mdastPlugins: ReturnType<typeof requireImageAlt>[];
+
+beforeEach(() => {
+  directory = pathToFileURL(
+    `${mkdtempSync(join(tmpdir(), 'require-image-alt-'))}/`,
+  );
+  fileURL = new URL('post.md', directory);
+  mdastPlugins = [requireImageAlt(directory)];
+});
+
+afterEach(() => {
+  rmSync(directory, { recursive: true, force: true });
+});
+
+function renderPost(source: string) {
+  writeFileSync(fileURL, source);
+  const { content } = parseFrontmatter(source, {
+    frontmatter: 'empty-with-spaces',
+  });
+  return markdownToHtml(content.trim(), { fileURL, mdastPlugins });
+}
 
 describe('required Markdown image alt text', () => {
   test.each([
@@ -12,22 +37,30 @@ describe('required Markdown image alt text', () => {
     '![  ](photo.png)',
     '![][photo]\n\n[photo]: photo.png',
   ])('rejects %s with its file and line', (image) => {
-    expect(() =>
-      markdownToHtml(`Introduction\n\n${image}`, { fileURL, mdastPlugins }),
-    ).toThrow(
-      '/blog/posts/post.md (Markdown line 3): Markdown images need non-empty alt text.',
+    expect(() => renderPost(`Introduction\n\n${image}`)).toThrow(
+      `${fileURLToPath(fileURL)}:3: Markdown images need non-empty alt text.`,
     );
   });
 
   test.each([
-    '<img src="photo.png">',
-    'Inline <IMG SRC=photo.png ALT="">',
-    '<figure>\n  <img src="photo.png" alt=" &#32; ">\n</figure>',
-  ])('rejects authored HTML without alt: %s', (html) => {
-    expect(() =>
-      markdownToHtml(`Introduction\n\n${html}`, { fileURL, mdastPlugins }),
-    ).toThrow(
-      '/blog/posts/post.md (Markdown HTML starts on line 3): HTML images need non-empty alt text.',
+    ['<img src="photo.png">', 3],
+    ['Inline <IMG SRC=photo.png ALT="">', 3],
+    ['<figure>\n  <img src="photo.png" alt=" &#32; ">\n</figure>', 4],
+    ['<template>\n  <img src=x>\n</template>', 4],
+    ['<noscript>\n  <img src=x>\n</noscript>', 4],
+  ])('rejects authored HTML without alt: %s', (html, line) => {
+    expect(() => renderPost(`Introduction\n\n${html}`)).toThrow(
+      `${fileURLToPath(fileURL)}:${line}: HTML images need non-empty alt text.`,
+    );
+  });
+
+  test.each([
+    ['![](photo.png)', 7, 'Markdown'],
+    ['<figure>\r\n  <img src=x>\r\n</figure>', 8, 'HTML'],
+  ])('counts frontmatter and blank lines for %s', (image, line, type) => {
+    const source = `---\r\ntitle: Post\r\n---\r\n\r\nIntroduction\r\n\r\n${image}\r\n`;
+    expect(() => renderPost(source)).toThrow(
+      `${fileURLToPath(fileURL)}:${line}: ${type} images need non-empty alt text.`,
     );
   });
 

@@ -226,6 +226,9 @@ importers:
       open-graph-scraper:
         specifier: 6.13.0
         version: 6.13.0
+      parse5:
+        specifier: 7.3.0
+        version: 7.3.0
       postcss-nesting:
         specifier: 14.0.3
         version: 14.0.3(postcss@8.5.33)

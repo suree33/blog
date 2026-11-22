@@ -53,7 +53,7 @@ Callout、リンクカードの個別テストは含みません。
 
 `tests/unit/post-schema.test.ts` は、記事の `title`、`description`、`tags`、`pubDate` が欠けているか空の場合と、画像オブジェクトに空でない `alt` がない場合に、スキーマが拒否することを検証します。
 
-`tests/unit/require-image-alt.test.ts` は、記事本文に書かれた Markdown 画像や HTML の `<img>` に代替テキストがない場合に、ファイル名と本文の行番号を示すエラーが出ることを検証します。HTML の場合は、該当する HTML ブロックやタグの開始行を示します。リンクカードが生成する装飾画像は検証対象外です。
+`tests/unit/require-image-alt.test.ts` は、記事本文に書かれた Markdown 画像や HTML の `<img>` に代替テキストがない場合に、ファイル名とファイルの先頭から数えた画像の行番号を示すエラーが出ることを検証します。リンクカードが生成する装飾画像は検証対象外です。
 
 ## Sätteri リンクカードの単体テスト
 
