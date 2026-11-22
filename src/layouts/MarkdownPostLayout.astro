@@ -1,12 +1,12 @@
 ---
 import type { MarkdownHeading } from 'astro';
-import type { PostFrontmatter } from '@/types/Post';
+import type { StandalonePageFrontmatter } from '@/types/Post';
 import PostMetadata from '@components/PostMetadata.astro';
 import ProseArticleLayout from '@layouts/ProseArticleLayout.astro';
 import TableOfContents from '@components/TableOfContents.astro';
 
 interface Props {
-  frontmatter: PostFrontmatter;
+  frontmatter: StandalonePageFrontmatter;
   headings: MarkdownHeading[];
 }
 
@@ -25,7 +25,7 @@ const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
   <PostMetadata
     tags={frontmatter.tags}
     pubDate={frontmatter.pubDate}
-    updatedDate={frontmatter.updatedDate}
+    updatedDate={frontmatter.updatedDate ?? undefined}
   />
   <h1>{frontmatter.title}</h1>
   {frontmatter.image && (

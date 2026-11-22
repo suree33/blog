@@ -1,7 +1,9 @@
 ---
 export const prerender = true;
+import type { InferGetStaticPropsType } from 'astro';
 import PostList from '@components/PostList.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
+import type { Post } from '@/types/Post';
 import { getPublishedPosts, getPublishedStandalonePages } from '@lib/posts';
 
 export async function getStaticPaths() {
@@ -30,8 +32,10 @@ export async function getStaticPaths() {
   ];
 
   return uniqueTags.map((tag) => {
-    const filteredPosts = posts.filter((post) =>
-      post.frontmatter.tags ? post.frontmatter.tags.includes(tag) : false,
+    const filteredPosts = posts.filter(
+      (post): post is typeof post & Post =>
+        post.frontmatter.pubDate !== undefined &&
+        (post.frontmatter.tags?.includes(tag) ?? false),
     );
     return {
       params: { tag },
@@ -39,6 +43,8 @@ export async function getStaticPaths() {
     };
   });
 }
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { tag } = Astro.params;
 const { posts } = Astro.props;
