@@ -4,6 +4,9 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { HookParameters } from 'astro';
 import type { LoaderContext } from 'astro/loaders';
+import { load as parseHtml } from 'cheerio';
+import sharp from 'sharp';
+import { markdownToHtml } from 'satteri';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createLinkCards, withLinkCardImages } from './link-card-assets';
 
@@ -146,4 +149,109 @@ test('build hook propagates output write failures', async () => {
       dir: pathToFileURL(`${root}/output/`),
     } as HookParameters<'astro:build:done'>),
   ).rejects.toMatchObject({ code: 'ENOTDIR' });
+});
+
+test.each(['large', 'small', 'empty', 'unsupported', 'missing'])(
+  'thumbnail conversion (%s)',
+  async (state) => {
+    const original =
+      state === 'unsupported'
+        ? Buffer.from('invalid image')
+        : state === 'empty'
+          ? Buffer.alloc(0)
+          : await sharp({
+              create: {
+                width: state === 'small' ? 32 : 480,
+                height: state === 'small' ? 16 : 480,
+                channels: 3,
+                background: '#2288aa',
+              },
+            })
+              .png()
+              .toBuffer();
+    const requests = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      const url = String(input);
+      if (url.endsWith('/image.png'))
+        return new Response(original, {
+          headers: { 'content-type': 'image/png' },
+        });
+      return new Response(
+        `<html><head><title>Card</title><link rel="icon" href="https://example.com/image.png">${state === 'missing' ? '' : '<meta property="og:image" content="https://example.com/image.png">'}</head></html>`,
+      );
+    });
+    const { plugin, integration } = createLinkCards({ fetch: requests });
+    await integration.hooks['astro:config:done']?.({
+      config: { cacheDir },
+    } as HookParameters<'astro:config:done'>);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const { html } = await markdownToHtml('https://example.com/', {
+        mdastPlugins: [plugin],
+      });
+      const image = parseHtml(html)('.link-card__image');
+      if (state === 'empty' || state === 'missing')
+        expect(image).toHaveLength(0);
+      else if (state === 'unsupported') {
+        expect(image.attr('src')).toMatch(/\.png$/);
+        expect(warn).toHaveBeenCalled();
+      } else {
+        const source = image.attr('src');
+        if (!source) throw new Error('Missing thumbnail source');
+        const bytes = await readFile(new URL(source.slice(1), cacheDir));
+        expect(await sharp(bytes).metadata()).toMatchObject({
+          format: 'webp',
+          width: state === 'small' ? 32 : 232,
+          height: state === 'small' ? 16 : 232,
+        });
+        expect(image.attr('width')).toBe(state === 'small' ? '32' : '232');
+        expect(image.attr('height')).toBe(state === 'small' ? '16' : '232');
+        expect(image.attr('loading')).toBe('lazy');
+        expect(image.attr('decoding')).toBe('async');
+        expect(parseHtml(html)('.link-card__favicon').attr('src')).toMatch(
+          /\.png$/,
+        );
+        const cached = await markdownToHtml('https://example.com/', {
+          mdastPlugins: [plugin],
+        });
+        expect(cached.html).toBe(html);
+        expect(requests).toHaveBeenCalledTimes(2);
+      }
+    } finally {
+      warn.mockRestore();
+    }
+  },
+);
+
+test('loader migrates legacy thumbnail HTML without invalidating optimized thumbnails', async () => {
+  const directory = new URL('link-card-images/', cacheDir);
+  await mkdir(directory, { recursive: true });
+  await writeFile(new URL(filename, directory), '<svg/>');
+  const remove = vi.fn();
+  const context = {
+    config: { cacheDir },
+    store: {
+      entries: () => [
+        [
+          'old',
+          {
+            rendered: {
+              html: `<img src="/link-card-images/${filename}" class="link-card__image" alt="">`,
+            },
+          },
+        ],
+        [
+          'new',
+          {
+            rendered: {
+              html: `<img src="/link-card-images/${filename}" class="link-card__image" width="1" height="1" loading="lazy" decoding="async" alt="">`,
+            },
+          },
+        ],
+      ],
+      delete: remove,
+    },
+    logger: { info: vi.fn() },
+  } as unknown as LoaderContext;
+  await withLinkCardImages({ name: 'fixture', load: vi.fn() }).load(context);
+  expect(remove.mock.calls).toEqual([['old']]);
 });

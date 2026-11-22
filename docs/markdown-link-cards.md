@@ -13,7 +13,7 @@
 文中のリンク、リスト・引用内のリンク、表示文字列が異なるリンクは変換しません。
 判定は `remark-link-card-plus@0.8.2` に合わせ、URL だけを強調した段落も対象です。
 
-HTML の構造・属性は旧プラグインと同じで、クラスの接頭辞だけを
+HTML の構造は旧プラグインと同じで、クラスの接頭辞を
 `remark-link-card-plus__` から `link-card__` に変更しています。
 タイトル・説明・表示ホスト名は `sanitize-html` の既定設定で無害化し、属性値はエスケープします。
 最初の OG 画像をサムネイルとして使います。画像がない場合や応答が画像でないと確認できた場合は、サムネイル要素を省略します。
@@ -39,6 +39,13 @@ favicon と OG 画像は Astro の `config.cacheDir` 配下の `link-card-images
 SVG は Content-Type と本文のルート要素、それ以外は `file-type` で形式を判定します。
 画像の Content-Type だが形式を判定できない場合は、旧プラグイン同様 `.png` にします。
 
+`createLinkCards()` は、保存済みの OG 画像から sharp で WebP サムネイルを生成します。
+縦横比を保って232×232px以内に縮小し、小さい画像は拡大しません。元の画像と favicon のキャッシュは残します。
+変換後のファイル名は、元の画像のバイト列と変換設定の識別子から求めた SHA-256 に `.webp` を付けたものです。
+同じ変換済みファイルがあれば再利用します。変換に失敗した場合は警告を出し、元の画像を参照します。
+変換済みサムネイルには実際のピクセル寸法を `width`・`height` に設定し、`loading="lazy"` と `decoding="async"` を付けます。
+CSSの表示領域は変更しません。幅はモバイルで116px、広い画面で220pxなので、232pxの上限はモバイルの約2倍、広い画面の約1倍に相当します。
+
 ### Astro のビルドキャッシュと開発サーバー
 
 Astro は内容が変わらない記事の描画済み HTML をデータストアから再利用します。
@@ -56,6 +63,7 @@ integration は毎回の `astro:build:done` で、画像をフックの `dir` �
 旧 `public/link-card-images/` 方式からの移行時や画像キャッシュだけが失われた場合も、自動で画像を再取得します。
 リモートのサムネイルや favicon の URL が HTML に残っている場合も、その記事だけを次のビルドで再描画して取得を再試行します。ビルド内で再描画を繰り返すことはありません。
 integration の追加だけで Astro がデータストアを無効化するとは想定していません。
+変換前のサムネイルを含むキャッシュ済みHTMLも、その記事だけ再描画して新しい画像と属性へ移行します。
 
 関連 API: [Astro integration hooks](https://docs.astro.build/en/reference/integrations-reference/)、
 [Content Loader API](https://docs.astro.build/en/reference/content-loader-reference/)。

@@ -1,8 +1,17 @@
-import { access, cp, mkdir, readdir, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import {
+  access,
+  cp,
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import type { AstroConfig, AstroIntegration } from 'astro';
 import type { Loader } from 'astro/loaders';
 import { fileTypeFromBuffer } from 'file-type';
+import sharp from 'sharp';
 import { linkCard, type LinkCardOptions } from './link-card';
 
 const imageFilename = '[a-f0-9]{64}\\.[a-z0-9]+';
@@ -26,6 +35,13 @@ export function withLinkCardImages(loader: Loader): Loader {
         ) {
           context.logger.info(
             `Rebuilding content with remote link card images: ${id}`,
+          );
+          context.store.delete(id);
+          continue;
+        }
+        if (/class="link-card__image"(?![^>]*decoding="async")/.test(html)) {
+          context.logger.info(
+            `Rebuilding content with unoptimized link card images: ${id}`,
           );
           context.store.delete(id);
           continue;
@@ -56,11 +72,50 @@ export function withLinkCardImages(loader: Loader): Loader {
 }
 
 export function createLinkCards(
-  options: Omit<LinkCardOptions, 'cacheDirectory'> = {},
+  options: Omit<LinkCardOptions, 'cacheDirectory' | 'thumbnail'> = {},
 ) {
   let directory: URL;
   const plugin = linkCard({
     ...options,
+    async thumbnail(source) {
+      if (!source.startsWith('/link-card-images/')) return undefined;
+      try {
+        const original = await readFile(
+          new URL(source.slice('/link-card-images/'.length), directory),
+        );
+        const hash = createHash('sha256')
+          .update(original)
+          .update('thumbnail-232-webp-v1')
+          .digest('hex');
+        const filename = `${hash}.webp`;
+        const output = new URL(filename, directory);
+        try {
+          await access(output);
+        } catch {
+          await writeFile(
+            output,
+            await sharp(original)
+              .rotate()
+              .resize({
+                width: 232,
+                height: 232,
+                fit: 'inside',
+                withoutEnlargement: true,
+              })
+              .webp()
+              .toBuffer(),
+          );
+        }
+        const { width, height } = await sharp(
+          await readFile(output),
+        ).metadata();
+        if (!width || !height) return undefined;
+        return { src: `/link-card-images/${filename}`, width, height };
+      } catch (error) {
+        console.warn(`[link-card] ${source}: ${String(error)}`);
+        return undefined;
+      }
+    },
     get cacheDirectory() {
       return fileURLToPath(directory);
     },
