@@ -19,6 +19,7 @@ const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
   ogType="article"
   pageTitle={frontmatter.title}
   ogimage={typeof ogimage === 'string' ? ogimage : ogimage?.src}
+  ogImageAlt={typeof ogimage === 'string' ? undefined : ogimage?.alt}
   description={frontmatter.description}
   tocHeadings={tocHeadings}
 >
