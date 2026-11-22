@@ -13,7 +13,9 @@ const sanitizeOptions: sanitizeHtml.IOptions = {
       tagName,
       attribs: {
         ...attribs,
-        ...(attribs.src && { src: new URL(attribs.src, config.url).href }),
+        ...(attribs.src && {
+          src: new URL(attribs.src, import.meta.env.SITE).href,
+        }),
       },
     }),
   },
@@ -26,7 +28,7 @@ export const GET = (async () => {
   return rss({
     title: config.siteName,
     description: config.description,
-    site: config.url,
+    site: import.meta.env.SITE,
     stylesheet: '/rss/styles.xsl',
     items: [
       ...(await Promise.all(
