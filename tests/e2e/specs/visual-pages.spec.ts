@@ -77,7 +77,7 @@ async function loadAllImagesAndFonts(page: Page): Promise<string[]> {
  * 決定性のための対策:
  * - ビルド時の外部 HTTP（リンクカードの OGP・画像取得など）は
  *   `tests/e2e/support/network-stub.ts` が合成レスポンスに置き換える
- * - ブラウザからの localhost 以外へのリクエスト（Google Analytics / Partytown など）は
+ * - ブラウザからの localhost 以外へのリクエストは
  *   中断し、Service Worker も無効化する
  * - テーマはサイトの仕組み（`localStorage.theme`）とシステム配色の両方で固定する
  * - 遅延読み込み画像も含めて全画像とフォントの読み込みを待ち、アニメーションを無効化する

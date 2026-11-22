@@ -33,7 +33,6 @@
   "dependencies": {
     "@astrojs/check": "0.9.12",
     "@astrojs/markdown-satteri": "0.4.10",
-    "@astrojs/partytown": "2.1.9",
     "@astrojs/rss": "4.0.19",
     "@astrojs/sitemap": "3.7.6",
     "@astrojs/ts-plugin": "1.11.0",
