@@ -1,86 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "minimumReleaseAge": "3 days",
-  "timezone": "Asia/Tokyo",
-  "schedule": ["* 10 * * *"],
-  "enabledManagers": ["github-actions", "npm"],
-  "lockFileMaintenance": {
-    "enabled": true
-  },
-  "packageRules": [
-    {
-      "matchUpdateTypes": ["patch"],
-      "minimumReleaseAge": "1 day"
-    },
-    {
-      "matchUpdateTypes": ["minor"],
-      "minimumReleaseAge": "2 days"
-    },
-    {
-      "matchUpdateTypes": ["major"],
-      "minimumReleaseAge": "3 days"
-    },
-    {
-      "description": "Astro関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["@astrojs/**", "astro", "astro-**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "astro"
-    },
-    {
-      "description": "Tailwind関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["@tailwindcss/**", "tailwindcss"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "tailwind"
-    },
-    {
-      "description": "PostCSS関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["postcss**", "autoprefixer"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "postcss"
-    },
-    {
-      "description": "Markdown関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["rehype**", "remark**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "markdown"
-    },
-    {
-      "description": "Iconify関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["@iconify-json/**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "icon"
-    },
-    {
-      "description": "TypeScript関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["typescript", "@types/**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "typescript"
-    },
-    {
-      "description": "ESLint関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": [
-        "@eslint/**",
-        "eslint**",
-        "typescript-eslint",
-        "@typescript-eslint/parser"
-      ],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "eslint"
-    },
-    {
-      "description": "Prettier関連の minor/patch をまとめる",
-      "matchManagers": ["npm"],
-      "matchPackageNames": ["prettier**"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "prettier"
-    }
+  "extends": [
+    "config:best-practices",
+    "config:js-app",
+    ":automergeMinor",
+    ":automergeDigest",
+    ":disableRateLimiting"
   ]
 }

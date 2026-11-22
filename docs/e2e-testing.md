@@ -349,6 +349,13 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 
 artifact の保持期間は 7 日です。テストが失敗した場合も調査できるよう、アップロードステップには `if: ${{ !cancelled() }}` を付けています。
 
+### ビルドの使い回しとキャッシュ
+
+- `Build` ジョブの `dist/` は `dist` artifact として `Worker integration tests` に渡し、同じビルドを再実行しません。
+- E2E シャードとフルページ VRT は、従来どおり各ジョブで Playwright の `webServer` がビルドします。E2E 用ビルドを別ジョブで 1 回にまとめると、シャードがそのジョブを待つぶん全体の所要時間が延びるためです。
+- pnpm ストアのキャッシュは全ジョブで復元しますが、保存（`save-cache`）は main への push 時の `Build` ジョブだけが行います。
+- `concurrency` は、PR の実行では ref 単位のグループで新しい push が古い実行をキャンセルします。main への push の実行はコミット（`github.sha`）ごとに別グループになるため、実行中・待機中のどちらもキャンセルされません。
+
 ## レポートを URL で閲覧する (Cloudflare Workers プレビュー)
 
 artifact をダウンロードして開く代わりに、CI の実行結果からリンクをクリックするだけで HTML レポートを閲覧できるようにしています。レポートは本番ブログとは別の Cloudflare Worker（静的アセット配信）にアップロードします。

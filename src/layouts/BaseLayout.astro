@@ -65,7 +65,9 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
     />
     <meta
       property="og:image"
-      content={ogimage ? config.url + ogimage : config.url + config.ogImage}
+      content={
+        new URL(ogimage || config.ogImage, Astro.site ?? Astro.url.origin)
+      }
     />
     <meta property="og:locale" content="ja_JP" />
     <!-- Google Analytics -->
