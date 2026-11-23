@@ -24,7 +24,7 @@ const { class: classList } = Astro.props;
 </HeaderIcon>
 
 <script>
-  import { isTheme, type Theme } from '@/types/Theme';
+  import { isTheme, THEMES, type Theme } from '@/types/Theme';
   type ThemeState = Theme | null;
 
   const html = document.documentElement;
@@ -71,29 +71,18 @@ const { class: classList } = Astro.props;
   /**
    * 指定されたテーマを適用する
    *
-   * 指定されたテーマを `<html>` のクラスに追加し、 localStorage に保存する
+   * 指定されたテーマを `<html>` のクラスに追加し、 localStorage に保存する。
+   * null の場合はクラスと保存値を外し、システム設定に従う
    *
    * @param theme
    */
   const applyTheme = (theme: ThemeState) => {
-    html.classList.remove('dark', 'light', 'theme-system');
-
-    if (theme === 'dark') {
-      html.classList.add('dark');
-      html.style.colorScheme = 'dark';
-      storeTheme('dark');
-      return;
+    html.classList.remove(...THEMES);
+    if (theme !== null) {
+      html.classList.add(theme);
     }
-
-    if (theme === 'light') {
-      html.classList.add('light');
-      html.style.colorScheme = 'light';
-      storeTheme('light');
-      return;
-    }
-
-    html.style.colorScheme = 'light dark';
-    storeTheme(null);
+    html.style.colorScheme = theme ?? 'light dark';
+    storeTheme(theme);
   };
 
   /**
@@ -101,17 +90,8 @@ const { class: classList } = Astro.props;
    *
    * 'light' も 'dark' もどちらも適用されていない場合は null を返す
    */
-  const getCurrentTheme = (): ThemeState => {
-    if (html.classList.contains('dark')) {
-      return 'dark';
-    }
-
-    if (html.classList.contains('light')) {
-      return 'light';
-    }
-
-    return null;
-  };
+  const getCurrentTheme = (): ThemeState =>
+    THEMES.find((theme) => html.classList.contains(theme)) ?? null;
 
   applyTheme(getStoredTheme());
 

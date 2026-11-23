@@ -6,7 +6,7 @@ import {
 import { routes } from '../utils/routes';
 
 /** RSS `<item>` のうち本スイートで検証に使うフィールド。 */
-export interface RssFeedItem {
+interface RssFeedItem {
   title: string;
   link: string;
   content: string;
