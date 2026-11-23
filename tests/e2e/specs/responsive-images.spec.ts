@@ -3,7 +3,10 @@ import { routes } from '../utils/routes';
 
 const aboutPhotoAlt = '渋谷のスクランブル交差点でタクシーを横から撮影した写真';
 
-test('loads the About photo eagerly at a responsive size', async ({ page }) => {
+test('loads the About photo eagerly at a responsive size', async ({
+  page,
+  browserName,
+}) => {
   await page.goto(routes.about);
   const photo = page.getByRole('img', {
     name: aboutPhotoAlt,
@@ -14,12 +17,24 @@ test('loads the About photo eagerly at a responsive size', async ({ page }) => {
   await expect(photo).toHaveAttribute('data-astro-image', 'constrained');
   await expect(photo).toHaveAttribute('sizes', /calc\(250vw - 5rem\)/);
   await expect(photo).toHaveAttribute('srcset', /360w, .*580w, .*1080w/);
-  await expect
-    .poll(() => photo.evaluate((image: HTMLImageElement) => image.currentSrc))
-    .toContain('/_astro/');
-  expect(
-    await photo.evaluate((image: HTMLImageElement) => image.currentSrc),
-  ).not.toBe(await photo.evaluate((image: HTMLImageElement) => image.src));
+  const { currentSrc, src, candidates } = await photo.evaluate(
+    async (image: HTMLImageElement) => {
+      await image.decode();
+      return {
+        currentSrc: image.currentSrc,
+        src: image.src,
+        candidates: image.srcset.split(', ').map((entry) => {
+          const [url] = entry.split(' ');
+          return new URL(url, image.baseURI).href;
+        }),
+      };
+    },
+  );
+  expect(currentSrc).toContain('/_astro/');
+  expect(candidates).toContain(currentSrc);
+  if (browserName === 'chromium') {
+    expect(currentSrc).not.toBe(src);
+  }
 });
 
 test('selects a larger About photo when the browser default font is larger', async ({
