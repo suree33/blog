@@ -29,11 +29,18 @@ import { Icon } from 'astro-icon/components';
 </div>
 
 <script>
-  import { addPostControls } from '@scripts/post-controls';
+  import { addPostControls, syncHeadingMetrics } from '@scripts/post-controls';
 
-  document
-    .querySelectorAll<HTMLElement>('[data-post-content]')
-    .forEach(addPostControls);
+  const contents = document.querySelectorAll<HTMLElement>(
+    '[data-post-content]',
+  );
+  contents.forEach(addPostControls);
+
+  // スタイル適用・フォント読み込み前は行の高さが取れないことがあるため測り直す
+  const syncMetrics = () => contents.forEach(syncHeadingMetrics);
+  void document.fonts?.ready.then(syncMetrics);
+  window.addEventListener('load', syncMetrics);
+  window.addEventListener('resize', syncMetrics);
 </script>
 
 <style is:global>
@@ -55,7 +62,13 @@ import { Icon } from 'astro-icon/components';
   }
 
   .post-content a.post-heading-permalink {
-    @apply absolute end-0 top-0 min-w-7 no-underline;
+    @apply absolute end-0 min-w-7 no-underline;
+    /* 見出しの 1 行目の中央にアイコンを合わせる。行の高さは
+       post-controls.ts が --post-heading-line-height に入れる。 */
+    block-size: 1.75rem;
+    inset-block-start: calc(
+      (var(--post-heading-line-height, 1.75rem) - 1.75rem) / 2
+    );
   }
 
   /* コードブロックの pre だけを包み、コピーボタンの配置基準にする */
@@ -70,12 +83,13 @@ import { Icon } from 'astro-icon/components';
 
   .post-content .post-code-copy {
     @apply absolute end-2 top-2 z-10 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border;
-    /* コードの背景（remark-code.css の gray-100 / Shiki のダーク背景）に合わせた不透明な背景。
-       ボタンはコードに重ねるので、下の文字が透けないようにする。 */
-    @apply border-neutral-300 bg-gray-100 text-neutral-600 shadow-sm;
-    @apply hover:bg-neutral-200 hover:text-neutral-900;
-    @apply dark:border-neutral-500 dark:bg-[#24292e] dark:text-neutral-300;
-    @apply dark:hover:bg-neutral-700 dark:hover:text-white;
+    /* コードの背景（remark-code.css の gray-100 / Shiki のダーク背景）を 60% で重ね、
+       下のコードが透けて読めるようにする。 */
+    @apply bg-gray-100/60;
+    @apply border-neutral-300 text-neutral-600 shadow-sm;
+    @apply hover:bg-neutral-200/85 hover:text-neutral-900;
+    @apply dark:border-neutral-500 dark:bg-[#24292e]/60 dark:text-neutral-300;
+    @apply dark:hover:bg-neutral-700/85 dark:hover:text-white;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
     @apply transition-opacity;
   }
