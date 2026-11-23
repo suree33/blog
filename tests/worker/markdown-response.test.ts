@@ -61,12 +61,14 @@ interface AssetCall {
 
 interface AssetsOptions {
   status?: number;
+  markdownStatus?: number;
   statusText?: string;
   headers?: HeadersInit;
 }
 
 const createRecordingEnv = ({
   status = 200,
+  markdownStatus,
   statusText = '',
   headers = {},
 }: AssetsOptions = {}) => {
@@ -79,11 +81,13 @@ const createRecordingEnv = ({
         const url = new URL(request.url);
         calls.push({ method: request.method, url });
 
+        const isMarkdown = url.pathname.endsWith('.md');
+
         return new Response(url.pathname, {
-          status,
+          status: isMarkdown ? (markdownStatus ?? status) : status,
           statusText,
           headers: {
-            'Content-Type': url.pathname.endsWith('.md')
+            'Content-Type': isMarkdown
               ? 'text/markdown'
               : 'text/html; charset=utf-8',
             ...headers,
@@ -114,9 +118,7 @@ const fetchPost = async (
     env,
   );
 
-  assert.equal(calls.length, 1);
-
-  return { response, assetCall: calls[0] };
+  return { response, assetCall: calls[0], calls };
 };
 
 const negotiationCases: { accept: string | null; markdown: boolean }[] = [
@@ -223,12 +225,20 @@ const pathCases: { url: string; assetUrl: string }[] = [
     assetUrl: 'https://example.com/posts/example.md?a=1',
   },
   {
+    url: 'https://example.com/',
+    assetUrl: 'https://example.com/index.md',
+  },
+  {
     url: 'https://example.com/posts/',
-    assetUrl: 'https://example.com/posts/',
+    assetUrl: 'https://example.com/posts.md',
   },
   {
     url: 'https://example.com/posts/example/nested',
-    assetUrl: 'https://example.com/posts/example/nested',
+    assetUrl: 'https://example.com/posts/example/nested.md',
+  },
+  {
+    url: 'https://example.com/robots.txt',
+    assetUrl: 'https://example.com/robots.txt',
   },
   {
     url: 'https://example.com/posts/example.html',
@@ -236,7 +246,11 @@ const pathCases: { url: string; assetUrl: string }[] = [
   },
   {
     url: 'https://example.com/tags/example',
-    assetUrl: 'https://example.com/tags/example',
+    assetUrl: 'https://example.com/tags/example.md',
+  },
+  {
+    url: 'https://example.com/tags/%E7%94%9F%E6%B4%BB/',
+    assetUrl: 'https://example.com/tags/%E7%94%9F%E6%B4%BB.md',
   },
 ];
 
@@ -251,9 +265,11 @@ for (const { url, assetUrl } of pathCases) {
 const htmlVaryCases: { url: string; vary: string | null }[] = [
   { url: 'https://example.com/posts/example', vary: 'Accept' },
   { url: 'https://example.com/posts/example/?a=1', vary: 'Accept' },
-  { url: 'https://example.com/posts/', vary: null },
+  { url: 'https://example.com/', vary: 'Accept' },
+  { url: 'https://example.com/posts/', vary: 'Accept' },
   { url: 'https://example.com/posts/example.html', vary: null },
-  { url: 'https://example.com/tags/example', vary: null },
+  { url: 'https://example.com/tags/example', vary: 'Accept' },
+  { url: 'https://example.com/robots.txt', vary: null },
 ];
 
 for (const { url, vary } of htmlVaryCases) {
@@ -273,13 +289,15 @@ const assetStatusCases: { status: number; statusText: string }[] = [
 for (const { status, statusText } of assetStatusCases) {
   for (const accept of ['text/markdown', 'text/html']) {
     test(`ASSETS ${status} passes through for Accept ${accept}`, async () => {
-      const { response, assetCall } = await fetchPost(accept, {
+      const { response, calls } = await fetchPost(accept, {
         assets: { status, statusText },
       });
 
       assert.equal(response.status, status);
       assert.equal(response.statusText, statusText);
-      assert.equal(await response.text(), assetCall.url.pathname);
+      assert.equal(response.headers.get('Link'), null);
+      assert.equal(await response.text(), '/posts/example');
+      assert.equal(calls.length, accept === 'text/markdown' ? 2 : 1);
     });
   }
 }
@@ -308,3 +326,82 @@ for (const { vary, expected } of varyCases) {
     });
   }
 }
+
+const siteLinks = [
+  '</llms.txt>; rel="describedby"; type="text/plain"',
+  '</rss.xml>; rel="alternate"; type="application/rss+xml"',
+  '</sitemap-index.xml>; rel="sitemap"; type="application/xml"',
+];
+
+const linkCases: { url: string; markdownPath: string }[] = [
+  { url: 'https://example.com/', markdownPath: '/index.md' },
+  { url: 'https://example.com/about/', markdownPath: '/about.md' },
+  {
+    url: 'https://example.com/posts/example/',
+    markdownPath: '/posts/example.md',
+  },
+  { url: 'https://example.com/tags/', markdownPath: '/tags.md' },
+];
+
+for (const { url, markdownPath } of linkCases) {
+  test(`HTML response on ${url} links its Markdown variant and site resources`, async () => {
+    const { response, calls } = await fetchPost('text/html', { url });
+
+    assert.deepEqual(
+      calls.map(({ method, url }) => `${method} ${url.pathname}`),
+      [`GET ${new URL(url).pathname}`, `HEAD ${markdownPath}`],
+    );
+    assert.equal(
+      response.headers.get('Link'),
+      [
+        `<${markdownPath}>; rel="alternate"; type="text/markdown"`,
+        ...siteLinks,
+      ].join(', '),
+    );
+  });
+}
+
+test('HTML response without a Markdown variant links only site resources', async () => {
+  const { response } = await fetchPost('text/html', {
+    url: 'https://example.com/posts/',
+    assets: { markdownStatus: 404 },
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('Link'), siteLinks.join(', '));
+});
+
+test('negotiated Markdown response links site resources', async () => {
+  const { response, calls } = await fetchPost('text/markdown', {
+    url: 'https://example.com/',
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(await response.text(), '/index.md');
+  assert.equal(response.headers.get('Link'), siteLinks.join(', '));
+});
+
+test('Accept text/markdown falls back to HTML when no Markdown variant exists', async () => {
+  const { response, calls } = await fetchPost('text/markdown', {
+    url: 'https://example.com/posts/',
+    assets: { markdownStatus: 404 },
+  });
+
+  assert.deepEqual(
+    calls.map(({ method, url }) => `${method} ${url.pathname}`),
+    ['GET /posts.md', 'GET /posts/', 'HEAD /posts.md'],
+  );
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), '/posts/');
+  assert.equal(response.headers.get('Vary'), 'Accept');
+  assert.equal(response.headers.get('Link'), siteLinks.join(', '));
+});
+
+test('non-page assets are passed through without Link', async () => {
+  const { response, calls } = await fetchPost('text/html', {
+    url: 'https://example.com/robots.txt',
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(response.headers.get('Link'), null);
+});

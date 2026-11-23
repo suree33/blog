@@ -1,5 +1,15 @@
-const POSTS_PATH_PATTERN = /^\/posts\/[^/.]+\/?$/;
-const MARKDOWN_POSTS_PATH_PATTERN = /^\/posts\/[^/]+\.md$/;
+// Paths whose last segment has no extension are HTML pages (`/`, `/about/`, `/posts/foo/`).
+const PAGE_PATH_PATTERN = /^(?:\/[^/.]+)*\/?$/;
+const MARKDOWN_PATH_PATTERN = /\.md$/;
+
+const SITE_LINKS = [
+  '</llms.txt>; rel="describedby"; type="text/plain"',
+  '</rss.xml>; rel="alternate"; type="application/rss+xml"',
+  '</sitemap-index.xml>; rel="sitemap"; type="application/xml"',
+];
+
+const toMarkdownPath = (pathname: string) =>
+  pathname === '/' ? '/index.md' : `${pathname.replace(/\/$/, '')}.md`;
 
 interface AcceptPreference {
   mediaType: string;
@@ -128,32 +138,70 @@ const addMarkdownCharset = (response: Response) => {
   });
 };
 
+const addLinkHeader = (response: Response, links: string[]) => {
+  const headers = new Headers(response.headers);
+
+  for (const link of links) {
+    headers.append('Link', link);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+const fetchMarkdownVariant = (request: Request, env: Env, pathname: string) => {
+  const markdownUrl = new URL(request.url);
+  markdownUrl.pathname = toMarkdownPath(pathname);
+
+  return env.ASSETS.fetch(new Request(markdownUrl, request));
+};
+
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const isNegotiable =
       (request.method === 'GET' || request.method === 'HEAD') &&
-      POSTS_PATH_PATTERN.test(url.pathname);
+      PAGE_PATH_PATTERN.test(url.pathname);
 
-    if (isNegotiable && prefersMarkdown(request.headers.get('Accept'))) {
-      const markdownUrl = new URL(request.url);
-      markdownUrl.pathname = `${url.pathname.replace(/\/$/, '')}.md`;
+    if (!isNegotiable) {
+      const response = await env.ASSETS.fetch(request);
 
-      const response = await env.ASSETS.fetch(
-        new Request(markdownUrl, request),
-      );
+      return MARKDOWN_PATH_PATTERN.test(url.pathname)
+        ? addMarkdownCharset(response)
+        : response;
+    }
 
-      return addVaryAccept(addMarkdownCharset(response));
+    if (prefersMarkdown(request.headers.get('Accept'))) {
+      const markdown = await fetchMarkdownVariant(request, env, url.pathname);
+
+      if (markdown.ok) {
+        return addVaryAccept(
+          addLinkHeader(addMarkdownCharset(markdown), SITE_LINKS),
+        );
+      }
     }
 
     const response = await env.ASSETS.fetch(request);
 
-    if (isNegotiable) {
+    if (!response.ok) {
       return addVaryAccept(response);
     }
 
-    return MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname)
-      ? addMarkdownCharset(response)
-      : response;
+    const markdown = await fetchMarkdownVariant(
+      new Request(request, { method: 'HEAD' }),
+      env,
+      url.pathname,
+    );
+    const links = markdown.ok
+      ? [
+          `<${toMarkdownPath(url.pathname)}>; rel="alternate"; type="text/markdown"`,
+          ...SITE_LINKS,
+        ]
+      : SITE_LINKS;
+
+    return addVaryAccept(addLinkHeader(response, links));
   },
 };
