@@ -7,7 +7,7 @@ autoInstallPeers: true
 enablePrePostScripts: true
 nodeLinker: isolated
 overrides:
-  '@tailwindcss/typography>postcss-selector-parser': 6.1.6
+  '@tailwindcss/typography>postcss-selector-parser': 7.2.1
 publicHoistPattern:
   - '*eslint*'
   - '*prettier*'
