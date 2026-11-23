@@ -8,6 +8,7 @@ const isLinkActive = isNavItemActive(path, currentPath);
 ---
 
 <a
+  aria-current={path === currentPath ? 'page' : undefined}
   class={cn('uppercase', { 'border-b border-current': isLinkActive })}
   href={path}
 >
