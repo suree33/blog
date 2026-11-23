@@ -1,7 +1,8 @@
 import { defineHastPlugin } from 'satteri';
 import type { SatteriAstroData } from '@astrojs/markdown-satteri';
 
-const proseSizes = '(max-width: 610px) calc(100vw - 2rem), 578px';
+// Tailwind's 65ch prose cap is about 36.125rem at 1rem with the site's sans-serif font stack.
+const proseSizes = 'min(calc(100vw - 2rem), 36.125rem)';
 
 export const responsiveMarkdownImages = defineHastPlugin({
   name: 'responsive-markdown-images',

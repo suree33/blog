@@ -1,10 +1,12 @@
 import { expect, test } from '../fixtures/test';
 import { routes } from '../utils/routes';
 
+const aboutPhotoAlt = '渋谷のスクランブル交差点でタクシーを横から撮影した写真';
+
 test('loads the About photo eagerly at a responsive size', async ({ page }) => {
   await page.goto(routes.about);
   const photo = page.getByRole('img', {
-    name: '渋谷のスクランブル交差点でタクシーを横から撮影した写真',
+    name: aboutPhotoAlt,
   });
 
   await expect(photo).toHaveAttribute('loading', 'eager');
@@ -18,6 +20,36 @@ test('loads the About photo eagerly at a responsive size', async ({ page }) => {
   expect(
     await photo.evaluate((image: HTMLImageElement) => image.currentSrc),
   ).not.toBe(await photo.evaluate((image: HTMLImageElement) => image.src));
+});
+
+test('selects a larger About photo when the browser default font is larger', async ({
+  page,
+  browserName,
+  isMobile,
+}) => {
+  test.skip(browserName !== 'chromium' || isMobile, 'Requires desktop CDP');
+  const session = await page.context().newCDPSession(page);
+  await session.send('Page.setFontSizes', { fontSizes: { standard: 24 } });
+  await page.goto(routes.about);
+
+  const photo = page.getByRole('img', { name: aboutPhotoAlt });
+  const { fontSize, displayWidth, sourceWidth } = await photo.evaluate(
+    async (image: HTMLImageElement) => {
+      await image.decode();
+      const candidate = image.srcset
+        .split(', ')
+        .map((entry) => entry.split(' '))
+        .find(([url]) => new URL(url, image.baseURI).href === image.currentSrc);
+      return {
+        fontSize: getComputedStyle(document.documentElement).fontSize,
+        displayWidth: image.getBoundingClientRect().width,
+        sourceWidth: Number.parseInt(candidate?.[1] ?? '', 10),
+      };
+    },
+  );
+  expect(fontSize).toBe('24px');
+  expect(displayWidth).toBeGreaterThan(580);
+  expect(sourceWidth).toBeGreaterThan(580);
 });
 
 test('loads article photos lazily with responsive candidates', async ({
