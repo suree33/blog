@@ -24,11 +24,11 @@ Run `pnpm run test:e2e tests/e2e/specs/rss.spec.ts --project=chromium` to verify
 - `pnpm run test:worker`: Worker の公開 HTTP レスポンス境界を Node.js Test Runner で検証
 - `pnpm run test:e2e:headed`: ブラウザを表示して実行
 - `pnpm run test:e2e:ui`: Playwright UI モードで実行
-- `pnpm run test:e2e:update`: コンポーネントのビジュアルスナップショットを更新
+- `pnpm run test:e2e:update`: CI と同じコンテナでコンポーネントのスナップショットを更新（Docker が必要）
 - `pnpm run test:e2e:visual`: 全ページのフルページ比較（専用 Linux コンテナで実行）
 - `pnpm run test:e2e:visual:update`: フルページのベースラインを更新
 
-初回実行前にブラウザが必要です。未インストールの場合は以下を実行してください（config が Chromium / Firefox / WebKit を使うため 3 種すべて）。
+ホストで E2E テストを実行する場合は、事前に Chromium / Firefox / WebKit をインストールしてください。コンテナでスナップショットを更新するだけなら不要です。
 
 ```sh
 pnpm exec playwright install chromium firefox webkit
@@ -262,7 +262,7 @@ axe-core による自動検査だけではアクセシビリティ適合を保�
 
 全 Playwright プロジェクトで実行します。フルページではなくロケーター単位でスクリーンショットを撮ることで、ベースラインを小さく保ち、無関係なコンテンツ変更の影響を減らします。
 
-ベースラインはブラウザ・端末・OS ごとに必要です。CI（Linux）で生成・コミットする前提で、フォント描画差のあるローカル（macOS 等）では一致しないことがあります。
+ベースラインは CI の Linux 環境でプロジェクトごとに生成します。ホストで撮影すると、macOS などではフォントの描画差で一致しないことがあります。[スナップショットの更新](#スナップショットの更新)の手順を使ってください。
 
 - 記事メタデータ: タグと日付の余白・レイアウト崩れを検出します。
 - ヘッダー: ナビゲーションとテーマトグルの見た目を確認します。
@@ -270,7 +270,7 @@ axe-core による自動検査だけではアクセシビリティ適合を保�
 
 全スクリーンショットで `animations: 'disabled'` を指定します。また、`tests/e2e/styles/screenshot.css` を `stylePath` で注入し、日本語フォントを `Noto Sans CJK JP` に固定します。
 
-ローカルでビジュアルテストを実行する場合も `Noto Sans CJK JP` が必要です。Ubuntu / Debian では以下でインストールできます。
+ホストでビジュアルテストを実行する場合も `Noto Sans CJK JP` が必要です。Ubuntu / Debian では以下でインストールできます。
 
 ```sh
 sudo apt-get install fonts-noto-cjk
@@ -295,18 +295,16 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 #### ベースラインの生成・更新
 
-[Playwright 公式ガイド](https://playwright.dev/docs/test-snapshots) のとおり、生成と比較は同じ OS・ブラウザ・フォント環境で行います。CI の `visual` ジョブと同じ **`mcr.microsoft.com/playwright:v1.65.1-noble`（Linux amd64）** を使ってください。通常のホスト OS で更新しないでください。
+[Playwright 公式ガイド](https://playwright.dev/docs/test-snapshots)のとおり、生成と比較には同じ OS・ブラウザ・フォント環境を使います。コンポーネントの更新と同じスクリプトで、CI の `visual` ジョブと同じ Linux amd64 コンテナを起動します。
 
 ```sh
-docker run --rm --init --ipc=host --platform=linux/amd64 \
-  -v "$PWD:/work" -v /work/node_modules -w /work \
-  mcr.microsoft.com/playwright:v1.65.1-noble \
-  sh -c 'npm install -g pnpm@12.16.1 && apt-get update && apt-get install -y fonts-noto-cjk && pnpm install --frozen-lockfile && pnpm run test:e2e:visual:update && pnpm run test:e2e:visual'
+bash scripts/e2e-container.sh run test:e2e:visual:update
+bash scripts/e2e-container.sh run test:e2e:visual
 ```
 
 記事やタグを追加・変更したら、この手順で生成した `tests/e2e/specs/visual-pages.spec.ts-snapshots/` の PNG を目視確認してコミットします。削除したページの PNG は削除してください。失敗時は HTML report の expected / actual / diff を確認し、意図しない変化をベースライン更新で隠さないでください。CI は更新オプションなしで比較し、`visual-report` artifact にレポートと差分を保存します。
 
-Playwright の更新時は lockfile のバージョンと CI・上記 Docker タグを揃え、同じ環境で全ベースラインを再生成してください。フォントやコンテナ OS の更新でも差分レビューが必要です。
+Playwright の更新時は lockfile と CI のイメージのバージョンを揃え、この手順で全ベースラインを再生成してください。フォントやコンテナ OS を更新したときも画像の差分を確認してください。
 
 ### RSS フィードテスト (`rss.spec.ts`)
 
@@ -321,23 +319,23 @@ Playwright の更新時は lockfile のバージョンと CI・上記 Docker タ
 
 ### スナップショットの更新
 
-コンポーネント単位のベースラインを更新する場合は以下を実行し、差分をコミットしてください。
+Docker を起動し、リポジトリのルートで次のコマンドを実行してください。全 Playwright プロジェクトのコンポーネント画像を撮り直します。
 
 ```sh
 pnpm run test:e2e:update
-# 個別 spec のみ更新する場合
-pnpm exec playwright test tests/e2e/specs/visual.spec.ts --update-snapshots
 ```
+
+コマンドは `.github/workflows/ci.yml` にダイジェストで固定した Playwright イメージ（Linux amd64）を使い、コンテナ内に `fonts-noto-cjk` を入れます。ホストの `node_modules` はコンテナに持ち込まず、コンテナ内で lockfile どおりに依存パッケージをインストールします。生成ファイルは実行ユーザーの所有になります。
+
+`tests/e2e/specs/visual.spec.ts-snapshots/` の差分を確認し、意図した変更だけをコミットしてください。対象を絞る場合は、たとえば `pnpm run test:e2e:update --project=firefox` を実行します。
 
 フルページ比較は既定の `playwright.config.ts` では除外しています。全ページを更新する場合は、上記「ベースラインの生成・更新」のコンテナ手順（`pnpm run test:e2e:visual:update`）を使ってください。
 
 個別ページ・テーマ・プロジェクトだけ更新する場合も、CI と同じコンテナと専用 config を使います。例としてホームのライトテーマ（デスクトップ Chromium）の 1 枚だけを再生成する手順:
 
 ```sh
-docker run --rm --init --ipc=host --platform=linux/amd64 \
-  -v "$PWD:/work" -v /work/node_modules -w /work \
-  mcr.microsoft.com/playwright:v1.65.1-noble \
-  sh -c 'npm install -g pnpm@12.16.1 && apt-get update && apt-get install -y fonts-noto-cjk && pnpm install --frozen-lockfile && pnpm exec playwright test -c playwright.visual.config.ts --project=chromium --grep " ホーム（light）$" --update-snapshots=all'
+bash scripts/e2e-container.sh exec playwright test -c playwright.visual.config.ts \
+  --project=chromium --grep ' ホーム（light）$' --update-snapshots=all
 ```
 
 `--project` と `--grep` で対象を絞り、`--update-snapshots=all` で一致したテストの画像だけを再生成します。検索文字列の先頭の空白と末尾の `$` は、「タグ スマートホーム」などの別テストを含めないために必要です。この例の出力先は `tests/e2e/specs/visual-pages.spec.ts-snapshots/home-light-chromium-linux.png` です。差分を目視確認し、意図した PNG だけをコミットしてください。
@@ -360,7 +358,7 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 
 In `.github/workflows/ci.yml`, `e2e-shard` runs one matrix job per Playwright project. Checkout and pnpm setup are shared with other jobs through YAML anchors.
 
-1. Use the same digest-pinned `mcr.microsoft.com/playwright:v1.65.1-noble` container as `visual`, with `--ipc=host`. The image includes Chromium, Firefox, WebKit and their system dependencies; its version must match the locked `@playwright/test` version. [Playwright's CI guide](https://playwright.dev/docs/ci) documents container jobs and advises against caching browser binaries.
+1. Use the same digest-pinned Playwright container as `visual` and the local snapshot updater, with `--ipc=host`. The image includes Chromium, Firefox, WebKit and their system dependencies; its version must match the locked `@playwright/test` version. [Playwright's CI guide](https://playwright.dev/docs/ci) documents container jobs and advises against caching browser binaries.
 2. Install `fonts-noto-cjk` with `apt-get` without `sudo` inside the container.
 3. Run `pnpm exec playwright test --project="$PROJECT" --reporter=github,list,blob`. The GitHub reporter produces failure annotations, and blob reports are retained for 1 day. Test results are retained for 7 days.
 4. The separate `e2e` job merges the blob reports into an HTML report, publishes the Cloudflare preview, and uploads the HTML report as an artifact retained for 7 days. It still runs on the host runner, not in the browser container.

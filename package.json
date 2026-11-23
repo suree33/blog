@@ -29,7 +29,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:visual": "playwright test --config=playwright.visual.config.ts",
     "test:e2e:visual:update": "pnpm run test:e2e:visual --update-snapshots",
-    "test:e2e:update": "playwright test tests/e2e/specs/visual.spec.ts --update-snapshots"
+    "test:e2e:update": "bash scripts/e2e-container.sh exec playwright test tests/e2e/specs/visual.spec.ts --update-snapshots=all"
   },
   "dependencies": {
     "@astrojs/check": "0.9.12",
