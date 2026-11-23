@@ -122,7 +122,7 @@ test.describe('ページのメタデータ', () => {
 
   for (const path of [
     ...cases.map(({ path }) => path),
-    openGraphTypes[2][0],
+    `${routes.about}/`,
     routes.notFound,
     '/404.html',
   ]) {
