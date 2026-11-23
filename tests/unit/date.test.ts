@@ -4,7 +4,11 @@ import { formatDate } from '../../src/scripts/date';
 const originalTZ = process.env.TZ;
 
 afterEach(() => {
-  process.env.TZ = originalTZ;
+  if (originalTZ === undefined) {
+    delete process.env.TZ;
+  } else {
+    process.env.TZ = originalTZ;
+  }
 });
 
 describe('formatDate', () => {

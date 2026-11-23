@@ -25,9 +25,9 @@ function expectISODate(actual: string | null, expected: string): void {
   expect(new Date(actual).toISOString()).toBe(new Date(expected).toISOString());
 }
 
-function japaneseLongDate(isoDate: string): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return `${year}年${month}月${day}日`;
+function japaneseLongDate(date: string): string {
+  const instant = new Date(date);
+  return `${instant.getUTCFullYear()}年${instant.getUTCMonth() + 1}月${instant.getUTCDate()}日`;
 }
 
 async function expectPostTime(time: Locator, date: string): Promise<void> {
