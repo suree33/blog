@@ -7,6 +7,7 @@ import process from 'node:process';
 
 import { createLinkCards } from './src/lib/markdown/link-card-assets.ts';
 import { requireImageAlt } from './src/lib/markdown/require-image-alt.ts';
+import { responsiveMarkdownImages } from './src/lib/markdown/responsive-images.ts';
 import { satteriCallouts } from './src/lib/satteri-callouts.ts';
 import { codeTitleTransformer } from './src/lib/code-title.ts';
 
@@ -19,6 +20,11 @@ export default defineConfig({
       ? './node_modules/.astro-e2e'
       : './node_modules/.astro',
   site: 'https://sur33.com/',
+  image: {
+    layout: 'constrained',
+    responsiveStyles: true,
+    breakpoints: [360, 580, 720, 1080, 1160, 1440, 1740, 2700],
+  },
   redirects: {
     '/posts': '/',
   },
@@ -32,7 +38,7 @@ export default defineConfig({
         ),
         linkCards.plugin,
       ],
-      hastPlugins: [satteriCallouts],
+      hastPlugins: [satteriCallouts, responsiveMarkdownImages],
     }),
     shikiConfig: {
       themes: {

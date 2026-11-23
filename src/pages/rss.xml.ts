@@ -8,6 +8,10 @@ import { getPublishedPosts, getPublishedStandalonePages } from '@lib/posts';
 
 const sanitizeOptions: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+  },
   transformTags: {
     img: (tagName, attribs) => ({
       tagName,
