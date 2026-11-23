@@ -97,7 +97,7 @@ function listPostSlugs(): string[] {
 }
 
 /** タグページ（`src/pages/tags/[tag].astro`）と同じく `src/pages/**\/*.md` からタグを集める。 */
-function listTags(): string[] {
+export function listTags(): string[] {
   const tags = [
     ...listMarkdownFiles(postsDir),
     ...listMarkdownFiles(
@@ -134,9 +134,15 @@ export const sitePages: SitePage[] = [
     snapshotPath: ['posts', slug],
     inSitemap: true,
   })),
+  {
+    label: 'タグ一覧',
+    route: routes.tagsBase,
+    snapshotPath: ['tags'],
+    inSitemap: true,
+  },
   ...listTags().map((tag) => ({
     label: `タグ ${tag}`,
-    route: `${routes.tagsBase}${encodeURIComponent(tag)}`,
+    route: `${routes.tagsBase}${encodeURIComponent(tag)}/`,
     snapshotPath: ['tags', tag],
     inSitemap: true,
   })),
