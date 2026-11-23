@@ -167,6 +167,31 @@ test('コピーボタンはコード領域の右上に浮かび、コードタ�
   ).toBeGreaterThanOrEqual(24);
 });
 
+test('コピーボタンがコードの先頭行に重ならない', async ({
+  isDesktop,
+  page,
+}) => {
+  if (!isDesktop) await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/posts/zshrc-startup-slow-cause-and-fix/');
+
+  const area = page.locator('.post-code-area').filter({
+    hasText: 'if ! command -v compinit >/dev/null; then',
+  });
+  const copy = area.getByRole('button', { name: 'コードをコピー' });
+  const firstLine = area.locator('pre > code > .line').first();
+
+  if (isDesktop) await area.hover();
+  await expect(copy).toHaveCSS('opacity', '1');
+  await expect(firstLine).toContainText('then');
+
+  const [copyBox, lineBox] = await Promise.all([
+    copy.boundingBox(),
+    firstLine.boundingBox(),
+  ]);
+  if (!copyBox || !lineBox) throw new Error('要素の位置を取得できない');
+  expect(lineBox.y).toBeGreaterThanOrEqual(copyBox.y + copyBox.height);
+});
+
 test('クリップボードへの書き込みが拒否されると失敗を通知する', async ({
   page,
 }) => {

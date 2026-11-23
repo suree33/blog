@@ -61,6 +61,10 @@ import { Icon } from 'astro-icon/components';
   /* コードブロックの pre だけを包み、コピーボタンの配置基準にする */
   .post-content .post-code-area {
     @apply relative;
+
+    > pre {
+      @apply pt-11;
+    }
   }
 
   /* タイトル付きのコードは、タイトルと pre が隣接していたときの見た目を保つ */
