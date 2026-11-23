@@ -1,0 +1,126 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<div class="post-content" data-post-content>
+  <slot />
+  <template data-heading-permalink>
+    <Icon name="lucide:link" size={16} aria-hidden="true" />
+  </template>
+  <template data-code-copy>
+    <div class="post-code-area">
+      <button type="button" class="post-code-copy" aria-label="コードをコピー">
+        <Icon
+          name="lucide:copy"
+          class="post-code-copy-icon"
+          size={16}
+          aria-hidden="true"
+        />
+        <Icon
+          name="lucide:check"
+          class="post-code-copy-check"
+          size={16}
+          aria-hidden="true"
+        />
+      </button>
+      <span class="sr-only" role="status"></span>
+    </div>
+  </template>
+</div>
+
+<script>
+  import { addPostControls, syncHeadingMetrics } from '@scripts/post-controls';
+
+  const contents = document.querySelectorAll<HTMLElement>(
+    '[data-post-content]',
+  );
+  contents.forEach(addPostControls);
+
+  // スタイル適用・フォント読み込み前は行の高さが取れないことがあるため測り直す
+  const syncMetrics = () => contents.forEach(syncHeadingMetrics);
+  void document.fonts?.ready.then(syncMetrics);
+  window.addEventListener('load', syncMetrics);
+  window.addEventListener('resize', syncMetrics);
+</script>
+
+<style is:global>
+  @reference '../styles/global.css';
+
+  .post-content .post-heading {
+    @apply relative;
+
+    > :is(h1, h2, h3, h4, h5, h6) {
+      @apply pe-9;
+    }
+  }
+
+  .post-content .post-heading-permalink {
+    @apply inline-flex shrink-0 items-center justify-center rounded-md;
+    @apply text-neutral-600 dark:text-neutral-300;
+    @apply hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-700 dark:hover:text-white;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
+  }
+
+  .post-content a.post-heading-permalink {
+    @apply absolute end-0 min-w-7 no-underline;
+    /* 見出しの 1 行目の中央にアイコンを合わせる。行の高さは
+       post-controls.ts が --post-heading-line-height に入れる。 */
+    block-size: 1.75rem;
+    inset-block-start: calc(
+      (var(--post-heading-line-height, 1.75rem) - 1.75rem) / 2
+    );
+  }
+
+  /* コードブロックの pre だけを包み、コピーボタンの配置基準にする */
+  .post-content .post-code-area {
+    @apply relative;
+  }
+
+  /* タイトル付きのコードは、タイトルと pre が隣接していたときの見た目を保つ */
+  .post-content .remark-code-title + .post-code-area > pre {
+    @apply mt-0 rounded-tl-none;
+  }
+
+  .post-content .post-code-copy {
+    @apply absolute end-2 top-2 z-10 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border;
+    /* コードの背景（remark-code.css の gray-100 / Shiki のダーク背景）を 60% で重ね、
+       下のコードが透けて読めるようにする。 */
+    @apply bg-gray-100/60;
+    @apply border-neutral-300 text-neutral-600 shadow-sm;
+    @apply hover:bg-neutral-200/85 hover:text-neutral-900;
+    @apply dark:border-neutral-500 dark:bg-[#24292e]/60 dark:text-neutral-300;
+    @apply dark:hover:bg-neutral-700/85 dark:hover:text-white;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
+    @apply transition-opacity;
+  }
+
+  .post-content .post-code-copy-check,
+  .post-content .post-code-copy[data-copied] .post-code-copy-icon {
+    display: none;
+  }
+
+  .post-content .post-code-copy[data-copied] .post-code-copy-check {
+    display: block;
+  }
+
+  /* ポインタ操作では普段隠し、ホバー・フォーカスで見せる。タッチでは常時表示 */
+  @media (hover: hover) and (pointer: fine) {
+    .post-content .post-code-copy {
+      opacity: 0;
+    }
+
+    .post-content .post-code-area:is(:hover, :focus-within) .post-code-copy,
+    .post-content .post-code-copy:focus-visible {
+      opacity: 1;
+    }
+  }
+
+  /* タッチ端末ではボタンが常時表示されるため、右端までスクロールした行末が
+     ボタンの下に残らないよう、インライン終端に余白を確保する
+     （ボタン 2rem + オフセット 0.5rem + 間隔 0.25rem = 2.75rem） */
+  @media (hover: none) {
+    .post-content .post-code-area > pre {
+      padding-inline-end: 2.75rem;
+    }
+  }
+</style>
