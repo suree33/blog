@@ -167,29 +167,45 @@ test('コピーボタンはコード領域の右上に浮かび、コードタ�
   ).toBeGreaterThanOrEqual(24);
 });
 
-test('コピーボタンがコードの先頭行に重ならない', async ({
+test('コピーボタンはコードに重なり、ポインタ操作では通常は隠れる', async ({
   isDesktop,
   page,
 }) => {
-  if (!isDesktop) await page.setViewportSize({ width: 360, height: 800 });
-  await page.goto('/posts/zshrc-startup-slow-cause-and-fix/');
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.goto('/posts/zshrc-startup-slow-cause-and-fix/');
 
-  const area = page.locator('.post-code-area').filter({
-    hasText: 'if ! command -v compinit >/dev/null; then',
-  });
-  const copy = area.getByRole('button', { name: 'コードをコピー' });
-  const firstLine = area.locator('pre > code > .line').first();
+    const area = page.locator('.post-code-area').first();
+    const copy = area.getByRole('button', { name: 'コードをコピー' });
+    const opacity = () =>
+      copy.evaluate((element) => getComputedStyle(element).opacity);
 
-  if (isDesktop) await area.hover();
-  await expect(copy).toHaveCSS('opacity', '1');
-  await expect(firstLine).toContainText('then');
+    if (isDesktop) {
+      await page.mouse.move(0, 0);
+      await expect.poll(opacity, `${colorScheme}: 通常は非表示`).toBe('0');
+      await area.hover();
+      await expect.poll(opacity, `${colorScheme}: ホバーで表示`).toBe('1');
+    } else {
+      await expect
+        .poll(opacity, `${colorScheme}: タッチでは常時表示`)
+        .toBe('1');
+    }
 
-  const [copyBox, lineBox] = await Promise.all([
-    copy.boundingBox(),
-    firstLine.boundingBox(),
-  ]);
-  if (!copyBox || !lineBox) throw new Error('要素の位置を取得できない');
-  expect(lineBox.y).toBeGreaterThanOrEqual(copyBox.y + copyBox.height);
+    const [buttonBackground, codeBackground] = await Promise.all([
+      copy.evaluate((element) => getComputedStyle(element).backgroundColor),
+      area
+        .locator('> pre')
+        .evaluate((element) => getComputedStyle(element).backgroundColor),
+    ]);
+    expect(
+      buttonBackground,
+      `${colorScheme}: ボタンの背景はコードの背景と一致する`,
+    ).toBe(codeBackground);
+    expect(
+      buttonBackground,
+      `${colorScheme}: 背景は不透明（下の文字が透けない）`,
+    ).not.toMatch(/rgba\([^)]*,\s*0?\.\d+\)/);
+  }
 });
 
 test('クリップボードへの書き込みが拒否されると失敗を通知する', async ({

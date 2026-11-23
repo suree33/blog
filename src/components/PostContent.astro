@@ -61,10 +61,6 @@ import { Icon } from 'astro-icon/components';
   /* コードブロックの pre だけを包み、コピーボタンの配置基準にする */
   .post-content .post-code-area {
     @apply relative;
-
-    > pre {
-      @apply pt-11;
-    }
   }
 
   /* タイトル付きのコードは、タイトルと pre が隣接していたときの見た目を保つ */
@@ -74,9 +70,11 @@ import { Icon } from 'astro-icon/components';
 
   .post-content .post-code-copy {
     @apply absolute end-2 top-2 z-10 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border;
-    @apply border-neutral-300 bg-white/90 text-neutral-600 shadow-sm;
-    @apply hover:bg-neutral-100 hover:text-neutral-900;
-    @apply dark:border-neutral-500 dark:bg-neutral-700/90 dark:text-neutral-300;
+    /* コードの背景（remark-code.css の gray-100 / Shiki のダーク背景）に合わせた不透明な背景。
+       ボタンはコードに重ねるので、下の文字が透けないようにする。 */
+    @apply border-neutral-300 bg-gray-100 text-neutral-600 shadow-sm;
+    @apply hover:bg-neutral-200 hover:text-neutral-900;
+    @apply dark:border-neutral-500 dark:bg-[#24292e] dark:text-neutral-300;
     @apply dark:hover:bg-neutral-700 dark:hover:text-white;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
     @apply transition-opacity;
