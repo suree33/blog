@@ -1,8 +1,7 @@
 import { defineHastPlugin } from 'satteri';
+import type { SatteriAstroData } from '@astrojs/markdown-satteri';
 
-const widths = [360, 580, 720, 1080, 1160, 1440, 1740];
 const proseSizes = '(max-width: 610px) calc(100vw - 2rem), 578px';
-const aboutHero = '../assets/images/daiki-sato-xzItvPFgpBQ-unsplash.jpg';
 
 export const responsiveMarkdownImages = defineHastPlugin({
   name: 'responsive-markdown-images',
@@ -10,19 +9,26 @@ export const responsiveMarkdownImages = defineHastPlugin({
     filter: ['img'],
     visit(node, ctx) {
       const { src } = node.properties ?? {};
-      if (typeof src !== 'string' || src.startsWith('/') || URL.canParse(src)) {
+      const astro: SatteriAstroData | undefined = ctx.data.astro;
+      if (
+        typeof src !== 'string' ||
+        !astro?.localImagePaths.has(decodeURI(src))
+      ) {
         return;
       }
 
-      const eager = src === aboutHero;
-      ctx.setProperty(node, 'widths', widths);
+      const priority =
+        astro.frontmatter.priorityFirstImage === true &&
+        !ctx.data.hasPrioritizedMarkdownImage;
       ctx.setProperty(
         node,
         'sizes',
-        eager ? proseSizes : `auto, ${proseSizes}`,
+        priority ? proseSizes : `auto, ${proseSizes}`,
       );
-      ctx.setProperty(node, 'loading', eager ? 'eager' : 'lazy');
-      if (eager) ctx.setProperty(node, 'fetchpriority', 'high');
+      if (priority) {
+        ctx.setProperty(node, 'priority', true);
+        ctx.data.hasPrioritizedMarkdownImage = true;
+      }
     },
   },
 });

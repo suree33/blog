@@ -20,6 +20,11 @@ export default defineConfig({
       ? './node_modules/.astro-e2e'
       : './node_modules/.astro',
   site: 'https://sur33.com/',
+  image: {
+    layout: 'constrained',
+    responsiveStyles: true,
+    breakpoints: [360, 580, 720, 1080, 1160, 1440, 1740],
+  },
   redirects: {
     '/posts': '/',
   },
