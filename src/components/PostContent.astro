@@ -1,0 +1,73 @@
+---
+import { Icon } from 'astro-icon/components';
+---
+
+<div class="post-content" data-post-content>
+  <slot />
+  <template data-heading-permalink>
+    <Icon name="lucide:link" size={16} aria-hidden="true" />
+  </template>
+  <template data-code-toolbar>
+    <div class="post-code-toolbar">
+      <button type="button" class="post-code-copy" aria-label="コードをコピー">
+        <Icon name="lucide:copy" size={14} aria-hidden="true" />
+        <span aria-hidden="true">コピー</span>
+      </button>
+      <span class="sr-only" role="status"></span>
+    </div>
+  </template>
+</div>
+
+<script>
+  import { addPostControls } from '@scripts/post-controls';
+
+  document
+    .querySelectorAll<HTMLElement>('[data-post-content]')
+    .forEach(addPostControls);
+</script>
+
+<style is:global>
+  @reference '../styles/global.css';
+
+  .post-content .post-heading {
+    @apply relative;
+
+    > :is(h1, h2, h3, h4, h5, h6) {
+      @apply pe-9;
+    }
+  }
+
+  .post-content .post-heading-permalink,
+  .post-content .post-code-copy {
+    @apply inline-flex min-h-7 shrink-0 items-center justify-center rounded-md;
+    @apply text-neutral-600 dark:text-neutral-300;
+    @apply hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-700 dark:hover:text-white;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
+  }
+
+  .post-content a.post-heading-permalink {
+    @apply absolute end-0 top-0 min-w-7 no-underline;
+  }
+
+  .post-content .post-code {
+    @apply my-6;
+
+    > pre {
+      @apply my-0 rounded-t-none;
+    }
+  }
+
+  .post-content .post-code-toolbar {
+    @apply flex min-w-0 items-center justify-between gap-2;
+    @apply rounded-t-md border-b border-neutral-200 bg-neutral-50 px-2 py-1;
+    @apply dark:border-neutral-700 dark:bg-neutral-800;
+
+    > .remark-code-title {
+      @apply min-w-0 bg-transparent px-2 py-0 text-neutral-700 dark:bg-transparent dark:text-neutral-200;
+    }
+  }
+
+  .post-content .post-code-copy {
+    @apply ms-auto min-w-24 cursor-pointer gap-1.5 px-2 text-xs font-medium;
+  }
+</style>

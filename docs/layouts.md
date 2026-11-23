@@ -142,6 +142,10 @@ Markdownブログ記事専用のレイアウトです。ProseArticleLayoutを拡
 - **説明文表示**: 記事の概要を強調表示
 - **Callout対応**: Sätteri 用ローカルプラグインのスタイル設定
 
+### 記事本文の操作
+
+`/posts/[slug]/` では `PostContent.astro` が記事本文に操作を追加する。見出しのパーマリンクには既存の ID を使い、目次は変更しない。Clipboard API が使える環境ではコピーボタンでコードだけをコピーできる。コードブロックのタイトルはコピーに含めない。
+
 ### Frontmatter対応プロパティ
 
 ```typescript
