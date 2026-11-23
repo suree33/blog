@@ -10,6 +10,14 @@ if [[ ! $image =~ ^mcr\.microsoft\.com/playwright:v[^[:space:]]+-noble@sha256:[[
 fi
 
 pnpm_version=$(node -p "require('./package.json').devEngines.packageManager.version")
+security_options=$(docker info --format '{{json .SecurityOptions}}')
+uid=0
+gid=0
+if [[ $security_options != *name=rootless* ]]; then
+  uid=$(id -u)
+  gid=$(id -g)
+fi
+
 mkdir -p node_modules
 
 exec docker run --rm --init --ipc=host --platform=linux/amd64 --env CI=true --env TZ=UTC \
@@ -31,4 +39,4 @@ exec docker run --rm --init --ipc=host --platform=linux/amd64 --env CI=true --en
       pnpm install --frozen-lockfile
       exec pnpm "$@"
     '\'' bash "$@"
-  ' bash "$(id -u)" "$(id -g)" "$pnpm_version" "$@"
+  ' bash "$uid" "$gid" "$pnpm_version" "$@"
