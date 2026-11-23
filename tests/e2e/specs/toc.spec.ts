@@ -214,4 +214,33 @@ test.describe('目次 (TOC)', () => {
       '現在のビューポートに対応する目次だけが 1 件表示される',
     ).toHaveCount(1);
   });
+  test('低いウィンドウでもサイドバー目次は画面内に収まり末尾までスクロールできる', async ({
+    articlePage,
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'デスクトップのサイドバー目次のみ');
+
+    await page.setViewportSize({ width: 1440, height: 420 });
+    await page.goto('/posts/wishlist-2024-04');
+    await page.evaluate(() => window.scrollTo(0, 600));
+
+    const toc = articlePage.toc.root;
+    await expect(toc).toBeVisible();
+    const tocBottom = await toc.evaluate(
+      (element) => element.getBoundingClientRect().bottom,
+    );
+    expect(
+      tocBottom,
+      'sticky の目次はビューポートの下端からはみ出さない',
+    ).toBeLessThanOrEqual(420);
+
+    await toc.hover();
+    await page.mouse.wheel(0, 2000);
+
+    await expect(
+      articlePage.toc.links.last(),
+      '目次上のホイール操作で最後の目次リンクまで表示できる',
+    ).toBeInViewport({ ratio: 1 });
+  });
 });
