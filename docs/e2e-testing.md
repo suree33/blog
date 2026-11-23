@@ -324,7 +324,7 @@ Docker を起動し、リポジトリのルートで次のコマンドを実行�
 pnpm run test:e2e:update
 ```
 
-コマンドは `.github/workflows/ci.yml` にダイジェストで固定した Playwright イメージ（Linux amd64）を使い、コンテナ内に `fonts-noto-cjk` を入れます。依存パッケージはコンテナ内で lockfile どおりにインストールし、ホストの `node_modules` は変更しません。生成ファイルは実行ユーザーの所有になります。
+コマンドは `.github/workflows/ci.yml` にダイジェストで固定した Playwright イメージ（Linux amd64）を使い、コンテナ内に `fonts-noto-cjk` を入れます。ホストの `node_modules` はコンテナに持ち込まず、コンテナ内で lockfile どおりに依存パッケージをインストールします。生成ファイルは実行ユーザーの所有になります。
 
 `tests/e2e/specs/visual.spec.ts-snapshots/` の差分を確認し、意図した変更だけをコミットしてください。対象を絞る場合は、たとえば `pnpm run test:e2e:update --project=firefox` を実行します。
 

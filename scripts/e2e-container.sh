@@ -10,6 +10,7 @@ if [[ ! $image =~ ^mcr\.microsoft\.com/playwright:v[^[:space:]]+-noble@sha256:[[
 fi
 
 pnpm_version=$(node -p "require('./package.json').devEngines.packageManager.version")
+mkdir -p node_modules
 
 exec docker run --rm --init --ipc=host --platform=linux/amd64 --env CI=true --env TZ=UTC \
   --mount "type=bind,src=$PWD,dst=/work" \
