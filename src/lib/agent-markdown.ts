@@ -23,6 +23,28 @@ const postLines = (posts: readonly ListedPost[], site: URL) =>
     return `- ${markdownLink(frontmatter.title, url, site)}${description}`;
   });
 
+interface PageLink {
+  title: string;
+  url: string;
+}
+
+const siteHeader = () => [
+  `# ${config.siteName}`,
+  '',
+  `> ${config.description}`,
+  '',
+  '各ページは `Accept: text/markdown` を付けてリクエストすると Markdown で返します。下のリンクは各ページの Markdown 版です。',
+  '',
+];
+
+const optionalSection = (site: URL) => [
+  '## Optional',
+  '',
+  `- [RSS フィード](${new URL('/rss.xml', site).href})`,
+  `- [サイトマップ](${new URL('/sitemap-index.xml', site).href})`,
+  '',
+];
+
 export function buildSiteMarkdown({
   site,
   posts,
@@ -30,15 +52,10 @@ export function buildSiteMarkdown({
 }: {
   site: URL;
   posts: readonly ListedPost[];
-  pages: readonly { title: string; url: string }[];
+  pages: readonly PageLink[];
 }) {
   return [
-    `# ${config.siteName}`,
-    '',
-    `> ${config.description}`,
-    '',
-    '各ページは `Accept: text/markdown` を付けてリクエストすると Markdown で返します。下のリンクは各ページの Markdown 版です。',
-    '',
+    ...siteHeader(),
     '## 記事',
     '',
     ...postLines(posts, site),
@@ -48,11 +65,26 @@ export function buildSiteMarkdown({
     ...pages.map(({ title, url }) => `- ${markdownLink(title, url, site)}`),
     `- ${markdownLink('タグ一覧', '/tags/', site)}`,
     '',
-    '## Optional',
+    ...optionalSection(site),
+  ].join('\n');
+}
+
+export function buildLlmsTxt({
+  site,
+  pages,
+}: {
+  site: URL;
+  pages: readonly PageLink[];
+}) {
+  return [
+    ...siteHeader(),
+    '## ページ',
     '',
-    `- [RSS フィード](${new URL('/rss.xml', site).href})`,
-    `- [サイトマップ](${new URL('/sitemap-index.xml', site).href})`,
+    `- ${markdownLink('記事一覧', '/', site)}`,
+    `- ${markdownLink('タグ一覧', '/tags/', site)}`,
+    ...pages.map(({ title, url }) => `- ${markdownLink(title, url, site)}`),
     '',
+    ...optionalSection(site),
   ].join('\n');
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  buildLlmsTxt,
   buildSiteMarkdown,
   buildTagIndexMarkdown,
   buildTagMarkdown,
@@ -58,6 +59,28 @@ describe('buildSiteMarkdown', () => {
       ].join('\n'),
     );
     expect(markdown).toContain('- [RSS フィード](https://example.com/rss.xml)');
+  });
+});
+
+describe('buildLlmsTxt', () => {
+  test('links list pages instead of individual posts', () => {
+    const text = buildLlmsTxt({
+      site,
+      pages: [{ title: 'About', url: '/about/' }],
+    });
+
+    expect(text).toMatch(/^# .+\n\n> .+\n/);
+    expect(text).toContain(
+      [
+        '## ページ',
+        '',
+        '- [記事一覧](https://example.com/index.md)',
+        '- [タグ一覧](https://example.com/tags.md)',
+        '- [About](https://example.com/about.md)',
+      ].join('\n'),
+    );
+    expect(text).not.toContain('/posts/');
+    expect(text).toContain('- [RSS フィード](https://example.com/rss.xml)');
   });
 });
 

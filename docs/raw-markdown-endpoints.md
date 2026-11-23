@@ -45,7 +45,8 @@ Worker 側は `.md` への振り分けに加え、Cloudflare Workers Static Asse
 
 | URL | 内容 | 実装 |
 | --- | --- | --- |
-| `/index.md`、`/llms.txt` | サイト概要と、記事・固定ページ・タグ一覧の Markdown 版へのリンク（[llms.txt](https://llmstxt.org/) 形式） | `src/pages/index.md.ts`、`src/pages/llms.txt.ts`、`src/lib/agent-markdown.ts` |
+| `/index.md` | トップページの Markdown 版。サイト概要と、全記事・固定ページ・タグ一覧の Markdown 版へのリンク | `src/pages/index.md.ts`、`src/lib/agent-markdown.ts` |
+| `/llms.txt` | [llms.txt](https://llmstxt.org/) 形式のサイト概要。記事は個別に並べず、記事一覧（`/index.md`）・タグ一覧・固定ページの Markdown 版へのリンクだけを載せる | `src/pages/llms.txt.ts`、`src/lib/agent-markdown.ts` |
 | `/[page].md` | `src/pages/*.md` の固定ページの raw Markdown（`layout` は除外） | `src/pages/[page].md.ts` |
 | `/tags.md`、`/tags/[tag].md` | タグ一覧と、タグごとの記事一覧 | `src/pages/tags.md.ts`、`src/pages/tags/[tag].md.ts` |
 | `/robots.txt` | [Content Signals](https://contentsignals.org/)（`search=yes, ai-input=yes, ai-train=yes`）。検索、AI の回答、学習への利用をすべて許可する | `src/pages/robots.txt.ts` |
