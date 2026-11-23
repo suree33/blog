@@ -69,11 +69,18 @@ tests/e2e/
     ├── smoke.spec.ts         # 基本表示の確認
     ├── accessibility.spec.ts # axe-coreアクセシビリティ検査
     ├── article-layout.spec.ts # 記事本文のレスポンシブ幅と目次ガター
+    ├── canonical-links.spec.ts # 内部リンクの末尾スラッシュ統一とリダイレクトなしの HTTP 200
+    ├── datetime.spec.ts      # 公開日・更新日の datetime 属性と frontmatter の一致
+    ├── drafts.spec.ts        # 下書きの一覧・フィードからの除外と非公開 URL の 404
+    ├── link-card-geometry.spec.ts # リンクカードの幅・内在サイズと余白の回帰検証
+    ├── metadata.spec.ts      # OGP と説明文の確認
     ├── navigation.spec.ts    # ヘッダー/フッターの遷移確認
     ├── tag.spec.ts           # タグページ (/tags/[tag]) の確認
     ├── theme.spec.ts         # テーマ切り替えの確認
     ├── toc.spec.ts           # 目次 (TOC) の表示・追従
     ├── not-found.spec.ts     # 404 ページの確認
+    ├── reduced-motion.spec.ts # モーション設定に応じたスクロールとモバイルメニュー
+    ├── sitemap.spec.ts       # サイトマップの掲載 URL・HTTP 200 と robots.txt の案内
     ├── visual.spec.ts        # ビジュアルリグレッション（コンポーネント単位）
     ├── visual-pages.spec.ts  # ビジュアルリグレッション（全ページ・フルページ）
     ├── rss.spec.ts           # RSS フィードの確認
@@ -335,6 +342,8 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 - Astro 表示用の `layout` frontmatter は除去されている（`^layout:` 行が存在しない）
 
 通常記事 URL + `Accept: text/markdown` による content negotiation と、Cloudflare Workers Static Assets の応答に `charset=utf-8` を補う処理は `src/worker.ts` で実装しています。これらは `tests/worker/markdown-response.test.ts` で Worker の `fetch` 境界から検証し、直接の `.md` URLと content negotiation の両方が `Content-Type: text/markdown; charset=utf-8` を返すことを保証します。
+
+ビルド済みアセットと実際の Wrangler 設定を使う検証は [Worker 統合テスト](./unit-testing.md#worker-統合テスト) を参照してください。
 
 ## GitHub Actions
 
