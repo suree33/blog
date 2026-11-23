@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { type Locator } from '@playwright/test';
 import { expect, test } from '../fixtures/test';
 import { routes } from '../utils/routes';
 
@@ -24,7 +25,17 @@ function expectISODate(actual: string | null, expected: string): void {
   expect(new Date(actual).toISOString()).toBe(new Date(expected).toISOString());
 }
 
-test('home time attributes are ISO dates matching each post frontmatter', async ({
+function japaneseLongDate(date: string): string {
+  const instant = new Date(date);
+  return `${instant.getUTCFullYear()}年${instant.getUTCMonth() + 1}月${instant.getUTCDate()}日`;
+}
+
+async function expectPostTime(time: Locator, date: string): Promise<void> {
+  expectISODate(await time.getAttribute('datetime'), date);
+  await expect(time).toHaveText(japaneseLongDate(date));
+}
+
+test('home dates show and encode each post frontmatter date', async ({
   homePage,
 }) => {
   await homePage.goto();
@@ -35,11 +46,11 @@ test('home time attributes are ISO dates matching each post frontmatter', async 
     expect(route).toBeTruthy();
     if (!route) throw new Error('Missing post link');
     const [pubDate] = await frontmatterDates(route);
-    expectISODate(await time.getAttribute('datetime'), pubDate);
+    await expectPostTime(time, pubDate);
   }
 });
 
-test('article time attributes are ISO dates matching publication and update frontmatter', async ({
+test('article dates show and encode publication and update frontmatter', async ({
   articlePage,
 }) => {
   const route = routes.articleWithCodeBlock;
@@ -49,6 +60,6 @@ test('article time attributes are ISO dates matching publication and update fron
   const times = articlePage.page.locator('time');
   await expect(times).toHaveCount(dates.length);
   for (const [index, date] of dates.entries()) {
-    expectISODate(await times.nth(index).getAttribute('datetime'), date);
+    await expectPostTime(times.nth(index), date);
   }
 });
