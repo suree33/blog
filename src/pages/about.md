@@ -2,6 +2,7 @@
 layout: ../layouts/AboutLayout.astro
 title: Daiki Sato
 pageTitle: About
+priorityFirstImage: true
 interests:
   - Tech
   - Design

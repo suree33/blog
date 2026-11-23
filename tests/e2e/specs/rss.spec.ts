@@ -231,6 +231,7 @@ test.describe('RSS フィード', () => {
         `${post.route} の Markdown 画像が残る`,
       ).toBeGreaterThanOrEqual(post.imageCount);
       for (const image of $('img').toArray()) {
+        expect($(image).attr('srcset')).toBeUndefined();
         expect(
           $(image).attr('src'),
           `${post.route} の画像 src が絶対 HTTP URL である`,
