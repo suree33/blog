@@ -7,11 +7,23 @@ import '@styles/global.css';
 interface Props {
   pageTitle?: string;
   ogimage?: string;
+  ogImageAlt?: string;
+  canonical?: boolean;
   description?: string;
   ogType?: 'website' | 'article';
 }
 
-const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
+const {
+  pageTitle,
+  ogimage,
+  ogImageAlt,
+  description,
+  ogType = 'website',
+  canonical = true,
+} = Astro.props;
+const pageURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+const image = ogimage || config.ogImage;
+const isDefaultImage = image === config.ogImage;
 ---
 
 <html lang="ja" class="motion-safe:scroll-smooth">
@@ -42,6 +54,13 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    {canonical && <link rel="canonical" href={pageURL} />}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={config.siteName}
+      href={new URL('/rss.xml', Astro.site ?? Astro.url.origin)}
+    />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta
@@ -58,17 +77,29 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
       }
     />
     <meta property="og:type" content={ogType} />
-    <meta property="og:url" content={Astro.url} />
+    <meta property="og:url" content={pageURL} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta
       property="og:description"
       content={description ? description : config.description}
     />
     <meta
       property="og:image"
+      content={new URL(image, Astro.site ?? Astro.url.origin)}
+    />
+    <meta
+      property="og:image:alt"
       content={
-        new URL(ogimage || config.ogImage, Astro.site ?? Astro.url.origin)
+        ogImageAlt ||
+        (isDefaultImage ? config.siteName : pageTitle || config.siteName)
       }
     />
+    {isDefaultImage && (
+      <>
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </>
+    )}
     <meta property="og:locale" content="ja_JP" />
   </head>
   <body class="flex min-h-screen flex-col bg-white dark:bg-neutral-950">

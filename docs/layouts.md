@@ -25,6 +25,22 @@ BaseLayout.astro (基本レイアウト)
 - **初期テーマ同期**: `<head>` のインラインスクリプトで localStorage のテーマを初回描画前に `<html>` へ反映し、OS テーマとの差分によるちらつきを防止
 - **共通コンポーネント**: Header、Footer の配置
 
+### SEO metadata
+
+`BaseLayout` constructs canonical and Open Graph page URLs from the pathname
+and `Astro.site` (the production origin in `astro.config.mjs`), without query
+parameters. The 404 page passes `canonical={false}` to omit its canonical link.
+RSS discovery points to `/rss.xml` on the same origin.
+
+Social cards use `summary_large_image`. The default image at
+`public/ogimage/ogimage-default.png` measures 1200 × 630 pixels (about 1.9:1);
+only that image receives width and height tags. Update these measured values if
+the file changes. Custom image strings have no intrinsic Astro image metadata,
+so their dimensions are omitted rather than guessed or fetched remotely.
+`ogImageAlt` overrides the image description; otherwise the default image uses
+the site name and custom images use the page title. Object-form post `ogimage.alt`
+is forwarded to this prop.
+
 Google Analyticsのスクリプトは読み込みません。Cloudflare Web Analyticsの設定は変更していません。
 
 ### Props
@@ -33,7 +49,10 @@ Google Analyticsのスクリプトは読み込みません。Cloudflare Web Anal
 interface Props {
   pageTitle?: string;
   ogimage?: string;
+  ogImageAlt?: string;
+  canonical?: boolean;
   description?: string;
+  ogType?: 'website' | 'article';
 }
 ```
 
