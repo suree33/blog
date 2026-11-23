@@ -12,7 +12,7 @@ interface Props {
 const { class: classList } = Astro.props;
 ---
 
-<div class={cn('dark:text-white text-black', classList)}>
+<div class={cn('text-black dark:text-white', classList)}>
   {socialLinks.map(({ href, ariaLabel, icon }) => (
     <HeaderIcon href={href} ariaLabel={ariaLabel}>
       <Icon name={icon} />
