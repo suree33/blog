@@ -112,7 +112,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 ### Markdown の画像
 
-Astro の `image.layout: 'constrained'` と `image.breakpoints` が Markdown のローカル画像に幅の候補を生成します。[Sätteri プラグイン](../src/lib/markdown/responsive-images.ts)は、Astro の既定の `sizes` を本文の表示幅に合わせて上書きします。画像は既定で遅延読み込みです。frontmatter に `priorityFirstImage: true` を設定したページでは、先頭のローカル Markdown 画像だけを優先して読み込みます。本文の左右余白や最大幅を変えるときは、プラグインの `sizes` も確認してください。
+Astro の `image.layout: 'constrained'` と `image.breakpoints` が Markdown のローカル画像に幅の候補を生成します。写真では [Sätteri プラグイン](../src/lib/markdown/responsive-images.ts)が `sizes` を指定するため、ブラウザーは本文の表示幅より大きい候補を選んで縮小します。PNG は細い文字を保つため、幅を変えずに WebP に変換します。
+
+画像は既定で遅延読み込みです。frontmatter に `priorityFirstImage: true` を設定したページでは、先頭のローカル Markdown 画像だけを優先して読み込みます。本文の左右余白や最大幅を変えるときは、プラグインの `sizes` も確認してください。
 
 `public/` の OGP 画像、favicon、Apple Touch Icon は本文画像ではありません。参照先の URL を維持するため、Astro の画像変換は適用しません。
 

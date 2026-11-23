@@ -23,7 +23,7 @@ export default defineConfig({
   image: {
     layout: 'constrained',
     responsiveStyles: true,
-    breakpoints: [360, 580, 720, 1080, 1160, 1440, 1740],
+    breakpoints: [360, 580, 720, 1080, 1160, 1440, 1740, 2700],
   },
   redirects: {
     '/posts': '/',

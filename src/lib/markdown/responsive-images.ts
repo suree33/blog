@@ -1,8 +1,8 @@
 import { defineHastPlugin } from 'satteri';
 import type { SatteriAstroData } from '@astrojs/markdown-satteri';
 
-// Tailwind's 65ch prose cap is about 36.125rem at 1rem with the site's sans-serif font stack.
-const proseSizes = 'min(calc(100vw - 2rem), 36.125rem)';
+// Reserve 2.5× the gutter-limited width or 3× the 36.125rem prose cap for browser downsampling.
+const photoSizes = 'min(calc(250vw - 5rem), 108.375rem)';
 
 export const responsiveMarkdownImages = defineHastPlugin({
   name: 'responsive-markdown-images',
@@ -21,11 +21,11 @@ export const responsiveMarkdownImages = defineHastPlugin({
       const priority =
         astro.frontmatter.priorityFirstImage === true &&
         !ctx.data.hasPrioritizedMarkdownImage;
-      ctx.setProperty(
-        node,
-        'sizes',
-        priority ? proseSizes : `auto, ${proseSizes}`,
-      );
+      if (/\.png$/i.test(src)) {
+        ctx.setProperty(node, 'layout', 'none');
+      } else {
+        ctx.setProperty(node, 'sizes', photoSizes);
+      }
       if (priority) {
         ctx.setProperty(node, 'priority', true);
         ctx.data.hasPrioritizedMarkdownImage = true;

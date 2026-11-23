@@ -12,7 +12,7 @@ test('loads the About photo eagerly at a responsive size', async ({ page }) => {
   await expect(photo).toHaveAttribute('loading', 'eager');
   await expect(photo).toHaveAttribute('fetchpriority', 'high');
   await expect(photo).toHaveAttribute('data-astro-image', 'constrained');
-  await expect(photo).toHaveAttribute('sizes', /calc\(100vw - 2rem\)/);
+  await expect(photo).toHaveAttribute('sizes', /calc\(250vw - 5rem\)/);
   await expect(photo).toHaveAttribute('srcset', /360w, .*580w, .*1080w/);
   await expect
     .poll(() => photo.evaluate((image: HTMLImageElement) => image.currentSrc))
@@ -49,7 +49,7 @@ test('selects a larger About photo when the browser default font is larger', asy
   );
   expect(fontSize).toBe('24px');
   expect(displayWidth).toBeGreaterThan(580);
-  expect(sourceWidth).toBeGreaterThan(580);
+  expect(sourceWidth).toBe(2700);
 });
 
 test('loads article photos lazily with responsive candidates', async ({
@@ -63,7 +63,21 @@ test('loads article photos lazily with responsive candidates', async ({
     await expect(photo).toHaveAttribute('loading', 'lazy');
     await expect(photo).not.toHaveAttribute('fetchpriority', 'high');
     await expect(photo).toHaveAttribute('data-astro-image', 'constrained');
-    await expect(photo).toHaveAttribute('sizes', /^auto, /);
+    await expect(photo).toHaveAttribute('sizes', /calc\(250vw - 5rem\)/);
     await expect(photo).toHaveAttribute('srcset', /360w, .*580w/);
   }
+});
+
+test('preserves source resolution for PNG screenshots while loading lazily', async ({
+  page,
+}) => {
+  await page.goto('/posts/catppuccin-coteditor/');
+  const screenshot = page.getByRole('img', {
+    name: 'CatppuccinテーマをCotEditorに適用したイメージ',
+  });
+
+  await expect(screenshot).toHaveAttribute('loading', 'lazy');
+  await expect(screenshot).toHaveAttribute('width', '1752');
+  await expect(screenshot).toHaveAttribute('src', /\/_astro\/.*\.webp$/);
+  expect(await screenshot.getAttribute('srcset')).toBeNull();
 });
