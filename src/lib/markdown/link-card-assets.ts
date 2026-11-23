@@ -1,11 +1,21 @@
-import { access, cp, mkdir, readdir, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import {
+  access,
+  cp,
+  mkdir,
+  readdir,
+  readFile,
+  writeFile,
+} from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import type { AstroConfig, AstroIntegration } from 'astro';
 import type { Loader } from 'astro/loaders';
 import { fileTypeFromBuffer } from 'file-type';
+import sharp from 'sharp';
 import { linkCard, type LinkCardOptions } from './link-card';
 
 const imageFilename = '[a-f0-9]{64}\\.[a-z0-9]+';
+const thumbnailVersion = 'thumbnail-440-webp-v1';
 
 function imageDirectory(config: Pick<AstroConfig, 'cacheDir'>) {
   return new URL('link-card-images/', config.cacheDir);
@@ -17,6 +27,8 @@ export function withLinkCardImages(loader: Loader): Loader {
     name: `link-card-images:${loader.name}`,
     async load(context) {
       const directory = imageDirectory(context.config);
+      const thumbnailsChanged =
+        context.meta.get('link-card-thumbnail') !== thumbnailVersion;
       for (const [id, entry] of context.store.entries()) {
         const html = entry.rendered?.html ?? '';
         if (
@@ -26,6 +38,13 @@ export function withLinkCardImages(loader: Loader): Loader {
         ) {
           context.logger.info(
             `Rebuilding content with remote link card images: ${id}`,
+          );
+          context.store.delete(id);
+          continue;
+        }
+        if (thumbnailsChanged && html.includes('class="link-card__image"')) {
+          context.logger.info(
+            `Rebuilding content with unoptimized link card images: ${id}`,
           );
           context.store.delete(id);
           continue;
@@ -51,16 +70,56 @@ export function withLinkCardImages(loader: Loader): Loader {
         }
       }
       await loader.load(context);
+      context.meta.set('link-card-thumbnail', thumbnailVersion);
     },
   };
 }
 
 export function createLinkCards(
-  options: Omit<LinkCardOptions, 'cacheDirectory'> = {},
+  options: Omit<LinkCardOptions, 'cacheDirectory' | 'thumbnail'> = {},
 ) {
   let directory: URL;
   const plugin = linkCard({
     ...options,
+    async thumbnail(source) {
+      if (!source.startsWith('/link-card-images/')) return undefined;
+      try {
+        const original = await readFile(
+          new URL(source.slice('/link-card-images/'.length), directory),
+        );
+        const hash = createHash('sha256')
+          .update(original)
+          .update(thumbnailVersion)
+          .digest('hex');
+        const filename = `${hash}.webp`;
+        const output = new URL(filename, directory);
+        try {
+          await access(output);
+        } catch {
+          await writeFile(
+            output,
+            await sharp(original)
+              .rotate()
+              .resize({
+                width: 440,
+                height: 440,
+                fit: 'inside',
+                withoutEnlargement: true,
+              })
+              .webp()
+              .toBuffer(),
+          );
+        }
+        const { width, height } = await sharp(
+          await readFile(output),
+        ).metadata();
+        if (!width || !height) return undefined;
+        return { src: `/link-card-images/${filename}`, width, height };
+      } catch (error) {
+        console.warn(`[link-card] ${source}: ${String(error)}`);
+        return undefined;
+      }
+    },
     get cacheDirectory() {
       return fileURLToPath(directory);
     },

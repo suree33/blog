@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import PostItem from '@components/PostItem.astro';
+import PostList from '@components/PostList.astro';
 import { getPublishedPosts } from '@lib/posts';
 
 const posts = await getPublishedPosts();
@@ -8,20 +8,6 @@ const pageTitle = 'Blog';
 ---
 
 <BaseLayout pageTitle={pageTitle}>
-  <div class="mt-10 flex w-full justify-center sm:px-4">
-    <div class="container">
-      <ul class="grid grid-cols-1 flex-col gap-4 gap-y-2 sm:gap-y-4">
-        {posts
-          .sort((a, b) => {
-            return (
-              new Date(b.frontmatter.pubDate).getTime() -
-              new Date(a.frontmatter.pubDate).getTime()
-            );
-          })
-          .map((post) => (
-            <PostItem post={post} />
-          ))}
-      </ul>
-    </div>
-  </div>
+  <h1 class="sr-only">{pageTitle}</h1>
+  <PostList posts={posts} />
 </BaseLayout>

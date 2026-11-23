@@ -1,11 +1,9 @@
 /**
- * ハンバーガーメニューによるトグル機能をを提供する
+ * ハンバーガーメニューの開閉操作を設定する
  *
- * 指定されたハンバーガーメニューをクリックすると、ハンバーガーメニューとトグル対象の要素にdata-active属性を付与したり削除したりすることで、
- * メニューの開閉を行う。初回クリック時には'start'クラスを削除し、data-active属性を追加する。
- * それ以降のクリックではdata-active属性のトグルを行う。
- * data-active属性が付与されている場合、トグル対象の要素にもdata-active属性を付与し、
- * data-active属性が削除された場合はトグル対象の要素からもdata-active属性を削除する。
+ * 開閉処理でdata-active属性、aria-expanded属性、本文のスクロール制御、キー操作の監視をまとめて更新する。
+ * 初回に開くときは'start'クラスを削除する。クリックで開閉し、Escapeキーや画面幅の拡大で閉じる。
+ * 開いている間はTabキーのフォーカス移動をメニュー内に留め、Escapeキーで閉じた後はボタンにフォーカスを戻す。
  *
  * @param hamburgerSelector - ハンバーガーメニューの要素を指定するCSSセレクタ
  * @param toggleTargetSelector - トグルする要素を指定するCSSセレクタ
@@ -24,7 +22,7 @@
  * }
  *
  * // 関数を呼び出してハンバーガーメニューのトグル機能を有効化
- * import { toggleHamburgerMenu } from './hamburgerMenu.js';
+ * import { toggleHamburgerMenu } from '@scripts/menu';
  * toggleHamburgerMenu('.hamburger', '.hamburger-toggle');
  */
 export const toggleHamburgerMenu = (
@@ -33,69 +31,59 @@ export const toggleHamburgerMenu = (
 ) => {
   const hamburger = document.querySelector<HTMLElement>(hamburgerSelector);
   const menu = document.querySelectorAll(toggleTargetSelector);
-  if (hamburger) {
-    const panel = document.getElementById(
-      hamburger.getAttribute('aria-controls') ?? '',
-    );
-    const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+  if (!hamburger) return;
+
+  const panel = document.getElementById(
+    hamburger.getAttribute('aria-controls') ?? '',
+  );
+  const handleKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMenu();
+      hamburger.focus();
+    } else if (event.key === 'Tab') {
+      const controls = [
+        hamburger,
+        ...(panel?.querySelectorAll<HTMLElement>('a[href], button') ?? []),
+      ].filter((element) => element.checkVisibility());
+      const index = controls.indexOf(document.activeElement as HTMLElement);
+      if (
+        event.shiftKey ? index <= 0 : index === controls.length - 1 || index < 0
+      ) {
         event.preventDefault();
-        closeMenu();
-        hamburger.focus();
-      } else if (event.key === 'Tab') {
-        const controls = [
-          hamburger,
-          ...(panel?.querySelectorAll<HTMLElement>('a[href], button') ?? []),
-        ].filter((element) => element.checkVisibility());
-        const index = controls.indexOf(document.activeElement as HTMLElement);
-        if (
-          event.shiftKey
-            ? index <= 0
-            : index === controls.length - 1 || index < 0
-        ) {
-          event.preventDefault();
-          (event.shiftKey ? controls.at(-1) : controls[0])?.focus();
-        }
+        (event.shiftKey ? controls.at(-1) : controls[0])?.focus();
       }
-    };
-    const closeMenu = () => {
-      document.removeEventListener('keydown', handleKeydown);
-      hamburger.removeAttribute('data-active');
-      hamburger.setAttribute('aria-expanded', 'false');
-      menu.forEach((item) => item.removeAttribute('data-active'));
-      enableScroll();
-    };
-
-    window
-      .matchMedia('(min-width: 640px)')
-      .addEventListener('change', (event) => {
-        if (event.matches) closeMenu();
-      });
-
-    hamburger.addEventListener('click', () => {
-      if (hamburger.classList.contains('start')) {
-        hamburger.classList.remove('start');
-        hamburger.setAttribute('data-active', '');
-      } else {
-        hamburger.toggleAttribute('data-active');
-      }
-
-      if (hamburger.hasAttribute('data-active')) {
-        hamburger.setAttribute('aria-expanded', 'true');
-        menu.forEach((item) => item.setAttribute('data-active', ''));
-        disableScroll();
-        document.addEventListener('keydown', handleKeydown);
-      } else {
-        closeMenu();
-      }
-    });
-  }
-  function disableScroll() {
-    document.body.style.overflow = 'hidden';
-  }
-  function enableScroll() {
+    }
+  };
+  const closeMenu = () => {
+    document.removeEventListener('keydown', handleKeydown);
+    hamburger.removeAttribute('data-active');
+    hamburger.setAttribute('aria-expanded', 'false');
+    menu.forEach((item) => item.removeAttribute('data-active'));
     document.body.style.overflow = 'unset';
-  }
+  };
+  const openMenu = () => {
+    hamburger.classList.remove('start');
+    hamburger.setAttribute('data-active', '');
+    hamburger.setAttribute('aria-expanded', 'true');
+    menu.forEach((item) => item.setAttribute('data-active', ''));
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeydown);
+  };
+
+  window
+    .matchMedia('(min-width: 640px)')
+    .addEventListener('change', (event) => {
+      if (event.matches) closeMenu();
+    });
+
+  hamburger.addEventListener('click', () => {
+    if (hamburger.hasAttribute('data-active')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
 };
 
 /**
