@@ -18,7 +18,7 @@ description: 欲しいものがありすぎるので、自分の中で整理す�
 
 4年使ったMX Master 3から買い換えたい。
 
-https://sur33.com/posts/logi-mx-master-is-better-than-lift
+https://sur33.com/posts/logi-mx-master-is-better-than-lift/
 
 https://www.logicool.co.jp/ja-jp/products/mice/mx-master-3s.910-006568.html
 

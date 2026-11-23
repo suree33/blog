@@ -10,6 +10,12 @@ Astro のビルド結果を `astro preview` で起動し、スモークテスト
 
 ## コマンド
 
+`accessibility.spec.ts` scans home, About, a representative article, a tag page
+and 404 in both color schemes on Chromium and Mobile Chrome. Mobile scans cover
+both closed and open menus. `navigation.spec.ts` checks first-Tab skip-link focus
+and Enter activation; `metadata.spec.ts` checks one content heading on every
+route from `sitePages`, plus the PNG favicon type and viewport initial scale.
+
 Markdown の全記事描画と生成 HTML の回帰検証は [Vitest ユニットテスト](./unit-testing.md) で実行します。
 
 Run `pnpm run test:e2e tests/e2e/specs/rss.spec.ts --project=chromium` to verify the built RSS XML. The expected set mirrors `src/content.config.ts` and `src/lib/posts.ts`: top-level `src/content/posts/*.md` entries with `draft !== true`, plus top-level `src/pages/*.md` pages with `draft !== true`, title, and pubDate. E2E fixture posts are also read and filtered by draft. Tests cover exact item membership, every item's content and publication date, sanitized HTML, preserved headings/paragraphs/links/code/images, and the XSL processing instruction and response. Dates use Astro's `astro/markdown` frontmatter parser and the collection schema's date normalization before UTC comparison. Markdown images must use same-origin URLs and resolve through preview with HTTP 200 and an image content-type; link-card images are identified from the built article's `.link-card__container` and checked for valid absolute HTTP(S) URLs only, since failed caching can leave external image URLs. The configured renderer uses the Sätteri link-card plugin in `src/lib/markdown/link-card.ts`. Both RSS content paths allow images and convert their sources to absolute URLs, following the [Astro RSS documentation](https://docs.astro.build/en/recipes/rss/).
@@ -69,11 +75,18 @@ tests/e2e/
     ├── smoke.spec.ts         # 基本表示の確認
     ├── accessibility.spec.ts # axe-coreアクセシビリティ検査
     ├── article-layout.spec.ts # 記事本文のレスポンシブ幅と目次ガター
+    ├── canonical-links.spec.ts # 内部リンクの末尾スラッシュ統一とリダイレクトなしの HTTP 200
+    ├── datetime.spec.ts      # 公開日・更新日の datetime 属性と frontmatter の一致
+    ├── drafts.spec.ts        # 下書きの一覧・フィードからの除外と非公開 URL の 404
+    ├── link-card-geometry.spec.ts # リンクカードの幅・内在サイズと余白の回帰検証
+    ├── metadata.spec.ts      # OGP と説明文の確認
     ├── navigation.spec.ts    # ヘッダー/フッターの遷移確認
     ├── tag.spec.ts           # タグページ (/tags/[tag]) の確認
     ├── theme.spec.ts         # テーマ切り替えの確認
     ├── toc.spec.ts           # 目次 (TOC) の表示・追従
     ├── not-found.spec.ts     # 404 ページの確認
+    ├── reduced-motion.spec.ts # モーション設定に応じたスクロールとモバイルメニュー
+    ├── sitemap.spec.ts       # サイトマップの掲載 URL・HTTP 200 と robots.txt の案内
     ├── visual.spec.ts        # ビジュアルリグレッション（コンポーネント単位）
     ├── visual-pages.spec.ts  # ビジュアルリグレッション（全ページ・フルページ）
     ├── rss.spec.ts           # RSS フィードの確認
@@ -270,7 +283,7 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 - **ビルド時ネットワークスタブ**: リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL には `*.e2e-stub.invalid` を使います。E2E ビルドではスタブ画像を `node_modules/.astro-e2e/link-card-images/` に保存し、通常のキャッシュとは分けます。ビルドプロセスの終了時に同ディレクトリからスタブ画像を削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
 - **ビルド時のタイムゾーン**: 記事の日付はビルド時に整形されるため、`TZ=UTC` に固定します。
-- **ブラウザ側**: localhost 以外へのリクエスト（Google Analytics / Partytown など）は `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
+- **ブラウザ側**: localhost 以外へのリクエストは `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
 - **フォント**: `tests/e2e/styles/screenshot-pages.css` で本文を `Noto Sans CJK JP`、`code` / `pre` / `kbd` / `samp` を `Noto Sans Mono CJK JP` に固定します。等幅表示を保つことで、コードブロックの崩れも検出できます（どちらも `fonts-noto-cjk` に含まれます）。
 
 ブラウザ時計は `2026-01-01T00:00:00Z`、locale は `ja-JP`、タイムゾーンは UTC に固定します。外部 iframe は余白を保ったまま非表示にします。記事一覧（ホームがアーカイブを兼ねる）、コードタイトル、Callout、リンクカードを含む全記事も対象です。外部サイトの内容そのものは合成カードで置き換えるため検証対象外です。
@@ -336,18 +349,18 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 
 通常記事 URL + `Accept: text/markdown` による content negotiation と、Cloudflare Workers Static Assets の応答に `charset=utf-8` を補う処理は `src/worker.ts` で実装しています。これらは `tests/worker/markdown-response.test.ts` で Worker の `fetch` 境界から検証し、直接の `.md` URLと content negotiation の両方が `Content-Type: text/markdown; charset=utf-8` を返すことを保証します。
 
+ビルド済みアセットと実際の Wrangler 設定を使う検証は [Worker 統合テスト](./unit-testing.md#worker-統合テスト) を参照してください。
+
 ## GitHub Actions
 
-`.github/workflows/ci.yml` に `e2e` ジョブを追加しています。`lint` / `build` と同じ checkout、pnpm、Node.js、依存関係インストールのステップを YAML anchor で再利用します。
+In `.github/workflows/ci.yml`, `e2e-shard` runs one matrix job per Playwright project. Checkout and pnpm setup are shared with other jobs through YAML anchors.
 
-`e2e` ジョブでは以下を実行します。
+1. Use the same digest-pinned `mcr.microsoft.com/playwright:v1.65.1-noble` container as `visual`, with `--ipc=host`. The image includes Chromium, Firefox, WebKit and their system dependencies; its version must match the locked `@playwright/test` version. [Playwright's CI guide](https://playwright.dev/docs/ci) documents container jobs and advises against caching browser binaries.
+2. Install `fonts-noto-cjk` with `apt-get` without `sudo` inside the container.
+3. Run `pnpm exec playwright test --project="$PROJECT" --reporter=github,list,blob`. The GitHub reporter produces failure annotations, and blob reports are retained for 1 day. Test results are retained for 7 days.
+4. The separate `e2e` job merges the blob reports into an HTML report, publishes the Cloudflare preview, and uploads the HTML report as an artifact retained for 7 days. It still runs on the host runner, not in the browser container.
 
-1. `fonts-noto-cjk` をインストールし、スクリーンショット用の日本語フォントを固定する。
-2. `pnpm exec playwright install --with-deps chromium firefox webkit` で全ブラウザと必要なシステム依存パッケージをインストールする（config が 6 プロジェクトを定義するため、Firefox / WebKit も必要）。
-3. `pnpm run test:e2e` を実行する。`playwright.config.ts` では `fullyParallel: true` と `workers: undefined` を組み合わせ、Playwright のデフォルト worker 数で spec 内テストを並列実行する。GitHub Actions 上では `github` reporter を `list` / `html` に追加し、失敗時の annotation を有効化する。
-4. `playwright-report/` と `test-results/` を artifact としてアップロードする。
-
-artifact の保持期間は 7 日です。テストが失敗した場合も調査できるよう、アップロードステップには `if: ${{ !cancelled() }}` を付けています。
+Report and test-result uploads use `if: ${{ !cancelled() }}` so that failed tests remain inspectable.
 
 ### ビルドの使い回しとキャッシュ
 

@@ -3,7 +3,7 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 const pageTitle = '404: Page Not Found';
 ---
 
-<BaseLayout pageTitle={pageTitle}>
+<BaseLayout pageTitle={pageTitle} canonical={false}>
   <div class="mt-10 mb-16 flex w-full justify-center px-4">
     <article class="prose prose-neutral dark:prose-invert w-full">
       <h1 class="mt-6 mb-10 text-center text-2xl">{pageTitle}</h1>

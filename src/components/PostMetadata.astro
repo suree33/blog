@@ -1,8 +1,9 @@
 ---
 import { Icon } from 'astro-icon/components';
+import { getTagPath } from '@lib/tags';
 import { formatDate } from '@scripts/date';
 
-export interface Props {
+interface Props {
   tags?: string[];
   pubDate?: string;
   updatedDate?: string;
@@ -16,7 +17,7 @@ const formattedUpdatedDate = updatedDate ? formatDate(updatedDate) : null;
 <div class="dot-separated flex list-none flex-wrap justify-center gap-x-[0.1em] p-0 text-base font-bold text-neutral-500 uppercase dark:text-neutral-400">
   {tags?.map((tag: string) => (
     <a
-      href={`/tags/${tag}`}
+      href={getTagPath(tag)}
       class="inline-flex font-bold text-current no-underline"
     >
       {tag}
