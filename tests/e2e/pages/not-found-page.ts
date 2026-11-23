@@ -1,6 +1,5 @@
-import { type Locator, type Page, type Response } from '@playwright/test';
-import { Header } from '../components/header';
-import { Footer } from '../components/footer';
+import { type Locator, type Response } from '@playwright/test';
+import { SitePage } from './site-page';
 import { routes } from '../utils/routes';
 
 /**
@@ -8,17 +7,7 @@ import { routes } from '../utils/routes';
  *
  * 小さく保ち、ロケーターと遷移だけを提供する。検証は spec 側に書く。
  */
-export class NotFoundPage {
-  readonly page: Page;
-  readonly header: Header;
-  readonly footer: Footer;
-
-  constructor(page: Page) {
-    this.page = page;
-    this.header = new Header(page);
-    this.footer = new Footer(page);
-  }
-
+export class NotFoundPage extends SitePage {
   /**
    * 存在しないルートへ遷移する。
    *

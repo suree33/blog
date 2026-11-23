@@ -54,10 +54,12 @@ tests/e2e/
 │   ├── post-metadata.ts      # 記事メタデータ
 │   └── toc.ts                # 目次 (TOC)
 ├── pages/                    # ページオブジェクト
+│   ├── site-page.ts          # ヘッダー・フッターを持つページの共通基底クラス
 │   ├── home-page.ts          # ホーム (/)
 │   ├── about-page.ts         # About (/about)
 │   ├── article-page.ts       # 記事ページ
 │   ├── tag-page.ts           # タグページ (/tags/[tag])
+│   ├── tag-index-page.ts     # タグ一覧 (/tags/)
 │   ├── rss-feed-page.ts      # RSS フィード (/rss.xml)
 │   └── not-found-page.ts     # 404 ページ
 ├── fixtures/
@@ -163,7 +165,9 @@ export const sampleArticleDescription =
 
 ### ページオブジェクト (`tests/e2e/pages/`)
 
+- `site-page.ts`: `page`、`header`、`footer` を保持する共通基底クラス。`HomePage`、`AboutPage`、`ArticlePage`、`TagPage`、`TagIndexPage`、`NotFoundPage` が継承する。`RssFeedPage` はヘッダーとフッターを持たないため継承しない
 - `home-page.ts`: `goto()`、`header`、`footer`、`postList`
+- `tag-index-page.ts`: `goto()`、`header`、`footer`、`heading`、`tagLinks`、`tagLink(tag)`（`/tags/`）
 - `about-page.ts`: `goto()`、`header`、`footer`、`heading`
 - `article-page.ts`: `goto(route, title)`、`header`、`footer`、`metadata`、`toc`、`heading`
 - `tag-page.ts`: `goto(tag)`、`header`、`footer`、`postList`、`heading`（`<h1>{tag}のタグが付いた記事`）。`header` / `footer` / `postList` は他ページと同じ POM を再利用する
