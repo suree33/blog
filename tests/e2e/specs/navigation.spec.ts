@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures/test';
 import { HOME_URL_REGEX } from '../utils/regex';
-import { routes } from '../utils/routes';
+import { routes, sampleTag } from '../utils/routes';
 
 /**
  * ヘッダーとフッターのナビゲーションリンク。
@@ -11,6 +11,36 @@ import { routes } from '../utils/routes';
  * デスクトップ・モバイル両方のプロジェクトで実行する。
  */
 test.describe('ナビゲーション', () => {
+  for (const [route, currentLink] of [
+    [routes.home, 'Blog'],
+    [routes.tagsBase, 'Tags'],
+    [`${routes.about}/`, 'About'],
+    [`${routes.tagsBase}${encodeURIComponent(sampleTag)}/`, null],
+    [`${routes.sampleArticle}/`, null],
+  ] as const) {
+    test(`marks only the exact current header link on ${route}`, async ({
+      page,
+      homePage,
+      isDesktop,
+    }) => {
+      const response = await page.goto(route);
+      expect(response?.ok()).toBe(true);
+      if (!isDesktop) {
+        await homePage.header.openMobileMenu();
+      }
+
+      const nav = homePage.header.root.getByRole('navigation');
+      if (currentLink) {
+        await expect(
+          nav.getByRole('link', { name: currentLink, exact: true }),
+        ).toHaveAttribute('aria-current', 'page');
+      }
+      await expect(nav.locator('a[aria-current]')).toHaveCount(
+        currentLink ? 1 : 0,
+      );
+    });
+  }
+
   for (const route of [routes.home, routes.sampleArticle]) {
     test(`skip link moves keyboard focus to main on ${route}`, async ({
       page,
