@@ -15,7 +15,7 @@
 pnpm install
 ```
 
-Node.js と pnpm のバージョンは `package.json` の `devEngines.runtime` と `packageManager` で管理しています。
+Node.js と pnpm のバージョンは `package.json` の `devEngines.runtime` と `devEngines.packageManager` で管理しています。
 `pnpm install` が指定バージョンの Node.js を導入し、`pnpm run` と `pnpm exec` はその Node.js で実行します。
 解決した正確なバージョンは `pnpm-lock.yaml` に固定されます。
 シェルから直接 `node` を実行すると別バージョンになることがあるため、その場合は `pnpm exec node` を使ってください。
@@ -44,22 +44,83 @@ pnpm run build
 pnpm run preview
 ```
 
-## 使用ツール・サービス
+### テスト
+
+ユニットテスト・Worker 統合テストの詳細は [ユニットテスト](docs/unit-testing.md) を参照してください。
+
+```bash
+pnpm run test:unit        # ユニットテストを一度実行
+pnpm run test:unit:watch  # 変更を監視して再実行
+pnpm run test:worker      # Worker の HTTP レスポンスを検証（Node.js Test Runner）
+pnpm run build:ci && pnpm run test:integration  # ビルド済みアセットを使う Worker 統合テスト
+pnpm run test:git-hooks   # Git hooks の動作を検証
+```
+
+Git hooks の詳細は [Git hooks](docs/git-hooks.md) を参照してください。
+E2E テストの初回実行前にブラウザをインストールします。
+
+```bash
+pnpm exec playwright install chromium firefox webkit
+```
+
+```bash
+pnpm run test:e2e                # ヘッドレスで全 E2E テストを実行
+pnpm run test:e2e:headed         # ブラウザを表示して実行
+pnpm run test:e2e:ui             # Playwright UI モードで実行
+pnpm run test:e2e:update         # コンポーネントのスナップショットを更新
+pnpm run test:e2e:visual         # 全ページのフルページ比較
+pnpm run test:e2e:visual:update  # フルページのベースラインを更新
+```
+
+フルページ比較は専用 Linux コンテナで実行します。実行環境や構成の詳細は [E2E テスト](docs/e2e-testing.md) を参照してください。
+
+### Worker の型生成
+
+```bash
+pnpm run cf-typegen
+```
+
+`wrangler.toml` の設定（バインディング、`compatibility_date`）から Worker の型を `worker-configuration.d.ts` に生成します。
+生成した型は Worker 用の `tsconfig.worker.json` だけで読み込み、Astro のサイト側の型には混ぜません。
+`pnpm run lint` も最初にこのコマンドを実行するため、Wrangler の更新後に型が古いまま残ることはありません。
+
+## 記事の書き方
+
+記事は `src/content/posts/` の直下に Markdown ファイル（`.md`）として置きます。記事の URL は `/posts/<拡張子を除いたファイル名>` です。たとえば `src/content/posts/hello.md` は `/posts/hello` になります。
+
+ファイルの先頭に `---` で囲んだ frontmatter を書き、その下に Markdown で本文を書きます。
+
+```yaml
+---
+title: はじめての記事
+pubDate: 2026-10-01
+description: このブログで書くこと
+tags: [Astro]
+---
+```
+
+- 必須: `pubDate`（公開日。例: `2026-10-01`）
+- 任意: `title`（タイトル）、`description`（概要）、`tags`（タグ名の配列）、`updatedDate`（更新日。書式は `pubDate` と同じ）
+- `image`（任意）: 記事に表示する画像を `{ src: /images/hello.png, alt: 記事の画像 }` のように指定します。`alt` は省略できます。
+- `ogimage`（任意）: OGP 画像のパスを文字列で指定するか、`image` と同じ形式で指定します。
+- 下書き: frontmatter に `draft: true` を追加します。下書きは記事一覧や RSS に載らず、記事の URL も生成されません。公開するときは `draft` を削除するか、`draft: false` に変更します。
+
+Astro の `posts` コンテンツコレクションから記事を読み込み、`src/pages/posts/[slug].astro` で共通のレイアウトを適用するので、frontmatter に `layout` は不要です。
+
+Markdown の処理には Sätteri を使います。[リンクカード](docs/markdown-link-cards.md)と [Callout](docs/markdown-callouts.md)は、このリポジトリのプラグインで変換します。処理系とレイアウトの採用理由は [Sätteri 移行の ADR](docs/adr/0001-markdown-processor-satteri.md) を参照してください。
 
 ### コードブロックのタイトル
 
 コードフェンスの言語名に続けて `title="..."` を指定します（例: `` ```ts title="src/lib/utils.ts" ``）。
-タイトルは [Astro の Shiki transformer](https://docs.astro.build/en/guides/syntax-highlighting/#transformers) で表示します。
+旧記法の `ts:src/lib/utils.ts` ではタイトルを表示しません。タイトルの表示には Astro の `shikiConfig.transformers` に登録した [Shiki transformer](src/lib/code-title.ts) を使います。
+
+## 使用ツール・サービス
 
 ### フレームワーク
 
 - [Astro](https://astro.build/)
 - [Tailwind CSS](https://tailwindcss.com/)
   - [Tailwind Typography](https://github.com/tailwindlabs/tailwindcss-typography)
-
-### Remarkプラグイン
-
-- [remark-link-card-plus](https://github.com/okaryo/remark-link-card-plus)
 
 ### アセット
 

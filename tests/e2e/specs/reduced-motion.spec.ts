@@ -32,7 +32,10 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
         reduced ? 'auto' : 'smooth',
       );
       if (reduced) {
-        for (const element of [header.root, header.root.locator('h1'), menu]) {
+        const logo = header.root
+          .getByRole('link', { name: 'サイトのロゴ画像（アイコン画像）' })
+          .locator('..');
+        for (const element of [header.root, logo, menu]) {
           await expect(element).toHaveCSS('transition-property', 'none');
         }
       } else {

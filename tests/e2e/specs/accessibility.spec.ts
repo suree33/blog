@@ -1,6 +1,8 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type Page, type TestInfo } from '@playwright/test';
 import { expect, test } from '../fixtures/test';
+import { routes, sampleTag } from '../utils/routes';
+import { Header } from '../components/header';
 
 const SUPPORTED_PROJECTS = new Set(['chromium', 'Mobile Chrome']);
 const MOBILE_PROJECT = 'Mobile Chrome';
@@ -52,30 +54,32 @@ async function scanPageForAccessibility({
     await page.emulateMedia({ colorScheme: theme });
     await goto();
 
-    if (isMobile) {
-      await openMobileMenu();
-    }
-
-    const results = await new AxeBuilder({ page }).analyze();
-
-    await testInfo.attach(`axe-results-${theme}.json`, {
-      body: JSON.stringify(results, null, 2),
-      contentType: 'application/json',
-    });
-
-    for (const violation of results.violations) {
-      const { impact } = violation;
-      if (!isBlockingImpact(impact)) {
-        continue;
+    for (const menuState of isMobile ? ['closed', 'open'] : ['closed']) {
+      if (menuState === 'open') {
+        await openMobileMenu();
       }
 
-      for (const node of violation.nodes) {
-        blockingViolations.push({
-          theme,
-          ruleId: violation.id,
-          impact,
-          target: node.target,
-        });
+      const results = await new AxeBuilder({ page }).analyze();
+
+      await testInfo.attach(`axe-results-${theme}-${menuState}.json`, {
+        body: JSON.stringify(results, null, 2),
+        contentType: 'application/json',
+      });
+
+      for (const violation of results.violations) {
+        const { impact } = violation;
+        if (!isBlockingImpact(impact)) {
+          continue;
+        }
+
+        for (const node of violation.nodes) {
+          blockingViolations.push({
+            theme,
+            ruleId: violation.id,
+            impact,
+            target: node.target,
+          });
+        }
       }
     }
   }
@@ -87,6 +91,22 @@ async function scanPageForAccessibility({
 }
 
 test.describe('axe-coreアクセシビリティ検査', () => {
+  for (const route of [
+    `${routes.tagsBase}${encodeURIComponent(sampleTag)}/`,
+    routes.notFound,
+  ]) {
+    test(route, async ({ page }, testInfo) => {
+      skipUnsupportedProject(testInfo);
+      await scanPageForAccessibility({
+        page,
+        testInfo,
+        goto: async () => {
+          await page.goto(route);
+        },
+        openMobileMenu: () => new Header(page).openMobileMenu(),
+      });
+    });
+  }
   test('ホーム', async ({ homePage }, testInfo) => {
     skipUnsupportedProject(testInfo);
 

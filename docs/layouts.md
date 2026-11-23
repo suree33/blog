@@ -21,10 +21,42 @@ BaseLayout.astro (基本レイアウト)
 - **HTMLドキュメント構造**: `<html>`, `<head>`, `<body>` の基本構造
 - **メタタグ管理**: SEO、OGP、ビューポート設定
 - **サイト設定統合**: `config.json` からサイト名、説明、OGイメージを読み込み
-- **Google Analytics**: Partytown を使用したアナリティクス統合
 - **ダークモード対応**: TailwindCSSのダークモードクラス
 - **初期テーマ同期**: `<head>` のインラインスクリプトで localStorage のテーマを初回描画前に `<html>` へ反映し、OS テーマとの差分によるちらつきを防止
 - **共通コンポーネント**: Header、Footer の配置
+
+### SEO metadata
+
+`BaseLayout` constructs canonical and Open Graph page URLs from the pathname
+and `Astro.site` (the production origin in `astro.config.mjs`), without query
+parameters. The 404 page passes `canonical={false}` to omit its canonical link.
+RSS discovery points to `/rss.xml` on the same origin.
+
+Social cards use `summary_large_image`. The default image at
+`public/ogimage/ogimage-default.png` measures 1200 × 630 pixels (about 1.9:1);
+only that image receives width and height tags. Update these measured values if
+the file changes. Custom image strings have no intrinsic Astro image metadata,
+so their dimensions are omitted rather than guessed or fetched remotely.
+`ogImageAlt` overrides the image description; otherwise the default image uses
+the site name and custom images use the page title. Object-form post `ogimage.alt`
+is forwarded to this prop.
+
+Google Analyticsのスクリプトは読み込みません。Cloudflare Web Analyticsの設定は変更していません。
+
+### Keyboard navigation and headings
+
+The first focusable element is the skip link, labeled `本文へスキップ`. It is
+visually hidden until focused, appears as a full-width bar in normal flow above
+the sticky header in both themes without covering its links,
+and targets `<main id="main-content" tabindex="-1">` so activation moves keyboard
+focus to the content. Keep this link before the header. The main target uses
+`scroll-mt-24 sm:scroll-mt-28`, matching article heading anchors, so the sticky
+header does not cover the first content link after activation and Tab.
+
+Each HTML page supplies exactly one nonempty `h1` inside `main`; the header logo
+is not a heading. The home page uses a visually hidden `Blog` heading to preserve
+the existing design. Article, About, tag, Dreamhouse and 404 pages retain their
+page titles as headings.
 
 ### Props
 
@@ -32,7 +64,10 @@ BaseLayout.astro (基本レイアウト)
 interface Props {
   pageTitle?: string;
   ogimage?: string;
+  ogImageAlt?: string;
+  canonical?: boolean;
   description?: string;
+  ogType?: 'website' | 'article';
 }
 ```
 
@@ -47,6 +82,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <!-- コンテンツ -->
 </BaseLayout>
 ```
+
+### 内部ページへのリンク
+
+内部のHTMLページへのリンクは、Cloudflare Static Assets がリダイレクトせずに配信するURLに合わせ、末尾に `/` を付けます。
+
+`src/lib/posts.ts` の `getPublishedPosts()` と `getPublishedStandalonePages()` は、一覧とRSSに末尾が `/` のURLを渡します。`PostMetadata.astro` のタグリンクとMarkdown内の内部ページへのリンクも、この形式にそろえます。
+
+`/rss.xml` や `/posts/example.md` などのファイルへのリンク、ページ内リンク、外部URLは変更しません。AstroのURLポリシーやWorkerの動作も変更しません。
 
 ## ProseArticleLayout.astro
 

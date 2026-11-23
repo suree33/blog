@@ -12,7 +12,7 @@ description: メンテナンスの停滞している remark-link-card から rem
 
 remark-link-card はリンクをカード形式で表示するためのRemarkプラグインで、本サイトでもリンクカードの実現のためにこれを使用していました。ただ、現在はほぼメンテされていないので、移行することにしました。
 
-<https://sur33.com/posts/remark-link-card-with-astro>
+<https://sur33.com/posts/remark-link-card-with-astro/>
 
 ## okaryo/remark-link-card-plus
 
@@ -54,7 +54,7 @@ export default defineConfig({
 
 #### 3. CSS追加
 
-基本的に[remark-link-cardの時のCSS](https://sur33.com/posts/remark-link-card-with-astro)をremark-link-card-plus用に書き換えただけ。ただ、Tailwind CSS化してあるため、 `@apply` を多用しており、純粋なCSSはほぼありません。Tailwind CSSを使っていないプロジェクトでは、AIなどで頑張って生CSS化して使ってください。
+基本的に[remark-link-cardの時のCSS](https://sur33.com/posts/remark-link-card-with-astro/)をremark-link-card-plus用に書き換えただけ。ただ、Tailwind CSS化してあるため、 `@apply` を多用しており、純粋なCSSはほぼありません。Tailwind CSSを使っていないプロジェクトでは、AIなどで頑張って生CSS化して使ってください。
 
 ```css title="remark-link-card.css"
 /* ブレークポイント: 60ch（Tailwindcss/Typographyのproseのmax-widthを参考に） */
