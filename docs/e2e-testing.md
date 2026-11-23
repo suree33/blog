@@ -78,7 +78,7 @@ tests/e2e/
     ├── accessibility.spec.ts # axe-coreアクセシビリティ検査
     ├── article-layout.spec.ts # 記事本文のレスポンシブ幅と目次ガター
     ├── canonical-links.spec.ts # 内部リンクの末尾スラッシュ統一とリダイレクトなしの HTTP 200
-    ├── datetime.spec.ts      # 公開日・更新日の datetime 属性と frontmatter の一致
+    ├── datetime.spec.ts      # 公開日・更新日の表示と datetime 属性が frontmatter と一致
     ├── drafts.spec.ts        # 下書きの一覧・フィードからの除外と非公開 URL の 404
     ├── link-card-geometry.spec.ts # リンクカードの幅・内在サイズと余白の回帰検証
     ├── metadata.spec.ts      # OGP と説明文の確認

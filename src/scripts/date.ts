@@ -4,6 +4,9 @@
  * Accepts a string, number, or Date and returns a localized date string; null, undefined,
  * or an empty/whitespace-only string are treated as invalid.
  *
+ * Formats in UTC because date-only strings such as frontmatter `2026-03-02` parse as UTC
+ * midnight; using the build machine's time zone would shift the day west of UTC.
+ *
  * @param dateInput - The value to format; passed to the Date constructor for parsing.
  * @returns The date formatted in ja-JP long form (e.g., "2026年3月2日") if valid, `false` otherwise.
  */
@@ -25,6 +28,7 @@ export function formatDate(
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: 'UTC',
     });
   } else {
     return false;
