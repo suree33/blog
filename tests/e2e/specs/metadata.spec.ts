@@ -40,7 +40,8 @@ const cases = [
   {
     path: `${routes.articleWithoutCodeBlock}/`,
     image: defaultImage,
-    description: defaultDescription,
+    description:
+      'ネスプレッソを使ったあとの掃除、蒸し暑い時期はとくにサボらないほうがよさそう。',
   },
   {
     path: '/posts/setup-obsidian-livesync/',

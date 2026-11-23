@@ -8,41 +8,64 @@ if (!schema || typeof schema === 'function') {
 }
 
 describe('posts collection schema', () => {
+  const validPost = {
+    title: 'Post title',
+    pubDate: '2026-01-01',
+    description: 'Post description',
+    tags: ['Astro'],
+  };
+
   test('preserves populated init-post fields', () => {
-    const post: PostFrontmatter = schema.parse({
-      title: 'Post title',
-      pubDate: '2026-01-01',
-      description: 'Post description',
-      tags: ['Astro'],
-    });
-    expect(post).toEqual({
-      title: 'Post title',
-      pubDate: '2026-01-01',
-      description: 'Post description',
-      tags: ['Astro'],
-    });
+    const post: PostFrontmatter = schema.parse(validPost);
+    expect(post).toEqual(validPost);
   });
 
-  test('normalizes blank YAML fields without nullable consumer types', () => {
+  test('normalizes a YAML date without changing the other fields', () => {
     const post: PostFrontmatter = schema.parse({
-      title: null,
+      ...validPost,
       pubDate: new Date('2026-01-01'),
-      description: null,
-      tags: null,
     });
-    expect(post).toEqual({
-      title: '',
-      pubDate: '2026-01-01',
-      description: undefined,
-      tags: undefined,
-    });
+    expect(post).toEqual(validPost);
   });
 
-  test('accepts absent init-post text fields', () => {
-    expect(schema.parse({ pubDate: '2026-01-01' })).toEqual({
-      title: '',
-      pubDate: '2026-01-01',
+  test.each([
+    ['title', undefined],
+    ['title', null],
+    ['title', '  '],
+    ['description', undefined],
+    ['description', null],
+    ['description', '  '],
+    ['tags', undefined],
+    ['tags', null],
+    ['tags', []],
+    ['tags', ['  ']],
+    ['pubDate', undefined],
+    ['pubDate', '  '],
+  ])('rejects missing or blank %s (%j)', (field, value) => {
+    const { error } = schema.safeParse({ ...validPost, [field]: value });
+    expect(error?.issues).toContainEqual(
+      expect.objectContaining({ path: expect.arrayContaining([field]) }),
+    );
+  });
+
+  test.each(['image', 'ogimage'])('requires alt in a %s object', (field) => {
+    const src = '/photo.png';
+    const image = { src, alt: 'A mountain' };
+    expect(schema.parse({ ...validPost, [field]: image })).toMatchObject({
+      [field]: image,
     });
+    for (const input of [{ src }, { src, alt: '  ' }]) {
+      const { error } = schema.safeParse({ ...validPost, [field]: input });
+      expect(error?.message).toContain('"alt"');
+    }
+  });
+
+  test('preserves a URL-only ogimage', () => {
+    expect(schema.parse({ ...validPost, ogimage: '/photo.png' })).toMatchObject(
+      {
+        ogimage: '/photo.png',
+      },
+    );
   });
 
   test.each([
@@ -51,6 +74,6 @@ describe('posts collection schema', () => {
     { title: 'Title', pubDate: '2026-01-01', description: 42 },
     { title: 'Title', pubDate: '2026-01-01', tags: [42] },
   ])('rejects invalid field types: %j', (post) => {
-    expect(schema.safeParse(post).success).toBe(false);
+    expect(schema.safeParse({ ...validPost, ...post }).success).toBe(false);
   });
 });

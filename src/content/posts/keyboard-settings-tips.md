@@ -26,11 +26,11 @@ https://docs.qmk.fm/feature_advanced_keycodes#modifier-keys:~:text=and%20press%2
 
 例えばMacの音声入力キー。ここに `Hyper+V` を設定した。ちなみに、今のところDictation（音声入力）キーのQMKキーコードは無いっぽい。
 
-![](images/keyboard-settings-tip/dictation-hyper-key.png)
+![音声入力のショートカットにHyper+Vを設定したmacOSの画面](images/keyboard-settings-tip/dictation-hyper-key.png)
 
 他にも、ウィンドウ操作アプリのLoopではTriggerキーとしてHyperキーを設定したり。
 
-![](images/keyboard-settings-tip/loop-trigger-hyper-key.png)
+![LoopのTrigger Keyに左側のCommand・Shift・Option・Controlを設定した画面](images/keyboard-settings-tip/loop-trigger-hyper-key.png)
 
 https://github.com/MrKai77/Loop
 
@@ -38,6 +38,6 @@ https://github.com/MrKai77/Loop
 
 Spaceキー単押しの時はSpaceキーとして使って、他のキーと組み合わせて使ったときだけレイヤー切り替えキーとして動作するようにすると便利。実際、VIAにはこれ専用のキーがある。これをスペースキーに割り当てれば良いだけ。
 
-![](images/keyboard-settings-tip/space-as-layer-key.png)
+![VIAのキー一覧に並ぶSpace Fn1、Space Fn2、Space Fn3](images/keyboard-settings-tip/space-as-layer-key.png)
 
-![](images/keyboard-settings-tip/space-as-fn1-key.png)
+![VIAでスペースキーにSpace Fn1を割り当てたキーマップ](images/keyboard-settings-tip/space-as-fn1-key.png)

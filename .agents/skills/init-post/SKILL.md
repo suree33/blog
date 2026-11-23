@@ -13,9 +13,9 @@ description: src/content/posts/template/_blog-post.md を使って新規ブロ�
 2. ユーザーに以下を確認する。
 
 - slug（必須、例: `my-new-post`）
-- title（任意）
-- description（任意）
-- tags（任意、カンマ区切り）
+- title（必須）
+- description（必須）
+- tags（必須、カンマ区切り）
 - pubDate（任意、`YYYY-MM-DD`。未指定時は当日）
 
 3. 生成スクリプトを実行する。
@@ -35,10 +35,10 @@ python3 .agents/skills/init-post/scripts/init_post.py \
 
 - 必須:
 - `--slug`: 出力ファイル名（`.md` なし）
-- 任意:
 - `--title`: frontmatter `title`
 - `--description`: frontmatter `description`
-- `--tags`: カンマ区切り（`a,b,c`）
+- `--tags`: 1つ以上のタグ（複数の場合はカンマ区切り）
+- 任意:
 - `--date`: `pubDate`（`YYYY-MM-DD`）
 - `--root`: リポジトリルート（通常は不要）
 - `--force`: 既存ファイルを上書き

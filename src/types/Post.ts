@@ -4,16 +4,18 @@ export type PostFrontmatter = CollectionEntry<'posts'>['data'];
 
 export type StandalonePageFrontmatter = Omit<
   PostFrontmatter,
-  'pubDate' | 'updatedDate'
-> & {
-  pubDate?: PostFrontmatter['pubDate'];
-  updatedDate?: PostFrontmatter['updatedDate'] | null;
-};
+  'description' | 'tags' | 'pubDate' | 'updatedDate'
+> &
+  Partial<Pick<PostFrontmatter, 'description' | 'tags'>> & {
+    pubDate?: PostFrontmatter['pubDate'];
+    updatedDate?: PostFrontmatter['updatedDate'] | null;
+  };
 
 export interface Post {
   frontmatter: Pick<
-    PostFrontmatter,
-    'title' | 'pubDate' | 'description' | 'tags' | 'image'
-  >;
+    StandalonePageFrontmatter,
+    'title' | 'description' | 'tags' | 'image'
+  > &
+    Pick<PostFrontmatter, 'pubDate'>;
   url?: string;
 }

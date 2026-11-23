@@ -6,7 +6,12 @@ import { getStaticPaths } from '../../src/pages/posts/[slug].md.ts';
 vi.mock('../../src/lib/posts', () => ({ getPublishedPosts: vi.fn() }));
 vi.mock('node:fs/promises', () => ({ readFile: vi.fn() }));
 
-const data = { title: 'Published post', pubDate: '2026-01-01' };
+const data = {
+  title: 'Published post',
+  pubDate: '2026-01-01',
+  description: 'Published post description',
+  tags: ['Astro'],
+};
 const post = {
   id: 'published-post',
   collection: 'posts' as const,
