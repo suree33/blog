@@ -7,6 +7,7 @@ import process from 'node:process';
 
 import { createLinkCards } from './src/lib/markdown/link-card-assets.ts';
 import { requireImageAlt } from './src/lib/markdown/require-image-alt.ts';
+import { responsiveMarkdownImages } from './src/lib/markdown/responsive-images.ts';
 import { satteriCallouts } from './src/lib/satteri-callouts.ts';
 import { codeTitleTransformer } from './src/lib/code-title.ts';
 
@@ -32,7 +33,7 @@ export default defineConfig({
         ),
         linkCards.plugin,
       ],
-      hastPlugins: [satteriCallouts],
+      hastPlugins: [satteriCallouts, responsiveMarkdownImages],
     }),
     shikiConfig: {
       themes: {
