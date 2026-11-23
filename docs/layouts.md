@@ -99,6 +99,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 - **Prose スタイリング**: TailwindCSS の typography プラグインを使用
 - **レスポンシブデザイン**: モバイルでは外枠の左右16pxを除いた幅を本文に使い、`xl` 以上ではサイドバー目次との32pxのガターを確保
+- **サイドバー目次の高さ**: sticky の目次は `max-h-[calc(100dvh-8rem)]`（`top-24` と下余白 2rem を除いた高さ）に収め、はみ出す分は目次内でスクロールする
 - **ダークモード対応**: prose-invert クラスによる自動切り替え
 - **タイポグラフィ設定**: 見出し、コード、画像の統一スタイル
 
