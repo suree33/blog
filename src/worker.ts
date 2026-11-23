@@ -1,3 +1,5 @@
+import { toMarkdownPath } from './lib/markdown-path.ts';
+
 // Paths whose last segment has no extension are HTML pages (`/`, `/about/`, `/posts/foo/`).
 const PAGE_PATH_PATTERN = /^(?:\/[^/.]+)*\/?$/;
 const TEXT_PATH_PATTERN = /\.(?:md|txt)$/;
@@ -7,9 +9,6 @@ const SITE_LINKS = [
   '</rss.xml>; rel="alternate"; type="application/rss+xml"',
   '</sitemap-index.xml>; rel="sitemap"; type="application/xml"',
 ];
-
-const toMarkdownPath = (pathname: string) =>
-  pathname === '/' ? '/index.md' : `${pathname.replace(/\/$/, '')}.md`;
 
 interface AcceptPreference {
   mediaType: string;
