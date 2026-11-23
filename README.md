@@ -67,12 +67,12 @@ pnpm exec playwright install chromium firefox webkit
 pnpm run test:e2e                # ヘッドレスで全 E2E テストを実行
 pnpm run test:e2e:headed         # ブラウザを表示して実行
 pnpm run test:e2e:ui             # Playwright UI モードで実行
-pnpm run test:e2e:update         # コンポーネントのスナップショットを更新
+pnpm run test:e2e:update         # CI と同じ環境でコンポーネントのスナップショットを更新（Docker が必要）
 pnpm run test:e2e:visual         # 全ページのフルページ比較
 pnpm run test:e2e:visual:update  # フルページのベースラインを更新
 ```
 
-フルページ比較は専用 Linux コンテナで実行します。実行環境や構成の詳細は [E2E テスト](docs/e2e-testing.md) を参照してください。
+コンポーネントのスナップショット更新には、ホストへのブラウザのインストールは不要です。フルページ比較の実行方法とあわせて、[E2E テスト](docs/e2e-testing.md#スナップショットの更新)を参照してください。
 
 ### Worker の型生成
 

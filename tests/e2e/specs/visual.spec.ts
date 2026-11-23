@@ -25,8 +25,7 @@ const screenshotOptions = {
  * 潰れた過去のような、空白/レイアウトのリグレッションを検出する。
  *
  * スナップショットは `tests/e2e/specs/visual.spec.ts-snapshots/` にコミットする。
- * 意図的な UI 変更後は `pnpm run test:e2e:update`（または
- * `pnpm run test:e2e -- --update-snapshots`）で再生成する。
+ * 意図的な UI 変更後は `pnpm run test:e2e:update` で CI と同じ環境で再生成する。
  */
 test.describe('ビジュアルリグレッション', () => {
   test.beforeEach(async ({ page }) => {
