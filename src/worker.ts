@@ -1,6 +1,6 @@
 // Paths whose last segment has no extension are HTML pages (`/`, `/about/`, `/posts/foo/`).
 const PAGE_PATH_PATTERN = /^(?:\/[^/.]+)*\/?$/;
-const MARKDOWN_PATH_PATTERN = /\.md$/;
+const TEXT_PATH_PATTERN = /\.(?:md|txt)$/;
 
 const SITE_LINKS = [
   '</llms.txt>; rel="describedby"; type="text/plain"',
@@ -117,9 +117,13 @@ const addVaryAccept = (headers: Headers) => {
   }
 };
 
-const addMarkdownCharset = (headers: Headers) => {
-  if (headers.get('Content-Type')?.split(';', 1)[0] === 'text/markdown') {
-    headers.set('Content-Type', 'text/markdown; charset=utf-8');
+const UTF8_TEXT_TYPES = new Set(['text/markdown', 'text/plain']);
+
+const addUtf8Charset = (headers: Headers) => {
+  const mediaType = headers.get('Content-Type')?.split(';', 1)[0];
+
+  if (mediaType && UTF8_TEXT_TYPES.has(mediaType)) {
+    headers.set('Content-Type', `${mediaType}; charset=utf-8`);
   }
 };
 
@@ -146,7 +150,7 @@ const withHeaders = (
 
 const pageResponse = (response: Response, links: string[]) =>
   withHeaders(response, (headers) => {
-    addMarkdownCharset(headers);
+    addUtf8Charset(headers);
     addVaryAccept(headers);
 
     if (response.ok) {
@@ -166,8 +170,8 @@ export default {
     if (!isNegotiable) {
       const response = await env.ASSETS.fetch(request);
 
-      return MARKDOWN_PATH_PATTERN.test(url.pathname)
-        ? withHeaders(response, addMarkdownCharset)
+      return TEXT_PATH_PATTERN.test(url.pathname)
+        ? withHeaders(response, addUtf8Charset)
         : response;
     }
 

@@ -37,6 +37,26 @@ test('direct .md response declares UTF-8 in Content-Type', async () => {
   assert.equal(await response.text(), markdownBody);
 });
 
+test('direct .txt response declares UTF-8 in Content-Type', async () => {
+  const response = await worker.fetch(
+    new Request('https://example.com/llms.txt'),
+    {
+      ASSETS: createAssets(
+        async () =>
+          new Response(markdownBody, {
+            headers: { 'Content-Type': 'text/plain' },
+          }),
+      ),
+    },
+  );
+
+  assert.equal(
+    response.headers.get('Content-Type'),
+    'text/plain; charset=utf-8',
+  );
+  assert.equal(await response.text(), markdownBody);
+});
+
 test('negotiated Markdown response declares UTF-8 in Content-Type', async () => {
   const response = await worker.fetch(
     new Request('https://example.com/posts/example', {

@@ -145,3 +145,11 @@ test('robots.txt declares Content Signals', async () => {
     /^Content-Signal: search=yes, ai-input=yes, ai-train=yes$/m,
   );
 });
+
+test('llms.txt declares UTF-8 in Content-Type', async () => {
+  const response = await server.fetch('/llms.txt');
+  expect(response.status).toBe(200);
+  expect(response.headers.get('Content-Type')).toBe(
+    'text/plain; charset=utf-8',
+  );
+});
