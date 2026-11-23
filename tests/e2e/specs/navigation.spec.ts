@@ -195,6 +195,23 @@ test.describe('ナビゲーション', () => {
     ).toHaveURL(HOME_URL_REGEX);
   });
 
+  test('ヘッダーの Tags リンクでタグ一覧に遷移する', async ({
+    homePage,
+    isDesktop,
+    page,
+  }) => {
+    await homePage.goto();
+    if (!isDesktop) {
+      await homePage.header.openMobileMenu();
+    }
+    await homePage.header.tagsLink.click();
+
+    await expect(
+      page,
+      'ヘッダーの Tags リンクからタグ一覧ページに遷移する',
+    ).toHaveURL(/\/tags\/$/);
+  });
+
   test('ヘッダーの About リンクで About に遷移する', async ({
     homePage,
     isDesktop,
@@ -227,6 +244,19 @@ test.describe('ナビゲーション', () => {
       page,
       'フッターの Blog リンクからホームページに遷移する',
     ).toHaveURL(HOME_URL_REGEX);
+  });
+
+  test('フッターの Tags リンクでタグ一覧に遷移する', async ({
+    homePage,
+    page,
+  }) => {
+    await homePage.goto();
+    await homePage.footer.tagsLink.click();
+
+    await expect(
+      page,
+      'フッターの Tags リンクからタグ一覧ページに遷移する',
+    ).toHaveURL(/\/tags\/$/);
   });
 
   test('フッターの About リンクで About に遷移する', async ({

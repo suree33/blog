@@ -1,0 +1,38 @@
+---
+export const prerender = true;
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { getPublishedTags, getTagPath } from '@lib/tags';
+
+const tags = (await getPublishedTags()).sort(
+  (a, b) => b.posts.length - a.posts.length || a.tag.localeCompare(b.tag, 'ja'),
+);
+---
+
+<BaseLayout
+  pageTitle="Tags"
+  description="ブログ記事に付いているタグの一覧です。"
+>
+  <div class="mt-10 flex w-full justify-center sm:px-4">
+    <div class="container max-sm:px-4">
+      <h1 class="mt-6 mb-10 text-center text-2xl text-black dark:text-white">
+        タグ一覧
+      </h1>
+      <ul class="flex flex-wrap justify-center gap-2">
+        {tags.map(({ tag, posts }) => (
+          <li>
+            <a
+              href={getTagPath(tag)}
+              class="inline-flex items-center gap-2 rounded px-3 py-1.5 text-neutral-700 no-underline transition hover:bg-neutral-200 dark:text-neutral-300 hover:dark:bg-neutral-800"
+            >
+              {tag}
+              <span class="text-sm text-neutral-500 dark:text-neutral-400">
+                {posts.length}
+                <span class="sr-only">件の記事</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</BaseLayout>

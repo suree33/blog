@@ -1,0 +1,21 @@
+name: 機能追加・改善の提案
+description: ブログに追加してほしい機能や改善の提案はこちら
+labels: [needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 解決したいこと
+      description: どんなときに困るか、何ができるとよいかを書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 変更の案
+      description: 具体的な案があれば書いてください。
+  - type: input
+    id: url
+    attributes:
+      label: 関連するページの URL
+      placeholder: https://sur33.com/
