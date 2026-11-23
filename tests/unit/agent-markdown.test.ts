@@ -4,7 +4,6 @@ import {
   buildSiteMarkdown,
   buildTagIndexMarkdown,
   buildTagMarkdown,
-  toMarkdownPath,
 } from '../../src/lib/agent-markdown';
 
 const site = new URL('https://example.com/');
@@ -16,18 +15,6 @@ const post = (
 ) => ({
   frontmatter: { title, pubDate, description },
   url,
-});
-
-describe('toMarkdownPath', () => {
-  test.each([
-    ['/', '/index.md'],
-    ['/about/', '/about.md'],
-    ['/posts/foo/', '/posts/foo.md'],
-    ['/tags/', '/tags.md'],
-    ['/tags/%E7%94%9F%E6%B4%BB/', '/tags/%E7%94%9F%E6%B4%BB.md'],
-  ])('%s -> %s', (path, markdownPath) => {
-    expect(toMarkdownPath(path)).toBe(markdownPath);
-  });
 });
 
 describe('buildSiteMarkdown', () => {

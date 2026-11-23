@@ -1,16 +1,10 @@
 import config from '@/config.json';
+import { toMarkdownPath } from '@lib/markdown-path';
 import { sortPostsByDateDescending } from '@lib/posts';
 import { getTagPath } from '@lib/tags';
 import type { Post } from '@/types/Post';
 
 type ListedPost = Post & { url: string };
-
-/**
- * HTML ページのパスを、Worker が `Accept: text/markdown` で返す Markdown 版のパスに変換する。
- * `src/worker.ts` の対応付けと同じ規則（`/` → `/index.md`、末尾の `/` を除いて `.md` を付ける）。
- */
-export const toMarkdownPath = (path: string) =>
-  path === '/' ? '/index.md' : `${path.replace(/\/$/, '')}.md`;
 
 const markdownLink = (title: string, path: string, site: URL) =>
   `[${title}](${new URL(toMarkdownPath(path), site).href})`;
