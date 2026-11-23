@@ -69,6 +69,7 @@ tests/e2e/
     ├── smoke.spec.ts         # 基本表示の確認
     ├── accessibility.spec.ts # axe-coreアクセシビリティ検査
     ├── article-layout.spec.ts # 記事本文のレスポンシブ幅と目次ガター
+    ├── canonical-links.spec.ts # 内部リンクの末尾スラッシュ統一とリダイレクトなしの HTTP 200
     ├── datetime.spec.ts      # 公開日・更新日の datetime 属性と frontmatter の一致
     ├── drafts.spec.ts        # 下書きの一覧・フィードからの除外と非公開 URL の 404
     ├── link-card-geometry.spec.ts # リンクカードの幅・内在サイズと余白の回帰検証
@@ -276,7 +277,7 @@ Markdown 処理系の移行などで「画面での表示が変わらない」�
 
 - **ビルド時ネットワークスタブ**: リンクカード（`src/lib/markdown/link-card.ts`）はビルド時に外部サイトの OGP・favicon・OG 画像を取得するため、ネットワーク状態や時刻で結果が変わります。`build:e2e` は `tests/e2e/support/network-stub.ts` をプリロードし、ビルド中の localhost 以外への HTTP(S) をすべてプロセス内のループバックのスタブサーバーへ転送します。差し替えるのは、undici の Dispatcher（どのバージョンの `undici` も読み込み時にパッチするため、`open-graph-scraper` のように独自 `Agent` を渡す場合も含む）、Node.js 組み込み `fetch`（グローバル Dispatcher）、`node:http` / `node:https`、`node:dns` の `lookup` です。スタブは URL から決まる og:title / og:description / og:image / favicon を持つ HTML と、URL のハッシュから色を決めた PNG を返し、HEAD には 200 を返します。og:image と favicon の URL には `*.e2e-stub.invalid` を使います。E2E ビルドではスタブ画像を `node_modules/.astro-e2e/link-card-images/` に保存し、通常のキャッシュとは分けます。ビルドプロセスの終了時に同ディレクトリからスタブ画像を削除します。置き換えたリクエストはビルドログに `[e2e-network-stub]` として出力されます。
 - **ビルド時のタイムゾーン**: 記事の日付はビルド時に整形されるため、`TZ=UTC` に固定します。
-- **ブラウザ側**: localhost 以外へのリクエスト（Google Analytics / Partytown など）は `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
+- **ブラウザ側**: localhost 以外へのリクエストは `context.route()` で中断し、Service Worker も無効化します。テーマは `localStorage.theme` とシステム配色（`emulateMedia`）の両方で固定します。遅延読み込み画像を eager にして全画像のデコードと `document.fonts.ready` を待ち、読み込めない画像があれば失敗させます。`animations: 'disabled'` を指定します。
 - **フォント**: `tests/e2e/styles/screenshot-pages.css` で本文を `Noto Sans CJK JP`、`code` / `pre` / `kbd` / `samp` を `Noto Sans Mono CJK JP` に固定します。等幅表示を保つことで、コードブロックの崩れも検出できます（どちらも `fonts-noto-cjk` に含まれます）。
 
 ブラウザ時計は `2026-01-01T00:00:00Z`、locale は `ja-JP`、タイムゾーンは UTC に固定します。外部 iframe は余白を保ったまま非表示にします。記事一覧（ホームがアーカイブを兼ねる）、コードタイトル、Callout、リンクカードを含む全記事も対象です。外部サイトの内容そのものは合成カードで置き換えるため検証対象外です。

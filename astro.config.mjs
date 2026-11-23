@@ -1,4 +1,3 @@
-import partytown from '@astrojs/partytown';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import { satteri } from '@astrojs/markdown-satteri';
@@ -42,14 +41,5 @@ export default defineConfig({
       allowedHosts: ['quokka', 'quokka.local'],
     },
   },
-  integrations: [
-    linkCards.integration,
-    sitemap(),
-    icon(),
-    partytown({
-      config: {
-        forward: ['dataLayer.push'],
-      },
-    }),
-  ],
+  integrations: [linkCards.integration, sitemap(), icon()],
 });

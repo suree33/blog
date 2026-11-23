@@ -70,21 +70,6 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
       }
     />
     <meta property="og:locale" content="ja_JP" />
-    <!-- Google Analytics -->
-    <!-- Google tag (gtag.js) -->
-    <script
-      is:inline
-      type="text/partytown"
-      src="https://www.googletagmanager.com/gtag/js?id=G-8ZCMEEKWF9"
-    ></script>
-    <script is:inline type="text/partytown">
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args) {
-        window.dataLayer.push(args);
-      }
-      gtag('js', new Date());
-      gtag('config', 'G-8ZCMEEKWF9');
-    </script>
   </head>
   <body class="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
     <Header />

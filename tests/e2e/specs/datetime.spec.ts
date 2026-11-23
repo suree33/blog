@@ -3,7 +3,10 @@ import { expect, test } from '../fixtures/test';
 import { routes } from '../utils/routes';
 
 async function frontmatterDates(route: string): Promise<string[]> {
-  const source = await readFile(`src/content${route}.md`, 'utf8');
+  const source = await readFile(
+    `src/content${route.replace(/\/$/, '')}.md`,
+    'utf8',
+  );
   const frontmatter = source.split('---')[1];
   const pubDate = frontmatter.match(/^pubDate:\s*(\S+)/m)?.[1];
   const updatedDate = frontmatter.match(/^updatedDate:\s*(\S+)/m)?.[1];
