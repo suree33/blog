@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-const e2ePort = 4322;
+export const e2ePort = 4322;
 const e2eBaseURL = `http://localhost:${e2ePort}/`;
 
 /**

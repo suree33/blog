@@ -1,9 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { parseFrontmatter } from 'astro/markdown';
 import { load } from 'cheerio';
-import config from '../../../src/config.json' with { type: 'json' };
 import { expect, test } from '../fixtures/test';
 import { routes, sampleArticleTitle } from '../utils/routes';
+
+const productionOrigin = 'https://sur33.com';
 
 const routeOf = (link: string) =>
   decodeURI(new URL(link).pathname).replace(/^\/|\/$/g, '');
@@ -114,6 +115,7 @@ test.describe('RSS フィード', () => {
     for (const post of publishedPosts) {
       const item = items.find((item) => routeOf(item.link) === post.route);
       if (!item) throw new Error(`${post.route} が RSS にありません`);
+      expect(new URL(item.link).origin).toBe(productionOrigin);
       expect(item.title, `${post.route} のタイトルが一致する`).toBe(post.title);
       expect(
         item.content.trim(),
@@ -218,7 +220,7 @@ test.describe('RSS フィード', () => {
           .toArray()
           .map(
             (image) =>
-              new URL(article(image).attr('src') ?? '', config.url).href,
+              new URL(article(image).attr('src') ?? '', productionOrigin).href,
           ),
       );
       expect(
@@ -242,7 +244,7 @@ test.describe('RSS フィード', () => {
         expect(
           imageUrl.origin,
           `${post.route} の画像がサイトと同じオリジンを参照する`,
-        ).toBe(new URL(config.url).origin);
+        ).toBe(productionOrigin);
         const response = await rssFeedPage.request.get(imageUrl.pathname);
         expect(
           response.status(),

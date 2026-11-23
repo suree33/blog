@@ -4,16 +4,23 @@ import worker from '../../src/worker.ts';
 
 const markdownBody = '# 日本語の記事\n';
 
-const createEnv = (expectedPathname: string) => ({
-  ASSETS: {
-    fetch: async (request: Request) => {
-      assert.equal(new URL(request.url).pathname, expectedPathname);
-
-      return new Response(markdownBody, {
-        headers: { 'Content-Type': 'text/markdown' },
-      });
-    },
+const createAssets = (
+  fetch: (request: Request) => Promise<Response>,
+): Env['ASSETS'] => ({
+  fetch: (input, init) => fetch(new Request(input, init)),
+  connect: () => {
+    throw new Error('The Worker does not open sockets to ASSETS');
   },
+});
+
+const createEnv = (expectedPathname: string): Env => ({
+  ASSETS: createAssets(async (request) => {
+    assert.equal(new URL(request.url).pathname, expectedPathname);
+
+    return new Response(markdownBody, {
+      headers: { 'Content-Type': 'text/markdown' },
+    });
+  }),
 });
 
 test('direct .md response declares UTF-8 in Content-Type', async () => {
@@ -68,24 +75,22 @@ const createRecordingEnv = ({
   return {
     calls,
     env: {
-      ASSETS: {
-        fetch: async (request: Request) => {
-          const url = new URL(request.url);
-          calls.push({ method: request.method, url });
+      ASSETS: createAssets(async (request) => {
+        const url = new URL(request.url);
+        calls.push({ method: request.method, url });
 
-          return new Response(url.pathname, {
-            status,
-            statusText,
-            headers: {
-              'Content-Type': url.pathname.endsWith('.md')
-                ? 'text/markdown'
-                : 'text/html; charset=utf-8',
-              ...headers,
-            },
-          });
-        },
-      },
-    },
+        return new Response(url.pathname, {
+          status,
+          statusText,
+          headers: {
+            'Content-Type': url.pathname.endsWith('.md')
+              ? 'text/markdown'
+              : 'text/html; charset=utf-8',
+            ...headers,
+          },
+        });
+      }),
+    } satisfies Env,
   };
 };
 

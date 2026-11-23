@@ -2,6 +2,7 @@
 @import './callout.css';
 @import './link-card.css';
 @import './remark-code.css';
+@source not '../../worker-configuration.d.ts';
 
 @plugin '@tailwindcss/typography';
 @theme {
