@@ -142,6 +142,6 @@ test('robots.txt declares Content Signals', async () => {
   expect(response.status).toBe(200);
   expect(linkHeader(response)).toBe('');
   expect(await response.text()).toMatch(
-    /^Content-Signal: search=yes, ai-input=yes, ai-train=no$/m,
+    /^Content-Signal: search=yes, ai-input=yes, ai-train=yes$/m,
   );
 });

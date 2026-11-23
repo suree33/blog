@@ -48,7 +48,7 @@ Worker 側は `.md` への振り分けに加え、Cloudflare Workers Static Asse
 | `/index.md`、`/llms.txt` | サイト概要と、記事・固定ページ・タグ一覧の Markdown 版へのリンク（[llms.txt](https://llmstxt.org/) 形式） | `src/pages/index.md.ts`、`src/pages/llms.txt.ts`、`src/lib/agent-markdown.ts` |
 | `/[page].md` | `src/pages/*.md` の固定ページの raw Markdown（`layout` は除外） | `src/pages/[page].md.ts` |
 | `/tags.md`、`/tags/[tag].md` | タグ一覧と、タグごとの記事一覧 | `src/pages/tags.md.ts`、`src/pages/tags/[tag].md.ts` |
-| `/robots.txt` | [Content Signals](https://contentsignals.org/)（`search=yes, ai-input=yes, ai-train=no`）。検索と AI の回答での利用は許可し、学習への利用は許可しない | `src/pages/robots.txt.ts` |
+| `/robots.txt` | [Content Signals](https://contentsignals.org/)（`search=yes, ai-input=yes, ai-train=yes`）。検索、AI の回答、学習への利用をすべて許可する | `src/pages/robots.txt.ts` |
 
 Worker は、ページ URL への `200` レスポンスに [RFC 8288](https://www.rfc-editor.org/rfc/rfc8288) の `Link` ヘッダーを付けます。
 
