@@ -180,7 +180,7 @@ importers:
     dependencies:
       '@astrojs/check':
         specifier: 0.9.12
-        version: 0.9.12(prettier-plugin-astro@1.1.2(prettier@3.10.1))(prettier@3.10.1)(typescript@6.0.3)
+        version: 0.9.12(prettier@3.10.1)(typescript@6.0.3)
       '@astrojs/markdown-satteri':
         specifier: 0.4.10
         version: 0.4.10
@@ -250,7 +250,7 @@ importers:
         version: 0.5.3
       '@astrojs/language-server':
         specifier: 2.17.3
-        version: 2.17.3(prettier-plugin-astro@1.1.2(prettier@3.10.1))(prettier@3.10.1)(typescript@6.0.3)
+        version: 2.17.3(prettier@3.10.1)(typescript@6.0.3)
       '@axe-core/playwright':
         specifier: 4.14.0
         version: 4.14.0(playwright-core@1.65.1)
@@ -1261,9 +1261,6 @@ packages:
 
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==}
-
-  '@prettier/parse-srcset@3.1.0':
-    resolution: {integrity: sha512-FIRv2rZotO9NP/r66taYqD1zICpPiBbrECqjKV/xqNotqDxF7fLzzUeK+1RSRx9Tenk0DajR/GcRmTJ2qtHaKQ==}
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     resolution: {integrity: sha512-e+Ebe0WT+9tbXmNKPIiC8YrWAHYwug3m6i4p3rZGGulfZri1jtI4HslT+OZnFf/OIHowWF71DTlHwXBP2SiA7A==}
@@ -3241,12 +3238,6 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier-plugin-astro@1.1.2:
-    resolution: {integrity: sha512-vKyJW7Bb/QcIPUebEehbG+Tn+3yTIhoJ8ecm6NyJgcOj5T2xP+eF1IxY4zv809YyA69nV4ZFj+H9mdpC5cTaQA==}
-    engines: {node: '>=22.12.0'}
-    peerDependencies:
-      prettier: ^3.5.3
-
   prettier@3.10.1:
     resolution: {integrity: sha512-70vp3ZUYoPlFbF9uiTdXHUUCGEIp7d4+6p+8DYbkm2jP7x/3i/paXVF6dopSI3zd/CEitrZN1rc4i85xWmmXlg==}
     engines: {node: '>=14'}
@@ -3321,9 +3312,6 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
-  s.color@0.0.15:
-    resolution: {integrity: sha512-AUNrbEUHeKY8XsYr/DYpl+qk5+aM+DChopnWOPEzn8YKzOhv4l2zH6LzZms3tOZP3wwdOyc0RmTciyi46HLIuA==}
-
   safe-array-concat@1.1.4:
     resolution: {integrity: sha512-wtZlHyOje6OZTGqAoaDKxFkgRtkF9CnHAVnCHKfuj200wAgL+bSJhdsCD2l0Qx/2ekEXjPWcyKkfGb5CPboslg==}
     engines: {node: '>=0.4'}
@@ -3342,10 +3330,6 @@ packages:
   sanitize-html@2.18.2:
     resolution: {integrity: sha512-LTQVNHBeKB5qIae9x2J2Fw68ORnES++8vzYaG7DFT8P4GVCJFeHffHnRUzf5Mrxfx+4GweIvMRqkBPHHodaVNg==}
     engines: {node: '>=22.12.0'}
-
-  sass-formatter@0.8.0:
-    resolution: {integrity: sha512-Nf4eMGE2O5vnJG7KPCRyksWS9gVKSYoUWtPeMXRRxwZSPVQhSGtL602xVYS65LvMkHmkvKa7xpauF0+/5pPwrg==}
-    hasBin: true
 
   satteri@0.11.7:
     resolution: {integrity: sha512-xDOSxkc1ew3z3IovIjmsqJaVHRXTGYJkPvx0LL/U6o90km8kSU+pmrZVvnWd5creJeE0UnvMEienlkPuYQdJaA==}
@@ -3472,9 +3456,6 @@ packages:
   strtok3@10.8.0:
     resolution: {integrity: sha512-e6bW3fD6V01DPmcbLfNtn0cjsiHvTKS/hivgbzqYMfHb/nLes4QQ0H5QBxlkPQayF4xv08AvlSgptGwN86Eemw==}
     engines: {node: '>=18'}
-
-  suf-log@2.5.3:
-    resolution: {integrity: sha512-KvC8OPjzdNOe+xQ4XWJV2whQA0aM1kGVczMQ8+dStAO6KfEB140JEVQ9dE76ONZ0/Ylf67ni4tILPJB41U0eow==}
 
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
@@ -4077,9 +4058,9 @@ snapshots:
       '@emnapi/runtime': 1.11.3
       '@napi-rs/wasm-runtime': 1.2.4(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
 
-  '@astrojs/check@0.9.12(prettier-plugin-astro@1.1.2(prettier@3.10.1))(prettier@3.10.1)(typescript@6.0.3)':
+  '@astrojs/check@0.9.12(prettier@3.10.1)(typescript@6.0.3)':
     dependencies:
-      '@astrojs/language-server': 2.17.3(prettier-plugin-astro@1.1.2(prettier@3.10.1))(prettier@3.10.1)(typescript@6.0.3)
+      '@astrojs/language-server': 2.17.3(prettier@3.10.1)(typescript@6.0.3)
       chokidar: 5.0.0
       kleur: 4.1.5
       typescript: 6.0.3
@@ -4150,7 +4131,7 @@ snapshots:
       unified: 11.0.5
       yaml: 2.9.1
 
-  '@astrojs/language-server@2.17.3(prettier-plugin-astro@1.1.2(prettier@3.10.1))(prettier@3.10.1)(typescript@6.0.3)':
+  '@astrojs/language-server@2.17.3(prettier@3.10.1)(typescript@6.0.3)':
     dependencies:
       '@astrojs/astro2tsx': 0.1.4
       '@astrojs/yaml2ts': 0.2.4
@@ -4171,7 +4152,6 @@ snapshots:
       vscode-uri: 3.2.0
     optionalDependencies:
       prettier: 3.10.1
-      prettier-plugin-astro: 1.1.2(prettier@3.10.1)
     transitivePeerDependencies:
       - typescript
 
@@ -4844,9 +4824,6 @@ snapshots:
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.3': {}
-
-  '@prettier/parse-srcset@3.1.0':
-    optional: true
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     optional: true
@@ -6845,14 +6822,6 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-astro@1.1.2(prettier@3.10.1):
-    dependencies:
-      '@astrojs/compiler-rs': 0.5.3
-      '@prettier/parse-srcset': 3.1.0
-      prettier: 3.10.1
-      sass-formatter: 0.8.0
-    optional: true
-
   prettier@3.10.1: {}
 
   prismjs@1.30.0: {}
@@ -6959,9 +6928,6 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.3.3
       '@rolldown/binding-win32-x64-msvc': 1.3.3
 
-  s.color@0.0.15:
-    optional: true
-
   safe-array-concat@1.1.4:
     dependencies:
       call-bind: 1.0.9
@@ -6991,11 +6957,6 @@ snapshots:
       launder: 1.7.2
       parse-srcset: 1.0.2
       postcss: 8.5.33
-
-  sass-formatter@0.8.0:
-    dependencies:
-      suf-log: 2.5.3
-    optional: true
 
   satteri@0.11.7:
     dependencies:
@@ -7198,11 +7159,6 @@ snapshots:
   strtok3@10.8.0:
     dependencies:
       '@tokenizer/token': 0.3.0
-
-  suf-log@2.5.3:
-    dependencies:
-      s.color: 0.0.15
-    optional: true
 
   supports-color@10.2.2: {}
 
