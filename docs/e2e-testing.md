@@ -10,6 +10,12 @@ Astro のビルド結果を `astro preview` で起動し、スモークテスト
 
 ## コマンド
 
+`accessibility.spec.ts` scans home, About, a representative article, a tag page
+and 404 in both color schemes on Chromium and Mobile Chrome. Mobile scans cover
+both closed and open menus. `navigation.spec.ts` checks first-Tab skip-link focus
+and Enter activation; `metadata.spec.ts` checks one content heading on every
+route from `sitePages`, plus the PNG favicon type and viewport initial scale.
+
 Markdown の全記事描画と生成 HTML の回帰検証は [Vitest ユニットテスト](./unit-testing.md) で実行します。
 
 Run `pnpm run test:e2e tests/e2e/specs/rss.spec.ts --project=chromium` to verify the built RSS XML. The expected set mirrors `src/content.config.ts` and `src/lib/posts.ts`: top-level `src/content/posts/*.md` entries with `draft !== true`, plus top-level `src/pages/*.md` pages with `draft !== true`, title, and pubDate. E2E fixture posts are also read and filtered by draft. Tests cover exact item membership, every item's content and publication date, sanitized HTML, preserved headings/paragraphs/links/code/images, and the XSL processing instruction and response. Dates use Astro's `astro/markdown` frontmatter parser and the collection schema's date normalization before UTC comparison. Markdown images must use same-origin URLs and resolve through preview with HTTP 200 and an image content-type; link-card images are identified from the built article's `.link-card__container` and checked for valid absolute HTTP(S) URLs only, since failed caching can leave external image URLs. The configured renderer uses the Sätteri link-card plugin in `src/lib/markdown/link-card.ts`. Both RSS content paths allow images and convert their sources to absolute URLs, following the [Astro RSS documentation](https://docs.astro.build/en/recipes/rss/).

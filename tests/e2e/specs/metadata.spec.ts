@@ -1,5 +1,31 @@
 import { expect, test } from '../fixtures/test';
 import { routes, sampleTag } from '../utils/routes';
+import { sitePages } from '../utils/site-pages';
+
+for (const { route } of sitePages) {
+  test(`${route} has exactly one h1`, async ({ page }) => {
+    await page.goto(route);
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('main h1')).toHaveCount(1);
+    await expect(page.locator('main h1')).not.toBeEmpty();
+  });
+}
+
+test('favicon and viewport declarations match their content', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect
+    .soft(page.locator('link[rel="icon"]'))
+    .toHaveAttribute('type', 'image/png');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    'href',
+    '/favicon.png',
+  );
+  await expect
+    .soft(page.locator('meta[name="viewport"]'))
+    .toHaveAttribute('content', 'width=device-width, initial-scale=1');
+});
 
 const site = 'https://sur33.com';
 const defaultImage = '/ogimage/ogimage-default.png';
