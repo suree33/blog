@@ -181,9 +181,6 @@ importers:
       '@astrojs/markdown-satteri':
         specifier: 0.4.10
         version: 0.4.10
-      '@astrojs/partytown':
-        specifier: 2.1.9
-        version: 2.1.9
       '@astrojs/rss':
         specifier: 4.0.19
         version: 4.0.19
@@ -415,9 +412,6 @@ packages:
 
   '@astrojs/markdown-satteri@0.4.10':
     resolution: {integrity: sha512-3h/wheVjZIcP/m295nkiUjOvCsCs6QpvZ3l4BfDU4ghNQcrcFrNVu1+K+I+YT61hH9tuCDQiGdF8QDzfDoG42w==}
-
-  '@astrojs/partytown@2.1.9':
-    resolution: {integrity: sha512-jAywLxinR9XRHH8NB4AOJL0cohFlqX+VWEsC9WUWTWNxfDun774rpi8DMaXPOieGjuAOSkr2BM5ejcdY/eZhsQ==}
 
   '@astrojs/prism@4.1.2':
     resolution: {integrity: sha512-jMrUEpFDarDO1KWPvVc9eSa8DSfwBlwEOHwX+8zvZQpiqXRGDxFnOXHsYqV6DP7w+0qIgTr98gS1GdQlm8ypWg==}
@@ -1157,11 +1151,6 @@ packages:
 
   '@prettier/parse-srcset@3.1.0':
     resolution: {integrity: sha512-FIRv2rZotO9NP/r66taYqD1zICpPiBbrECqjKV/xqNotqDxF7fLzzUeK+1RSRx9Tenk0DajR/GcRmTJ2qtHaKQ==}
-
-  '@qwik.dev/partytown@1.0.5':
-    resolution: {integrity: sha512-E912WTT6XibcM9d4WJpMg6fjiYCYQS8j039oqYznnHis2uSjZ5622QTRaxykaveznGcwB4VhGXUEju4YCC2GOA==}
-    engines: {node: '>=18.0.0'}
-    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     resolution: {integrity: sha512-e+Ebe0WT+9tbXmNKPIiC8YrWAHYwug3m6i4p3rZGGulfZri1jtI4HslT+OZnFf/OIHowWF71DTlHwXBP2SiA7A==}
@@ -4120,11 +4109,6 @@ snapshots:
       github-slugger: 2.0.0
       satteri: 0.11.7
 
-  '@astrojs/partytown@2.1.9':
-    dependencies:
-      '@qwik.dev/partytown': 1.0.5
-      mrmime: 2.0.1
-
   '@astrojs/prism@4.1.2':
     dependencies:
       prismjs: 1.30.0
@@ -4738,8 +4722,6 @@ snapshots:
   '@poppinss/exception@1.2.3': {}
 
   '@prettier/parse-srcset@3.1.0': {}
-
-  '@qwik.dev/partytown@1.0.5': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.19':
     optional: true

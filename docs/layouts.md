@@ -21,10 +21,11 @@ BaseLayout.astro (基本レイアウト)
 - **HTMLドキュメント構造**: `<html>`, `<head>`, `<body>` の基本構造
 - **メタタグ管理**: SEO、OGP、ビューポート設定
 - **サイト設定統合**: `config.json` からサイト名、説明、OGイメージを読み込み
-- **Google Analytics**: Partytown を使用したアナリティクス統合
 - **ダークモード対応**: TailwindCSSのダークモードクラス
 - **初期テーマ同期**: `<head>` のインラインスクリプトで localStorage のテーマを初回描画前に `<html>` へ反映し、OS テーマとの差分によるちらつきを防止
 - **共通コンポーネント**: Header、Footer の配置
+
+Google Analyticsのスクリプトは読み込みません。Cloudflare Web Analyticsの設定は変更していません。
 
 ### Props
 
