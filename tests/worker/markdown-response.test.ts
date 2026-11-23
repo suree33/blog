@@ -83,8 +83,10 @@ const createRecordingEnv = ({
 
         const isMarkdown = url.pathname.endsWith('.md');
 
-        return new Response(url.pathname, {
-          status: isMarkdown ? (markdownStatus ?? status) : status,
+        const assetStatus = isMarkdown ? (markdownStatus ?? status) : status;
+
+        return new Response(assetStatus === 304 ? null : url.pathname, {
+          status: assetStatus,
           statusText,
           headers: {
             'Content-Type': isMarkdown
@@ -404,4 +406,18 @@ test('non-page assets are passed through without Link', async () => {
 
   assert.equal(calls.length, 1);
   assert.equal(response.headers.get('Link'), null);
+});
+
+test('Accept text/markdown keeps a 304 for the Markdown variant', async () => {
+  const { response, calls } = await fetchPost('text/markdown', {
+    url: 'https://example.com/posts/example/',
+    assets: { markdownStatus: 304 },
+  });
+
+  assert.deepEqual(
+    calls.map(({ method, url }) => `${method} ${url.pathname}`),
+    ['GET /posts/example.md'],
+  );
+  assert.equal(response.status, 304);
+  assert.equal(response.headers.get('Vary'), 'Accept');
 });

@@ -174,7 +174,7 @@ export default {
     if (prefersMarkdown(request.headers.get('Accept'))) {
       const markdown = await fetchMarkdownVariant(request, env, url.pathname);
 
-      if (markdown.ok) {
+      if (markdown.ok || markdown.status === 304) {
         return pageResponse(markdown, SITE_LINKS);
       }
     }
