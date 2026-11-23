@@ -95,8 +95,7 @@ const prefersMarkdown = (acceptHeader: string | null) => {
   );
 };
 
-const addVaryAccept = (response: Response) => {
-  const headers = new Headers(response.headers);
+const addVaryAccept = (headers: Headers) => {
   const vary = headers.get('Vary');
 
   if (!vary) {
@@ -106,26 +105,12 @@ const addVaryAccept = (response: Response) => {
   ) {
     headers.set('Vary', `${vary}, Accept`);
   }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 };
 
-const addMarkdownCharset = (response: Response) => {
-  const headers = new Headers(response.headers);
-
+const addMarkdownCharset = (headers: Headers) => {
   if (headers.get('Content-Type')?.split(';', 1)[0] === 'text/markdown') {
     headers.set('Content-Type', 'text/markdown; charset=utf-8');
   }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 };
 
 export default {
@@ -134,26 +119,39 @@ export default {
     const isNegotiable =
       (request.method === 'GET' || request.method === 'HEAD') &&
       POSTS_PATH_PATTERN.test(url.pathname);
+    const isMarkdown =
+      isNegotiable && prefersMarkdown(request.headers.get('Accept'));
+    let assetRequest = request;
 
-    if (isNegotiable && prefersMarkdown(request.headers.get('Accept'))) {
+    if (isMarkdown) {
       const markdownUrl = new URL(request.url);
       markdownUrl.pathname = `${url.pathname.replace(/\/$/, '')}.md`;
 
-      const response = await env.ASSETS.fetch(
-        new Request(markdownUrl, request),
-      );
-
-      return addVaryAccept(addMarkdownCharset(response));
+      assetRequest = new Request(markdownUrl, request);
     }
 
-    const response = await env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(assetRequest);
+    const needsMarkdownCharset =
+      isMarkdown || MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname);
+
+    if (!isNegotiable && !needsMarkdownCharset) {
+      return response;
+    }
+
+    const headers = new Headers(response.headers);
+
+    if (needsMarkdownCharset) {
+      addMarkdownCharset(headers);
+    }
 
     if (isNegotiable) {
-      return addVaryAccept(response);
+      addVaryAccept(headers);
     }
 
-    return MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname)
-      ? addMarkdownCharset(response)
-      : response;
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   },
 };
