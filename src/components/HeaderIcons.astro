@@ -2,6 +2,7 @@
 import { Icon } from 'astro-icon/components';
 import ThemeToggle from '@components/ThemeToggle.astro';
 import HeaderIcon from '@components/HeaderIcon.astro';
+import { socialLinks } from '@lib/social-links';
 import { cn } from '@lib/utils';
 
 interface Props {
@@ -12,23 +13,10 @@ const { class: classList } = Astro.props;
 ---
 
 <div class={cn('dark:text-white text-black', classList)}>
-  <HeaderIcon
-    href="https://twitter.com/thisissuree"
-    ariaLabel="Twitter profile page (@thisissuree)"
-  >
-    <Icon name="fa6-brands:x-twitter" />
-  </HeaderIcon>
-  <HeaderIcon
-    href="https://www.instagram.com/thisissuree/"
-    ariaLabel="Instagram profile page (@thisissuree)"
-  >
-    <Icon name="fa6-brands:instagram" />
-  </HeaderIcon>
-  <HeaderIcon
-    href="https://github.com/Suree33"
-    ariaLabel="GitHub profile page (@Suree33)"
-  >
-    <Icon name="fa6-brands:github" />
-  </HeaderIcon>
+  {socialLinks.map(({ href, ariaLabel, icon }) => (
+    <HeaderIcon href={href} ariaLabel={ariaLabel}>
+      <Icon name={icon} />
+    </HeaderIcon>
+  ))}
   <ThemeToggle />
 </div>

@@ -9,7 +9,7 @@
 # 初回のみ、Worker をブートストラップする必要がある（versions upload は
 # 既存 Worker にしか使えないため）。詳細は docs/e2e-testing.md を参照。
 name = "blog-e2e-report"
-compatibility_date = "2025-07-26"
+compatibility_date = "2026-11-18"
 
 # 本番 workers.dev ルートは公開しない。プレビュー URL のみ有効にする。
 workers_dev = false

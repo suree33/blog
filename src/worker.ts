@@ -1,9 +1,3 @@
-interface Env {
-  ASSETS: {
-    fetch(request: Request): Promise<Response>;
-  };
-}
-
 const POSTS_PATH_PATTERN = /^\/posts\/[^/.]+\/?$/;
 const MARKDOWN_POSTS_PATH_PATTERN = /^\/posts\/[^/]+\.md$/;
 

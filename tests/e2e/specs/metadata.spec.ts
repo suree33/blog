@@ -1,5 +1,31 @@
 import { expect, test } from '../fixtures/test';
 import { routes, sampleTag } from '../utils/routes';
+import { sitePages } from '../utils/site-pages';
+
+for (const { route } of sitePages) {
+  test(`${route} has exactly one h1`, async ({ page }) => {
+    await page.goto(route);
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('main h1')).toHaveCount(1);
+    await expect(page.locator('main h1')).not.toBeEmpty();
+  });
+}
+
+test('favicon and viewport declarations match their content', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect
+    .soft(page.locator('link[rel="icon"]'))
+    .toHaveAttribute('type', 'image/png');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
+    'href',
+    '/favicon.png',
+  );
+  await expect
+    .soft(page.locator('meta[name="viewport"]'))
+    .toHaveAttribute('content', 'width=device-width, initial-scale=1');
+});
 
 const site = 'https://sur33.com';
 const defaultImage = '/ogimage/ogimage-default.png';
@@ -79,6 +105,61 @@ test.describe('ページのメタデータ', () => {
         head.locator('meta[property="og:locale"]'),
         'og:locale は ja_JP',
       ).toHaveAttribute('content', 'ja_JP');
+    });
+  }
+
+  for (const path of [
+    ...cases.map(({ path }) => path),
+    openGraphTypes[2][0],
+    routes.notFound,
+    '/404.html',
+  ]) {
+    test(`${decodeURI(path)} has canonical, social image metadata and RSS discovery`, async ({
+      page,
+    }) => {
+      await page.goto(`${path}?utm_source=metadata`, {
+        waitUntil: 'domcontentloaded',
+      });
+      const head = page.locator('head');
+      const is404 = path === routes.notFound || path === '/404.html';
+      const canonical = head.locator('link[rel="canonical"]');
+      if (is404) {
+        await expect.soft(canonical).toHaveCount(0);
+      } else {
+        await expect.soft(canonical).toHaveAttribute('href', site + path);
+        await expect
+          .soft(head.locator('meta[property="og:url"]'))
+          .toHaveAttribute('content', site + path);
+      }
+      await expect
+        .soft(head.locator('meta[name="twitter:card"]'))
+        .toHaveAttribute('content', 'summary_large_image');
+      const image =
+        cases.find((entry) => entry.path === path)?.image ?? defaultImage;
+      const alt =
+        image === defaultImage
+          ? 'Daiki Sato'
+          : await page.locator('main h1').innerText();
+      await expect
+        .soft(head.locator('meta[property="og:image:alt"]'))
+        .toHaveAttribute('content', alt);
+      for (const [dimension, value] of [
+        ['width', '1200'],
+        ['height', '630'],
+      ] as const) {
+        const meta = head.locator(`meta[property="og:image:${dimension}"]`);
+        if (image === defaultImage) {
+          await expect.soft(meta).toHaveAttribute('content', value);
+        } else {
+          await expect.soft(meta).toHaveCount(0);
+        }
+      }
+      await expect
+        .soft(head.locator('link[rel="alternate"][type="application/rss+xml"]'))
+        .toHaveAttribute('href', site + routes.rss);
+      await expect
+        .soft(head.locator('link[rel="alternate"][type="application/rss+xml"]'))
+        .toHaveAttribute('title', 'Daiki Sato');
     });
   }
 });

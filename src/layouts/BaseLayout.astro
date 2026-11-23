@@ -3,15 +3,28 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import config from '@/config.json';
 import '@styles/global.css';
+import { cn } from '@lib/utils';
 
 interface Props {
   pageTitle?: string;
   ogimage?: string;
+  ogImageAlt?: string;
+  canonical?: boolean;
   description?: string;
   ogType?: 'website' | 'article';
 }
 
-const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
+const {
+  pageTitle,
+  ogimage,
+  ogImageAlt,
+  description,
+  ogType = 'website',
+  canonical = true,
+} = Astro.props;
+const pageURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url.origin);
+const image = ogimage || config.ogImage;
+const isDefaultImage = image === config.ogImage;
 ---
 
 <html lang="ja" class="motion-safe:scroll-smooth">
@@ -39,10 +52,17 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
         html.style.colorScheme = 'light dark';
       })();
     </script>
-    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="viewport" content="width=device-width" />
+    {canonical && <link rel="canonical" href={pageURL} />}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={config.siteName}
+      href={new URL('/rss.xml', Astro.site ?? Astro.url.origin)}
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta
       name="description"
@@ -58,35 +78,49 @@ const { pageTitle, ogimage, description, ogType = 'website' } = Astro.props;
       }
     />
     <meta property="og:type" content={ogType} />
-    <meta property="og:url" content={Astro.url} />
+    <meta property="og:url" content={pageURL} />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta
       property="og:description"
       content={description ? description : config.description}
     />
     <meta
       property="og:image"
-      content={ogimage ? config.url + ogimage : config.url + config.ogImage}
+      content={new URL(image, Astro.site ?? Astro.url.origin)}
     />
-    <meta property="og:locale" content="ja_JP" />
-    <!-- Google Analytics -->
-    <!-- Google tag (gtag.js) -->
-    <script
-      is:inline
-      type="text/partytown"
-      src="https://www.googletagmanager.com/gtag/js?id=G-8ZCMEEKWF9"
-    ></script>
-    <script is:inline type="text/partytown">
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args) {
-        window.dataLayer.push(args);
+    <meta
+      property="og:image:alt"
+      content={
+        ogImageAlt ||
+        (isDefaultImage ? config.siteName : pageTitle || config.siteName)
       }
-      gtag('js', new Date());
-      gtag('config', 'G-8ZCMEEKWF9');
-    </script>
+    />
+    {isDefaultImage && (
+      <>
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+      </>
+    )}
+    <meta property="og:locale" content="ja_JP" />
   </head>
   <body class="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
+    <a
+      href="#main-content"
+      class={cn(
+        'sr-only focus:not-sr-only',
+        'focus:block focus:w-full focus:shrink-0 focus:px-4 focus:py-3 focus:text-center focus:font-bold',
+        'focus:bg-neutral-100 focus:text-neutral-950 dark:focus:bg-neutral-900 dark:focus:text-white',
+        'focus:outline-2 focus:-outline-offset-4 focus:outline-blue-700 dark:focus:outline-blue-300',
+      )}
+    >
+      本文へスキップ
+    </a>
     <Header />
-    <main class="grow">
+    <main
+      id="main-content"
+      tabindex="-1"
+      class="grow scroll-mt-24 sm:scroll-mt-28"
+    >
       <slot />
     </main>
     <Footer />
