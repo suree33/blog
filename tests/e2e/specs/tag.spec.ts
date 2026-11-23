@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/test';
 import { escapeRegExp } from '../utils/regex';
-import { sampleArticleTitle, sampleTag } from '../utils/routes';
+import { routes, sampleArticleTitle, sampleTag } from '../utils/routes';
+import { listTags } from '../utils/site-pages';
 
 /**
  * タグページ（`/tags/[tag]`）のスモーク確認。
@@ -59,4 +60,60 @@ test.describe('タグページ', () => {
       new RegExp(`${escapeRegExp(sampleArticleTitle)}.*Daiki Sato`),
     );
   });
+});
+
+test.describe('タグ一覧ページ', () => {
+  test('公開中の全タグが一覧に表示される', async ({ tagIndexPage }) => {
+    await tagIndexPage.goto();
+
+    await expect(
+      tagIndexPage.heading,
+      '見出し「タグ一覧」が表示される',
+    ).toBeVisible();
+    const tags = listTags();
+    await expect(
+      tagIndexPage.tagLinks,
+      '公開中のタグ数だけリンクが並ぶ',
+    ).toHaveCount(tags.length);
+    for (const tag of tags) {
+      await expect(
+        tagIndexPage.tagLink(tag),
+        `タグ「${tag}」のリンクはエンコード済みのタグページ URL を指す`,
+      ).toHaveAttribute(
+        'href',
+        `${routes.tagsBase}${encodeURIComponent(tag)}/`,
+      );
+    }
+  });
+
+  test('一覧からタグページに遷移できる', async ({
+    tagIndexPage,
+    tagPage,
+    page,
+  }) => {
+    await tagIndexPage.goto();
+    await tagIndexPage.tagLink(sampleTag).click();
+
+    await expect(page, `タグ「${sampleTag}」のページに遷移する`).toHaveURL(
+      `${routes.tagsBase}${encodeURIComponent(sampleTag)}/`,
+    );
+    await expect(tagPage.heading).toContainText(sampleTag);
+  });
+});
+
+test('記事のタグリンクはエンコード済みのタグページ URL を指す', async ({
+  articlePage,
+  page,
+}) => {
+  await articlePage.goto();
+
+  await expect(
+    page.getByRole('main').getByRole('link', {
+      name: new RegExp(`^${escapeRegExp(sampleTag)}(\\s|$)`),
+    }),
+    `記事のタグ「${sampleTag}」のリンク先が末尾スラッシュ付きのエンコード済み URL になる`,
+  ).toHaveAttribute(
+    'href',
+    `${routes.tagsBase}${encodeURIComponent(sampleTag)}/`,
+  );
 });
