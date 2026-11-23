@@ -1,10 +1,11 @@
 ---
 import FooterNavItem from '@components/FooterNavItem.astro';
+import { navItems } from '@lib/navigation';
 const { class: classList } = Astro.props;
 ---
 
 <nav class={classList} aria-label="フッター">
-  <FooterNavItem path="/" title="Blog" />
-  <FooterNavItem path="/tags/" title="Tags" />
-  <FooterNavItem path="/about/" title="About" />
+  {navItems.map((item) => (
+    <FooterNavItem {...item} />
+  ))}
 </nav>
