@@ -21,7 +21,6 @@ BaseLayout.astro (基本レイアウト)
 - **HTMLドキュメント構造**: `<html>`, `<head>`, `<body>` の基本構造
 - **メタタグ管理**: SEO、OGP、ビューポート設定
 - **サイト設定統合**: `config.json` からサイト名、説明、OGイメージを読み込み
-- **Google Analytics**: Partytown を使用したアナリティクス統合
 - **ダークモード対応**: TailwindCSSのダークモードクラス
 - **初期テーマ同期**: `<head>` のインラインスクリプトで localStorage のテーマを初回描画前に `<html>` へ反映し、OS テーマとの差分によるちらつきを防止
 - **共通コンポーネント**: Header、Footer の配置
@@ -41,6 +40,8 @@ so their dimensions are omitted rather than guessed or fetched remotely.
 `ogImageAlt` overrides the image description; otherwise the default image uses
 the site name and custom images use the page title. Object-form post `ogimage.alt`
 is forwarded to this prop.
+
+Google Analyticsのスクリプトは読み込みません。Cloudflare Web Analyticsの設定は変更していません。
 
 ### Props
 
@@ -66,6 +67,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <!-- コンテンツ -->
 </BaseLayout>
 ```
+
+### 内部ページへのリンク
+
+内部のHTMLページへのリンクは、Cloudflare Static Assets がリダイレクトせずに配信するURLに合わせ、末尾に `/` を付けます。
+
+`src/lib/posts.ts` の `getPublishedPosts()` と `getPublishedStandalonePages()` は、一覧とRSSに末尾が `/` のURLを渡します。`PostMetadata.astro` のタグリンクとMarkdown内の内部ページへのリンクも、この形式にそろえます。
+
+`/rss.xml` や `/posts/example.md` などのファイルへのリンク、ページ内リンク、外部URLは変更しません。AstroのURLポリシーやWorkerの動作も変更しません。
 
 ## ProseArticleLayout.astro
 

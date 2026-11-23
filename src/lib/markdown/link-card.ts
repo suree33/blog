@@ -10,6 +10,14 @@ export interface LinkCardOptions {
   fetch?: typeof globalThis.fetch;
   cacheDirectory: string;
   timeout?: number;
+  thumbnail?: (source: string) => Promise<
+    | {
+        src: string;
+        width: number;
+        height: number;
+      }
+    | undefined
+  >;
 }
 
 function sameUrl(a: string, b: string) {
@@ -60,6 +68,7 @@ interface CardData {
   description: string;
   favicon?: string;
   image?: string;
+  imageDimensions?: { width: number; height: number };
 }
 
 function rootElement(buffer: Buffer) {
@@ -96,7 +105,7 @@ function renderCard(data: CardData) {
         <span class="link-card__url">${sanitizeHtml(hostname)}</span>
       </div>
     </div>
-    ${data.image ? `<div class="link-card__thumbnail"><img src="${attribute(data.image)}" class="link-card__image" alt=""></div>` : ''}
+    ${data.image ? `<div class="link-card__thumbnail"><img src="${attribute(data.image)}" class="link-card__image"${data.imageDimensions ? ` width="${data.imageDimensions.width}" height="${data.imageDimensions.height}" loading="lazy" decoding="async"` : ''} alt=""></div>` : ''}
   </a>
 </div>`;
 }
@@ -233,12 +242,17 @@ export function linkCard(options: LinkCardOptions) {
         ? image(new URL(ogImage).href)
         : undefined,
     ]);
+    const thumbnail =
+      imageSrc && options.thumbnail
+        ? await options.thumbnail(imageSrc)
+        : undefined;
     return renderCard({
       url,
       title: og?.ogTitle || url.hostname,
       description: og?.ogDescription || '',
       favicon: faviconSrc,
-      image: imageSrc,
+      image: thumbnail?.src ?? imageSrc,
+      imageDimensions: thumbnail,
     });
   }
 
