@@ -15,7 +15,7 @@
     "deploy:dry-run": "wrangler deploy --dry-run",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "pnpm run cf-typegen && oxlint && eslint '**/*.astro' && astro check && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
+    "lint": "pnpm run cf-typegen && oxlint && eslint \"**/*.astro\" && astro check && tsc --noEmit && tsc --noEmit -p tsconfig.worker.json",
     "cf-typegen": "wrangler types",
     "hooks:install": "bash scripts/git-hooks/install.sh",
     "hooks:uninstall": "bash scripts/git-hooks/uninstall.sh",

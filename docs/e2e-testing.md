@@ -405,7 +405,7 @@ Cloudflare は新規プロジェクトに Pages ではなく Workers (Static Ass
 
 ## 型チェック
 
-`pnpm run lint` は `oxlint && eslint '**/*.astro' && astro check && tsc --noEmit` を実行します。`astro check` は `.astro` ファイルと `src/` 配下を確認します。`tests/` 配下の TypeScript も型チェックできるように、`tsc --noEmit` を追加しています。
+`pnpm run lint` は `oxlint && eslint "**/*.astro" && astro check && tsc --noEmit` を実行します。`astro check` は `.astro` ファイルと `src/` 配下を確認します。`tests/` 配下の TypeScript も型チェックできるように、`tsc --noEmit` を追加しています。
 
 ## gitignore
 
