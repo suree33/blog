@@ -344,16 +344,14 @@ docker run --rm --init --ipc=host --platform=linux/amd64 \
 
 ## GitHub Actions
 
-`.github/workflows/ci.yml` に `e2e` ジョブを追加しています。`lint` / `build` と同じ checkout、pnpm、Node.js、依存関係インストールのステップを YAML anchor で再利用します。
+In `.github/workflows/ci.yml`, `e2e-shard` runs one matrix job per Playwright project. Checkout and pnpm setup are shared with other jobs through YAML anchors.
 
-`e2e` ジョブでは以下を実行します。
+1. Use the same digest-pinned `mcr.microsoft.com/playwright:v1.65.1-noble` container as `visual`, with `--ipc=host`. The image includes Chromium, Firefox, WebKit and their system dependencies; its version must match the locked `@playwright/test` version. [Playwright's CI guide](https://playwright.dev/docs/ci) documents container jobs and advises against caching browser binaries.
+2. Install `fonts-noto-cjk` with `apt-get` without `sudo` inside the container.
+3. Run `pnpm exec playwright test --project="$PROJECT" --reporter=github,list,blob`. The GitHub reporter produces failure annotations, and blob reports are retained for 1 day. Test results are retained for 7 days.
+4. The separate `e2e` job merges the blob reports into an HTML report, publishes the Cloudflare preview, and uploads the HTML report as an artifact retained for 7 days. It still runs on the host runner, not in the browser container.
 
-1. `fonts-noto-cjk` をインストールし、スクリーンショット用の日本語フォントを固定する。
-2. `pnpm exec playwright install --with-deps chromium firefox webkit` で全ブラウザと必要なシステム依存パッケージをインストールする（config が 6 プロジェクトを定義するため、Firefox / WebKit も必要）。
-3. `pnpm run test:e2e` を実行する。`playwright.config.ts` では `fullyParallel: true` と `workers: undefined` を組み合わせ、Playwright のデフォルト worker 数で spec 内テストを並列実行する。GitHub Actions 上では `github` reporter を `list` / `html` に追加し、失敗時の annotation を有効化する。
-4. `playwright-report/` と `test-results/` を artifact としてアップロードする。
-
-artifact の保持期間は 7 日です。テストが失敗した場合も調査できるよう、アップロードステップには `if: ${{ !cancelled() }}` を付けています。
+Report and test-result uploads use `if: ${{ !cancelled() }}` so that failed tests remain inspectable.
 
 ### ビルドの使い回しとキャッシュ
 

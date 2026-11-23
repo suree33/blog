@@ -12,7 +12,12 @@ const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
 export default defineConfig(
   {
-    ignores: ['src/content/posts/.obsidian/**', '.worktrees/**', '.wt/**'],
+    ignores: [
+      'src/content/posts/.obsidian/**',
+      '.worktrees/**',
+      '.wt/**',
+      'worker-configuration.d.ts',
+    ],
   },
   includeIgnoreFile(gitignorePath, 'Imported .gitignore patterns'),
   js.configs.recommended,
