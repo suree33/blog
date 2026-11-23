@@ -54,11 +54,22 @@ const cases = [
     description:
       'Astroで、remarkプラグインであるremark-link-cardを使いリンクをカード形式で表示できるようにしました。',
   },
+  {
+    path: routes.tagsBase,
+    image: defaultImage,
+    description: 'ブログ記事に付いているタグの一覧です。',
+  },
+  {
+    path: `${routes.tagsBase}${encodeURIComponent(sampleTag)}/`,
+    image: defaultImage,
+    description: `${sampleTag}のタグが付いた記事の一覧です。`,
+  },
 ];
 
 const openGraphTypes = [
   [routes.home, 'website'],
   [`${routes.about}/`, 'website'],
+  [routes.tagsBase, 'website'],
   [`${routes.tagsBase}${encodeURIComponent(sampleTag)}/`, 'website'],
   [routes.notFound, 'website'],
   [`${routes.sampleArticle}/`, 'article'],
@@ -71,7 +82,7 @@ test.describe('ページのメタデータ', () => {
   );
 
   for (const { path, image, description } of cases) {
-    test(`${path} の OGP と説明文が正しい`, async ({ page }) => {
+    test(`${decodeURI(path)} の OGP と説明文が正しい`, async ({ page }) => {
       await page.goto(path, { waitUntil: 'domcontentloaded' });
 
       const head = page.locator('head');
@@ -110,7 +121,7 @@ test.describe('ページのメタデータ', () => {
 
   for (const path of [
     ...cases.map(({ path }) => path),
-    openGraphTypes[2][0],
+    `${routes.about}/`,
     routes.notFound,
     '/404.html',
   ]) {
