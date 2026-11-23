@@ -301,6 +301,62 @@ test('コピーボタンはコードに重なり、ポインタ操作では通�
   }
 });
 
+test('右端までスクロールした行末はコピーボタンに隠れない', async ({
+  isDesktop,
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/posts/zshrc-startup-slow-cause-and-fix/');
+
+  const result = await page.evaluate(() => {
+    const areas = [...document.querySelectorAll('.post-code-area')];
+    const area = areas.find((candidate) => {
+      const pre = candidate.querySelector('pre');
+      return pre && pre.scrollWidth > pre.clientWidth + 40;
+    });
+    if (!area) throw new Error('横スクロールするコードブロックがない');
+    const pre = area.querySelector('pre');
+    const button = area.querySelector('.post-code-copy');
+    if (!pre || !button) throw new Error('コードかボタンがない');
+
+    pre.scrollLeft = pre.scrollWidth;
+    const code = pre.querySelector('code');
+    if (!code) throw new Error('コードがない');
+    const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT);
+    let lastText: Node | null = null;
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent?.trim()) lastText = walker.currentNode;
+    }
+    if (!lastText) throw new Error('コードの文字がない');
+    const range = document.createRange();
+    range.selectNodeContents(lastText);
+    const rects = [...range.getClientRects()].filter((rect) => rect.width > 0);
+    const lastRect = rects[rects.length - 1];
+    return {
+      gap: button.getBoundingClientRect().left - lastRect.right,
+      paddingInlineEnd: getComputedStyle(pre).paddingInlineEnd,
+    };
+  });
+
+  if (isDesktop) {
+    // ポインタ操作では余白を足さず、従来どおり重ねる
+    expect(
+      Number.parseFloat(result.paddingInlineEnd),
+      'ポインタ操作ではインライン終端に余白を追加しない',
+    ).toBeLessThan(40);
+    return;
+  }
+
+  expect(
+    Number.parseFloat(result.paddingInlineEnd),
+    'タッチ端末ではボタンの幅と間隔ぶんの余白を確保する',
+  ).toBeGreaterThanOrEqual(40);
+  expect(
+    result.gap,
+    '右端までスクロールした行末とボタンの間に 2px 以上の間隔がある',
+  ).toBeGreaterThanOrEqual(2);
+});
+
 test('クリップボードへの書き込みが拒否されると失敗を通知する', async ({
   page,
 }) => {

@@ -114,4 +114,13 @@ import { Icon } from 'astro-icon/components';
       opacity: 1;
     }
   }
+
+  /* タッチ端末ではボタンが常時表示されるため、右端までスクロールした行末が
+     ボタンの下に残らないよう、インライン終端に余白を確保する
+     （ボタン 2rem + オフセット 0.5rem + 間隔 0.25rem = 2.75rem） */
+  @media (hover: none) {
+    .post-content .post-code-area > pre {
+      padding-inline-end: 2.75rem;
+    }
+  }
 </style>
