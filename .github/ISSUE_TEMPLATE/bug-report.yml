@@ -1,0 +1,35 @@
+name: 不具合の報告
+description: ブログの表示や動作に問題がある場合はこちら
+labels: [needs-triage]
+body:
+  - type: input
+    id: url
+    attributes:
+      label: 問題が起きたページの URL
+      placeholder: https://sur33.com/
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 問題が起きるまでに何をしたか、順番に書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: 何が起きたかを書いてください。スクリーンショットがあれば添付してください。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待した動作
+      description: 本来どうなると思ったかを書いてください。
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: ブラウザー・端末
+      placeholder: '例: Safari 26、iPhone 16'

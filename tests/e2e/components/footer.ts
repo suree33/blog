@@ -17,6 +17,10 @@ export class Footer {
     return this.root.getByRole('link', { name: 'Blog' });
   }
 
+  get tagsLink(): Locator {
+    return this.root.getByRole('link', { name: 'Tags' });
+  }
+
   get aboutLink(): Locator {
     return this.root.getByRole('link', { name: 'About' });
   }

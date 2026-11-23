@@ -3,59 +3,25 @@ export const prerender = true;
 import type { InferGetStaticPropsType } from 'astro';
 import PostList from '@components/PostList.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import type { Post } from '@/types/Post';
-import { getPublishedPosts, getPublishedStandalonePages } from '@lib/posts';
+import { getPublishedTags } from '@lib/tags';
 
 export async function getStaticPaths() {
-  const posts = [
-    ...(await getPublishedStandalonePages()),
-    ...(await getPublishedPosts()),
-  ];
-
-  const uniqueTags = [
-    ...new Set(
-      posts
-        .filter((post) => {
-          if (!post.frontmatter.tags) {
-            console.warn(`Warning: Post "${post.url}" has no tags`);
-            return false;
-          }
-          if (!Array.isArray(post.frontmatter.tags)) {
-            console.warn(`Warning: Post "${post.url}" has invalid tags format`);
-            return false;
-          }
-          return true;
-        })
-        .map((post) => post.frontmatter.tags as string[])
-        .flat(),
-    ),
-  ];
-
-  return uniqueTags.map((tag) => {
-    const filteredPosts = posts.filter(
-      (post): post is typeof post & Post =>
-        post.frontmatter.pubDate !== undefined &&
-        (post.frontmatter.tags?.includes(tag) ?? false),
-    );
-    return {
-      params: { tag },
-      props: { posts: filteredPosts },
-    };
-  });
+  return (await getPublishedTags()).map(({ tag, posts }) => ({
+    params: { tag },
+    props: { tag, posts },
+  }));
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { tag } = Astro.params;
-const { posts } = Astro.props;
-
-if (!tag) {
-  return Astro.redirect('/404');
-}
+const { tag, posts } = Astro.props;
 ---
 
-<BaseLayout pageTitle={tag}>
-  <PostList posts={posts ?? []}>
+<BaseLayout
+  pageTitle={tag}
+  description={`${tag}のタグが付いた記事の一覧です。`}
+>
+  <PostList posts={posts}>
     <h1 class="mt-6 mb-10 text-center text-2xl text-black dark:text-white">
       {tag}のタグが付いた記事
     </h1>
