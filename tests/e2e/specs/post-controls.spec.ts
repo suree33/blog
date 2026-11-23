@@ -68,7 +68,14 @@ test('コードをコピーするとタイトルを除いた本文がクリッ�
     exact: true,
   });
   await untitled.click();
-  await expect(untitled).toContainText('コピー済み');
+  await expect(
+    untitled.locator('.post-code-copy-check'),
+    'コピー後にアイコンがチェックへ切り替わる',
+  ).toBeVisible();
+  await expect(
+    untitled.locator('.post-code-copy-icon'),
+    'コピー中はコピーアイコンを隠す',
+  ).toBeHidden();
   if (canReadClipboard) {
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
@@ -89,7 +96,10 @@ test('コードをコピーするとタイトルを除いた本文がクリッ�
   } else {
     await titled.tap();
   }
-  await expect(titled).toContainText('コピー済み');
+  await expect(
+    titled.locator('.post-code-copy-check'),
+    'コピー後にアイコンがチェックへ切り替わる',
+  ).toBeVisible();
   await expect(titled.locator('..').getByRole('status')).toHaveText(
     'コードをコピーしました',
   );
@@ -98,6 +108,63 @@ test('コードをコピーするとタイトルを除いた本文がクリッ�
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
       .toBe(await blocks.nth(2).textContent());
   }
+});
+
+test('コピーボタンはコード領域の右上に浮かび、コードタイトルの下に置かれる', async ({
+  page,
+}) => {
+  await page.goto(article);
+
+  const container = page.locator('article .remark-code-container').filter({
+    has: page.locator('.remark-code-title', {
+      hasText: 'lua/plugins/sidekick.lua',
+    }),
+  });
+  const area = container.locator('> .post-code-area');
+  const copy = area.getByRole('button', { name: /のコードをコピー$/ });
+  const pre = area.locator('> pre');
+  const title = container.locator('> .remark-code-title');
+
+  await expect(
+    title,
+    'コードタイトルはコンテナ直下のまま（ツールバーへ移動しない）',
+  ).toHaveText('lua/plugins/sidekick.lua');
+  await expect(
+    container.locator('.post-code-area > .remark-code-title'),
+    'コードタイトルはコピーボタンの配置領域に入らない',
+  ).toHaveCount(0);
+
+  const [copyBox, preBox, titleBox] = await Promise.all([
+    copy.boundingBox(),
+    pre.boundingBox(),
+    title.boundingBox(),
+  ]);
+  if (!copyBox || !preBox || !titleBox)
+    throw new Error('要素の位置を取得できない');
+
+  expect(
+    copyBox.y,
+    'ボタンはコードタイトルの下端より下にある',
+  ).toBeGreaterThanOrEqual(titleBox.y + titleBox.height - 1);
+  expect(copyBox.y, 'ボタンはコード領域の上端付近にある').toBeLessThanOrEqual(
+    preBox.y + 16,
+  );
+  expect(
+    copyBox.x + copyBox.width,
+    'ボタンはコード領域の右端付近にある',
+  ).toBeLessThanOrEqual(preBox.x + preBox.width);
+  expect(
+    copyBox.x + copyBox.width,
+    'ボタンはコード領域の右端に寄っている',
+  ).toBeGreaterThan(preBox.x + preBox.width - 48);
+  expect(
+    copyBox.width,
+    'ボタンの当たり判定は 24px 以上',
+  ).toBeGreaterThanOrEqual(24);
+  expect(
+    copyBox.height,
+    'ボタンの当たり判定は 24px 以上',
+  ).toBeGreaterThanOrEqual(24);
 });
 
 test('クリップボードへの書き込みが拒否されると失敗を通知する', async ({
@@ -117,7 +184,10 @@ test('クリップボードへの書き込みが拒否されると失敗を通�
     exact: true,
   });
   await copy.click();
-  await expect(copy).toContainText('コピー失敗');
+  await expect(
+    copy.locator('.post-code-copy-check'),
+    '失敗時はチェックアイコンへ切り替えない',
+  ).toBeHidden();
   await expect(copy.locator('..').getByRole('status')).toHaveText(
     'コードをコピーできませんでした',
   );
@@ -136,7 +206,7 @@ test('見出しのパーマリンクとコピーボタンは両テーマで axe 
     ).toBeVisible();
     const { violations } = await new AxeBuilder({ page })
       .include('.post-heading-permalink')
-      .include('.post-code-toolbar')
+      .include('.post-code-copy')
       .analyze();
     expect(violations, colorScheme).toEqual([]);
   }

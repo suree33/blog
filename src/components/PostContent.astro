@@ -7,11 +7,21 @@ import { Icon } from 'astro-icon/components';
   <template data-heading-permalink>
     <Icon name="lucide:link" size={16} aria-hidden="true" />
   </template>
-  <template data-code-toolbar>
-    <div class="post-code-toolbar">
+  <template data-code-copy>
+    <div class="post-code-area">
       <button type="button" class="post-code-copy" aria-label="コードをコピー">
-        <Icon name="lucide:copy" size={14} aria-hidden="true" />
-        <span aria-hidden="true">コピー</span>
+        <Icon
+          name="lucide:copy"
+          class="post-code-copy-icon"
+          size={16}
+          aria-hidden="true"
+        />
+        <Icon
+          name="lucide:check"
+          class="post-code-copy-check"
+          size={16}
+          aria-hidden="true"
+        />
       </button>
       <span class="sr-only" role="status"></span>
     </div>
@@ -37,9 +47,8 @@ import { Icon } from 'astro-icon/components';
     }
   }
 
-  .post-content .post-heading-permalink,
-  .post-content .post-code-copy {
-    @apply inline-flex min-h-7 shrink-0 items-center justify-center rounded-md;
+  .post-content .post-heading-permalink {
+    @apply inline-flex shrink-0 items-center justify-center rounded-md;
     @apply text-neutral-600 dark:text-neutral-300;
     @apply hover:bg-neutral-200 hover:text-neutral-900 dark:hover:bg-neutral-700 dark:hover:text-white;
     @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
@@ -49,25 +58,44 @@ import { Icon } from 'astro-icon/components';
     @apply absolute end-0 top-0 min-w-7 no-underline;
   }
 
-  .post-content .post-code {
-    @apply my-6;
-
-    > pre {
-      @apply my-0 rounded-t-none;
-    }
+  /* コードブロックの pre だけを包み、コピーボタンの配置基準にする */
+  .post-content .post-code-area {
+    @apply relative;
   }
 
-  .post-content .post-code-toolbar {
-    @apply flex min-w-0 items-center justify-between gap-2;
-    @apply rounded-t-md border-b border-neutral-200 bg-neutral-50 px-2 py-1;
-    @apply dark:border-neutral-700 dark:bg-neutral-800;
-
-    > .remark-code-title {
-      @apply min-w-0 bg-transparent px-2 py-0 text-neutral-700 dark:bg-transparent dark:text-neutral-200;
-    }
+  /* タイトル付きのコードは、タイトルと pre が隣接していたときの見た目を保つ */
+  .post-content .remark-code-title + .post-code-area > pre {
+    @apply mt-0 rounded-tl-none;
   }
 
   .post-content .post-code-copy {
-    @apply ms-auto min-w-24 cursor-pointer gap-1.5 px-2 text-xs font-medium;
+    @apply absolute end-2 top-2 z-10 inline-flex size-8 cursor-pointer items-center justify-center rounded-md border;
+    @apply border-neutral-300 bg-white/90 text-neutral-600 shadow-sm;
+    @apply hover:bg-neutral-100 hover:text-neutral-900;
+    @apply dark:border-neutral-500 dark:bg-neutral-700/90 dark:text-neutral-300;
+    @apply dark:hover:bg-neutral-700 dark:hover:text-white;
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-200;
+    @apply transition-opacity;
+  }
+
+  .post-content .post-code-copy-check,
+  .post-content .post-code-copy[data-copied] .post-code-copy-icon {
+    display: none;
+  }
+
+  .post-content .post-code-copy[data-copied] .post-code-copy-check {
+    display: block;
+  }
+
+  /* ポインタ操作では普段隠し、ホバー・フォーカスで見せる。タッチでは常時表示 */
+  @media (hover: hover) and (pointer: fine) {
+    .post-content .post-code-copy {
+      opacity: 0;
+    }
+
+    .post-content .post-code-area:is(:hover, :focus-within) .post-code-copy,
+    .post-content .post-code-copy:focus-visible {
+      opacity: 1;
+    }
   }
 </style>

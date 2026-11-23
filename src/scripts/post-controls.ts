@@ -24,55 +24,48 @@ function addHeadingPermalinks(content: HTMLElement) {
 }
 
 function addCopyButtons(content: HTMLElement, clipboard: Clipboard) {
-  const template = content.querySelector<HTMLTemplateElement>(
-    '[data-code-toolbar]',
-  );
-  const toolbarTemplate = template?.content.firstElementChild;
-  if (!toolbarTemplate) return;
+  const template =
+    content.querySelector<HTMLTemplateElement>('[data-code-copy]');
+  const areaTemplate = template?.content.firstElementChild;
+  if (!(areaTemplate instanceof HTMLElement)) return;
 
   for (const pre of content.querySelectorAll('pre')) {
     const code = pre.querySelector(':scope > code');
     if (!code) continue;
 
-    const toolbar = toolbarTemplate.cloneNode(true) as HTMLElement;
-    const button = toolbar.querySelector('button');
-    const label = button?.querySelector('span');
-    const status = toolbar.querySelector('[role="status"]');
-    if (!button || !label || !status) return;
+    const area = areaTemplate.cloneNode(true) as HTMLElement;
+    const button = area.querySelector('button');
+    const status = area.querySelector('[role="status"]');
+    if (!button || !status) return;
 
-    let block = pre.parentElement;
-    if (!block?.classList.contains('remark-code-container')) {
-      block = document.createElement('div');
-      pre.before(block);
-      block.append(pre);
-    }
-    block.classList.add('post-code');
-
-    const title = block.querySelector(':scope > .remark-code-title');
+    const title =
+      pre.parentElement?.querySelector(':scope > .remark-code-title') ?? null;
     if (title) {
-      toolbar.prepend(title);
       button.setAttribute(
         'aria-label',
-        `${title.textContent} のコードをコピー`,
+        `${title.textContent.trim()} のコードをコピー`,
       );
     }
-    pre.before(toolbar);
+
+    pre.before(area);
+    area.insertBefore(pre, status);
 
     let reset: number | undefined;
     button.addEventListener('click', async () => {
       try {
-        await clipboard.writeText(code.textContent);
-        label.textContent = 'コピー済み';
-        status.textContent = 'コードをコピーしました';
+        await clipboard.writeText(code.textContent ?? '');
       } catch {
-        label.textContent = 'コピー失敗';
+        delete button.dataset.copied;
         status.textContent = 'コードをコピーできませんでした';
+        return;
       }
+      button.dataset.copied = '';
+      status.textContent = 'コードをコピーしました';
       window.clearTimeout(reset);
       reset = window.setTimeout(() => {
-        label.textContent = 'コピー';
+        delete button.dataset.copied;
         status.textContent = '';
-      }, 2500);
+      }, 2000);
     });
   }
 }
