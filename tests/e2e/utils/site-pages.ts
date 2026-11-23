@@ -57,7 +57,7 @@ function parseFrontmatterTags(markdown: string): string[] {
   }
 
   const lines = frontmatter.split(/\r?\n/);
-  const tagsIndex = lines.findIndex((line) => /^tags:/.test(line));
+  const tagsIndex = lines.findIndex((line) => line.startsWith('tags:'));
   if (tagsIndex === -1) {
     return [];
   }
