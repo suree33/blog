@@ -105,6 +105,88 @@ test.describe('ナビゲーション', () => {
     await expect(controls.last()).toBeFocused();
   });
 
+  test.describe('高さが足りない横向きの画面', () => {
+    test.use({
+      viewport: { width: 568, height: 280 },
+      hasTouch: true,
+      isMobile: false,
+    });
+
+    test('モバイルメニューをスクロールしてテーマボタンとSNSリンクを表示できる', async ({
+      homePage,
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: 'light' });
+      await homePage.goto();
+      const { header } = homePage;
+      await header.openMobileMenu();
+
+      const theme = header.themeToggle;
+      const social = header.root.getByRole('link', {
+        name: /GitHub profile page/,
+      });
+      await expect(
+        theme,
+        'メニューを開いた直後はテーマボタンが画面外にある',
+      ).not.toBeInViewport();
+      await page.mouse.move(284, 200);
+      await page.mouse.wheel(0, 500);
+      await expect(
+        theme,
+        'メニューをスクロールするとテーマボタン全体が画面内に入る',
+      ).toBeInViewport({ ratio: 1 });
+      await expect(
+        social,
+        'メニューをスクロールすると GitHub リンク全体が画面内に入る',
+      ).toBeInViewport({ ratio: 1 });
+      expect(
+        await page.evaluate(() => window.scrollY),
+        'メニューをスクロールしても本文の位置は変わらない',
+      ).toBe(0);
+
+      await theme.tap();
+      await expect(
+        page.locator('html'),
+        'テーマボタンをタップするとダークテーマに切り替わる',
+      ).toHaveCSS('color-scheme', 'dark');
+    });
+
+    test('モバイルメニュー内のすべての操作要素に Tab キーで移動できる', async ({
+      homePage,
+      page,
+    }) => {
+      await homePage.goto();
+      const { header } = homePage;
+      await header.openMobileMenu();
+      await header.hamburger.focus();
+
+      const controls = header.root
+        .locator('#mobile-menu')
+        .locator('a[href], button');
+      for (const control of await controls.all()) {
+        await page.keyboard.press('Tab');
+        await expect(
+          control,
+          'Tab キーでメニュー内の次の操作要素にフォーカスが移る',
+        ).toBeFocused();
+      }
+      await expect(
+        header.themeToggle,
+        'テーマボタンにフォーカスするとボタン全体が画面内に入る',
+      ).toBeInViewport({ ratio: 1 });
+      await page.keyboard.press('Tab');
+      await expect(
+        header.hamburger,
+        '最後の操作要素から Tab キーでメニュー開閉ボタンに戻る',
+      ).toBeFocused();
+      await page.keyboard.press('Shift+Tab');
+      await expect(
+        header.themeToggle,
+        'メニュー開閉ボタンから Shift+Tab キーでテーマボタンに移る',
+      ).toBeFocused();
+    });
+  });
+
   test('Escapeでモバイルメニューを閉じてハンバーガーボタンにフォーカスを戻す', async ({
     homePage,
     page,
