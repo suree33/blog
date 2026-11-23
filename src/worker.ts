@@ -105,8 +105,7 @@ const prefersMarkdown = (acceptHeader: string | null) => {
   );
 };
 
-const addVaryAccept = (response: Response) => {
-  const headers = new Headers(response.headers);
+const addVaryAccept = (headers: Headers) => {
   const vary = headers.get('Vary');
 
   if (!vary) {
@@ -116,40 +115,12 @@ const addVaryAccept = (response: Response) => {
   ) {
     headers.set('Vary', `${vary}, Accept`);
   }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 };
 
-const addMarkdownCharset = (response: Response) => {
-  const headers = new Headers(response.headers);
-
+const addMarkdownCharset = (headers: Headers) => {
   if (headers.get('Content-Type')?.split(';', 1)[0] === 'text/markdown') {
     headers.set('Content-Type', 'text/markdown; charset=utf-8');
   }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-};
-
-const addLinkHeader = (response: Response, links: string[]) => {
-  const headers = new Headers(response.headers);
-
-  for (const link of links) {
-    headers.append('Link', link);
-  }
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 };
 
 const fetchMarkdownVariant = (request: Request, env: Env, pathname: string) => {
@@ -158,6 +129,32 @@ const fetchMarkdownVariant = (request: Request, env: Env, pathname: string) => {
 
   return env.ASSETS.fetch(new Request(markdownUrl, request));
 };
+
+const withHeaders = (
+  response: Response,
+  update: (headers: Headers) => void,
+) => {
+  const headers = new Headers(response.headers);
+  update(headers);
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+const pageResponse = (response: Response, links: string[]) =>
+  withHeaders(response, (headers) => {
+    addMarkdownCharset(headers);
+    addVaryAccept(headers);
+
+    if (response.ok) {
+      for (const link of links) {
+        headers.append('Link', link);
+      }
+    }
+  });
 
 export default {
   async fetch(request: Request, env: Env) {
@@ -170,7 +167,7 @@ export default {
       const response = await env.ASSETS.fetch(request);
 
       return MARKDOWN_PATH_PATTERN.test(url.pathname)
-        ? addMarkdownCharset(response)
+        ? withHeaders(response, addMarkdownCharset)
         : response;
     }
 
@@ -178,16 +175,14 @@ export default {
       const markdown = await fetchMarkdownVariant(request, env, url.pathname);
 
       if (markdown.ok) {
-        return addVaryAccept(
-          addLinkHeader(addMarkdownCharset(markdown), SITE_LINKS),
-        );
+        return pageResponse(markdown, SITE_LINKS);
       }
     }
 
     const response = await env.ASSETS.fetch(request);
 
     if (!response.ok) {
-      return addVaryAccept(response);
+      return pageResponse(response, []);
     }
 
     const markdown = await fetchMarkdownVariant(
@@ -195,13 +190,15 @@ export default {
       env,
       url.pathname,
     );
-    const links = markdown.ok
-      ? [
-          `<${toMarkdownPath(url.pathname)}>; rel="alternate"; type="text/markdown"`,
-          ...SITE_LINKS,
-        ]
-      : SITE_LINKS;
 
-    return addVaryAccept(addLinkHeader(response, links));
+    return pageResponse(
+      response,
+      markdown.ok
+        ? [
+            `<${toMarkdownPath(url.pathname)}>; rel="alternate"; type="text/markdown"`,
+            ...SITE_LINKS,
+          ]
+        : SITE_LINKS,
+    );
   },
 };

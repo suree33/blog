@@ -16,13 +16,13 @@ const { tocHeadings, ...baseProps } = Astro.props;
 <BaseLayout {...baseProps}>
   <div
     class={cn(
-      'mt-10 px-4 mb-16 w-full flex justify-center',
+      'mt-10 mb-16 flex w-full justify-center px-4',
       'xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,36ch)_auto_minmax(0,36ch)_minmax(0,1fr)]',
     )}
   >
     <article
       class={cn(
-        'w-full xl:mx-8 xl:col-start-3 xl:w-auto',
+        'w-full xl:col-start-3 xl:mx-8 xl:w-auto',
         'prose prose-neutral dark:prose-invert',
         'prose-headings:scroll-mt-24 sm:prose-headings:scroll-mt-28',
         'prose-h1:mb-10 prose-h1:mt-6 prose-h1:text-center prose-h1:text-3xl',
