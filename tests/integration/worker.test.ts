@@ -86,3 +86,70 @@ test.each(['/this-integration-route-does-not-exist', '/posts/no-such-post/'])(
     );
   },
 );
+
+const linkHeader = (response: Awaited<ReturnType<typeof server.fetch>>) =>
+  response.headers.get('link') ?? '';
+
+test.each([
+  ['/', 'index.md'],
+  ['/about/', 'about.md'],
+  ['/tags/', 'tags.md'],
+  ['/tags/%E7%94%9F%E6%B4%BB/', 'tags/生活.md'],
+  [postPath, `posts/${slug}.md`],
+])(
+  '%s negotiates Markdown and links its variant',
+  async (path, markdownFile) => {
+    const html = await server.fetch(path);
+    expect(html.status).toBe(200);
+    expect(html.headers.get('content-type')).toMatch(/^text\/html\b/);
+    expect(varyTokens(html)).toContain('accept');
+    expect(linkHeader(html)).toContain('rel="alternate"; type="text/markdown"');
+    expect(linkHeader(html)).toContain(
+      '</rss.xml>; rel="alternate"; type="application/rss+xml"',
+    );
+
+    const response = await server.fetch(path, {
+      headers: { Accept: 'text/markdown' },
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe(
+      'text/markdown; charset=utf-8',
+    );
+    expect(varyTokens(response)).toContain('accept');
+    expect(await response.text()).toBe(
+      await readFile(`dist/${markdownFile}`, 'utf8'),
+    );
+  },
+);
+
+test('Link header targets exist', async () => {
+  const targets = [
+    ...linkHeader(await server.fetch('/')).matchAll(/<([^>]+)>/g),
+  ].map(([, target]) => target);
+  expect(targets).toEqual([
+    '/index.md',
+    '/llms.txt',
+    '/rss.xml',
+    '/sitemap-index.xml',
+  ]);
+  for (const target of targets) {
+    expect((await server.fetch(target)).status, target).toBe(200);
+  }
+});
+
+test('robots.txt declares Content Signals', async () => {
+  const response = await server.fetch('/robots.txt');
+  expect(response.status).toBe(200);
+  expect(linkHeader(response)).toBe('');
+  expect(await response.text()).toMatch(
+    /^Content-Signal: search=yes, ai-input=yes, ai-train=yes$/m,
+  );
+});
+
+test('llms.txt declares UTF-8 in Content-Type', async () => {
+  const response = await server.fetch('/llms.txt');
+  expect(response.status).toBe(200);
+  expect(response.headers.get('Content-Type')).toBe(
+    'text/plain; charset=utf-8',
+  );
+});

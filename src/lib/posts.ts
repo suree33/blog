@@ -37,3 +37,18 @@ export async function getPublishedStandalonePages() {
       url: page.url && !page.url.endsWith('/') ? `${page.url}/` : page.url,
     }));
 }
+
+export async function getPublishedStandalonePageLinks() {
+  return (await getPublishedStandalonePages()).flatMap(({ frontmatter, url }) =>
+    url
+      ? [
+          {
+            title:
+              (frontmatter as { pageTitle?: string }).pageTitle ??
+              frontmatter.title,
+            url,
+          },
+        ]
+      : [],
+  );
+}

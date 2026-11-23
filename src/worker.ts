@@ -1,5 +1,15 @@
-const POSTS_PATH_PATTERN = /^\/posts\/[^/.]+\/?$/;
-const MARKDOWN_POSTS_PATH_PATTERN = /^\/posts\/[^/]+\.md$/;
+// Paths whose last segment has no extension are HTML pages (`/`, `/about/`, `/posts/foo/`).
+const PAGE_PATH_PATTERN = /^(?:\/[^/.]+)*\/?$/;
+const TEXT_PATH_PATTERN = /\.(?:md|txt)$/;
+
+const SITE_LINKS = [
+  '</llms.txt>; rel="describedby"; type="text/plain"',
+  '</rss.xml>; rel="alternate"; type="application/rss+xml"',
+  '</sitemap-index.xml>; rel="sitemap"; type="application/xml"',
+];
+
+const toMarkdownPath = (pathname: string) =>
+  pathname === '/' ? '/index.md' : `${pathname.replace(/\/$/, '')}.md`;
 
 interface AcceptPreference {
   mediaType: string;
@@ -107,51 +117,92 @@ const addVaryAccept = (headers: Headers) => {
   }
 };
 
-const addMarkdownCharset = (headers: Headers) => {
-  if (headers.get('Content-Type')?.split(';', 1)[0] === 'text/markdown') {
-    headers.set('Content-Type', 'text/markdown; charset=utf-8');
+const UTF8_TEXT_TYPES = new Set(['text/markdown', 'text/plain']);
+
+const addUtf8Charset = (headers: Headers) => {
+  const mediaType = headers.get('Content-Type')?.split(';', 1)[0];
+
+  if (mediaType && UTF8_TEXT_TYPES.has(mediaType)) {
+    headers.set('Content-Type', `${mediaType}; charset=utf-8`);
   }
 };
+
+const fetchMarkdownVariant = (request: Request, env: Env, pathname: string) => {
+  const markdownUrl = new URL(request.url);
+  markdownUrl.pathname = toMarkdownPath(pathname);
+
+  return env.ASSETS.fetch(new Request(markdownUrl, request));
+};
+
+const withHeaders = (
+  response: Response,
+  update: (headers: Headers) => void,
+) => {
+  const headers = new Headers(response.headers);
+  update(headers);
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+const pageResponse = (response: Response, links: string[]) =>
+  withHeaders(response, (headers) => {
+    addUtf8Charset(headers);
+    addVaryAccept(headers);
+
+    if (response.ok) {
+      for (const link of links) {
+        headers.append('Link', link);
+      }
+    }
+  });
 
 export default {
   async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     const isNegotiable =
       (request.method === 'GET' || request.method === 'HEAD') &&
-      POSTS_PATH_PATTERN.test(url.pathname);
-    const isMarkdown =
-      isNegotiable && prefersMarkdown(request.headers.get('Accept'));
-    let assetRequest = request;
+      PAGE_PATH_PATTERN.test(url.pathname);
 
-    if (isMarkdown) {
-      const markdownUrl = new URL(request.url);
-      markdownUrl.pathname = `${url.pathname.replace(/\/$/, '')}.md`;
+    if (!isNegotiable) {
+      const response = await env.ASSETS.fetch(request);
 
-      assetRequest = new Request(markdownUrl, request);
+      return TEXT_PATH_PATTERN.test(url.pathname)
+        ? withHeaders(response, addUtf8Charset)
+        : response;
     }
 
-    const response = await env.ASSETS.fetch(assetRequest);
-    const needsMarkdownCharset =
-      isMarkdown || MARKDOWN_POSTS_PATH_PATTERN.test(url.pathname);
+    if (prefersMarkdown(request.headers.get('Accept'))) {
+      const markdown = await fetchMarkdownVariant(request, env, url.pathname);
 
-    if (!isNegotiable && !needsMarkdownCharset) {
-      return response;
+      if (markdown.ok || markdown.status === 304) {
+        return pageResponse(markdown, SITE_LINKS);
+      }
     }
 
-    const headers = new Headers(response.headers);
+    const response = await env.ASSETS.fetch(request);
 
-    if (needsMarkdownCharset) {
-      addMarkdownCharset(headers);
+    if (!response.ok) {
+      return pageResponse(response, []);
     }
 
-    if (isNegotiable) {
-      addVaryAccept(headers);
-    }
+    const markdown = await fetchMarkdownVariant(
+      new Request(request, { method: 'HEAD' }),
+      env,
+      url.pathname,
+    );
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    });
+    return pageResponse(
+      response,
+      markdown.ok
+        ? [
+            `<${toMarkdownPath(url.pathname)}>; rel="alternate"; type="text/markdown"`,
+            ...SITE_LINKS,
+          ]
+        : SITE_LINKS,
+    );
   },
 };
