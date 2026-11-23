@@ -12,7 +12,7 @@ Astro + TypeScript + Tailwind CSSで構築されたDaiki Satoの個人ブログ 
 
 - 複数のCSSクラスを結合する場合は `src/lib/utils.ts` の `cn()` を使用する。テンプレート文字列による手動連結も、条件付きクラスの手動表現もしない
 - 実装や修正を始める前に、関連する `docs/` のドキュメントを能動的に参照する。新機能・新コンポーネント・カスタムコマンドの実装時と、既存機能の大幅な変更時は `docs/` を追加・更新する
-- コード変更後は `pnpm run lint`（eslint + astro check + tsc）を通す
+- コード変更後は `pnpm run lint`（oxlint + eslint（.astro のみ）+ astro check + tsc）を通す
 
 ## Skills
 
