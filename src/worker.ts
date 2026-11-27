@@ -10,6 +10,14 @@ const SITE_LINKS = [
   '</sitemap-index.xml>; rel="sitemap"; type="application/xml"',
 ];
 
+// Keep in sync with public/_headers for assets that bypass the Worker.
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
 interface AcceptPreference {
   mediaType: string;
   parameters: string[];
@@ -135,10 +143,14 @@ const fetchMarkdownVariant = (request: Request, env: Env, pathname: string) => {
 
 const withHeaders = (
   response: Response,
-  update: (headers: Headers) => void,
+  update?: (headers: Headers) => void,
 ) => {
   const headers = new Headers(response.headers);
-  update(headers);
+  update?.(headers);
+
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    headers.set(name, value);
+  }
 
   return new Response(response.body, {
     status: response.status,
@@ -169,9 +181,10 @@ export default {
     if (!isNegotiable) {
       const response = await env.ASSETS.fetch(request);
 
-      return TEXT_PATH_PATTERN.test(url.pathname)
-        ? withHeaders(response, addUtf8Charset)
-        : response;
+      return withHeaders(
+        response,
+        TEXT_PATH_PATTERN.test(url.pathname) ? addUtf8Charset : undefined,
+      );
     }
 
     if (prefersMarkdown(request.headers.get('Accept'))) {

@@ -32,12 +32,27 @@ const varyTokens = (response: Awaited<ReturnType<typeof server.fetch>>) =>
     ?.toLowerCase()
     .split(/\s*,\s*/) ?? [];
 
+const expectSecurityHeaders = (
+  response: Awaited<ReturnType<typeof server.fetch>>,
+) => {
+  expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  expect(response.headers.get('Referrer-Policy')).toBe(
+    'strict-origin-when-cross-origin',
+  );
+  expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+  expect(response.headers.get('Permissions-Policy')).toBe(
+    'camera=(), microphone=(), geolocation=()',
+  );
+  expect(response.headers.has('Content-Security-Policy')).toBe(false);
+};
+
 test('default post request returns HTML with Vary: Accept', async () => {
   const response = await server.fetch(postPath);
   expect(response.status).toBe(200);
   expect(response.headers.get('content-type')).toMatch(/^text\/html\b/);
   expect(varyTokens(response)).toContain('accept');
   expect(await response.text()).toContain(title);
+  expectSecurityHeaders(response);
 });
 
 test('Accept: text/markdown returns the built post Markdown', async () => {
@@ -50,6 +65,7 @@ test('Accept: text/markdown returns the built post Markdown', async () => {
   );
   expect(varyTokens(response)).toContain('accept');
   expect(await response.text()).toBe(markdown);
+  expectSecurityHeaders(response);
 });
 
 test('.md URL returns UTF-8 Markdown', async () => {
@@ -59,6 +75,7 @@ test('.md URL returns UTF-8 Markdown', async () => {
     'text/markdown; charset=utf-8',
   );
   expect(await response.text()).toBe(markdown);
+  expectSecurityHeaders(response);
 });
 
 test('static CSS is served without Worker-added Vary: Accept', async () => {
@@ -73,19 +90,31 @@ test('static CSS is served without Worker-added Vary: Accept', async () => {
   expect(await response.text()).toBe(
     await readFile(`dist/_astro/${css}`, 'utf8'),
   );
+  expect(response.headers.get('cache-control')).toBe(
+    'public, max-age=31536000, immutable',
+  );
+  expectSecurityHeaders(response);
 });
 
-test.each(['/this-integration-route-does-not-exist', '/posts/no-such-post/'])(
-  '%s returns the site 404 page',
-  async (path) => {
-    const response = await server.fetch(path);
-    expect(response.status).toBe(404);
-    expect(response.headers.get('content-type')).toMatch(/^text\/html\b/);
-    expect(await response.text()).toContain(
-      'このページは見つかりませんでした…',
-    );
-  },
-);
+test('favicon carries security headers without immutable caching', async () => {
+  const response = await server.fetch('/favicon.png');
+  expect(response.status).toBe(200);
+  expect(response.headers.get('content-type')).toBe('image/png');
+  expect(response.headers.get('cache-control')).not.toContain('immutable');
+  expectSecurityHeaders(response);
+});
+
+test.each([
+  '/this-integration-route-does-not-exist',
+  '/posts/no-such-post/',
+  '/_astro/missing.css',
+])('%s returns the site 404 page', async (path) => {
+  const response = await server.fetch(path);
+  expect(response.status).toBe(404);
+  expect(response.headers.get('content-type')).toMatch(/^text\/html\b/);
+  expect(await response.text()).toContain('このページは見つかりませんでした…');
+  expectSecurityHeaders(response);
+});
 
 const linkHeader = (response: Awaited<ReturnType<typeof server.fetch>>) =>
   response.headers.get('link') ?? '';
