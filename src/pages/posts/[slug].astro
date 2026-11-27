@@ -3,6 +3,8 @@ import { render } from 'astro:content';
 import { getPublishedPosts } from '@lib/posts';
 import MarkdownPostLayout from '@layouts/MarkdownPostLayout.astro';
 import PostContent from '@components/PostContent.astro';
+import JsonLd from '@components/JsonLd.astro';
+import config from '@/config.json';
 
 export async function getStaticPaths() {
   return (await getPublishedPosts()).map((post) => ({
@@ -13,9 +15,54 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
+const { title, description, pubDate, updatedDate, tags, image, ogimage } =
+  post.data;
+const site = Astro.site ?? Astro.url.origin;
+const pageURL = new URL(Astro.url.pathname, site).href;
+const ogImageSrc = typeof ogimage === 'string' ? ogimage : ogimage?.src;
+const articleImage = image?.src
+  ? new URL(image.src, pageURL).href
+  : ogImageSrc
+    ? new URL(ogImageSrc, site).href
+    : undefined;
+
+const blogPosting = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  mainEntityOfPage: pageURL,
+  headline: title,
+  description,
+  datePublished: pubDate,
+  dateModified: updatedDate || undefined,
+  keywords: tags,
+  image: articleImage,
+  author: {
+    '@type': 'Person',
+    name: config.author,
+    url: new URL('/about/', site).href,
+  },
+};
+
+const breadcrumbList = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Blog',
+      item: new URL('/', site).href,
+    },
+    { '@type': 'ListItem', position: 2, name: title, item: pageURL },
+  ],
+};
 ---
 
 <MarkdownPostLayout frontmatter={post.data} headings={headings}>
+  <Fragment slot="head">
+    <JsonLd data={blogPosting} />
+    <JsonLd data={breadcrumbList} />
+  </Fragment>
   <PostContent>
     <Content />
   </PostContent>

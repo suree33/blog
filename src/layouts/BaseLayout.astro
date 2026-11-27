@@ -102,6 +102,7 @@ const isDefaultImage = image === config.ogImage;
       </>
     )}
     <meta property="og:locale" content="ja_JP" />
+    <slot name="head" />
   </head>
   <body class="flex min-h-screen flex-col bg-white dark:bg-neutral-950">
     <a

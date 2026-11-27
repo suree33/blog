@@ -1,13 +1,22 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import JsonLd from '@components/JsonLd.astro';
 import PostList from '@components/PostList.astro';
 import { getPublishedPosts } from '@lib/posts';
+import config from '@/config.json';
 
 const posts = await getPublishedPosts();
 const pageTitle = 'Blog';
+const webSite = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: config.siteName,
+  url: new URL('/', Astro.site ?? Astro.url.origin).href,
+};
 ---
 
 <BaseLayout pageTitle={pageTitle}>
+  <JsonLd slot="head" data={webSite} />
   <h1 class="sr-only">{pageTitle}</h1>
   <PostList posts={posts} />
 </BaseLayout>

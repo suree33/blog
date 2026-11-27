@@ -1,0 +1,11 @@
+---
+interface Props {
+  data: Record<string, unknown>;
+}
+
+const { data } = Astro.props;
+// Metadata must not be able to close the script element.
+const json = JSON.stringify(data).replaceAll('<', '\\u003c');
+---
+
+<script type="application/ld+json" set:html={json} />

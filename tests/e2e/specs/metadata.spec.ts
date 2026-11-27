@@ -1,5 +1,10 @@
 import { expect, test } from '../fixtures/test';
-import { routes, sampleTag } from '../utils/routes';
+import {
+  routes,
+  sampleArticleDescription,
+  sampleArticleTitle,
+  sampleTag,
+} from '../utils/routes';
 import { sitePages } from '../utils/site-pages';
 
 for (const { route } of sitePages) {
@@ -30,6 +35,7 @@ test('favicon and viewport declarations match their content', async ({
 const site = 'https://sur33.com';
 const defaultImage = '/ogimage/ogimage-default.png';
 const defaultDescription = 'Daiki Satoのブログ';
+const jsonLd = 'script[type="application/ld+json"]';
 
 const cases = [
   {
@@ -81,6 +87,96 @@ test.describe('ページのメタデータ', () => {
     ({ browserName, isMobile }) => browserName !== 'chromium' || isMobile,
     '静的 HTML のメタデータ検証はデスクトップ Chromium のみで実行',
   );
+
+  test('published posts have valid BlogPosting and BreadcrumbList JSON-LD', async ({
+    page,
+  }) => {
+    const canonical = site + routes.sampleArticle + '/';
+    await page.goto(routes.sampleArticle + '/?utm_source=metadata', {
+      waitUntil: 'domcontentloaded',
+    });
+
+    const scripts = page.locator('head ' + jsonLd);
+    await expect(scripts).toHaveCount(2);
+    const data = (await scripts.allTextContents()).map((text) =>
+      JSON.parse(text),
+    );
+    expect(data).toContainEqual({
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      mainEntityOfPage: canonical,
+      headline: sampleArticleTitle,
+      description: sampleArticleDescription,
+      datePublished: '2024-05-16',
+      keywords: [sampleTag, 'DIY'],
+      author: { '@type': 'Person', name: 'Daiki Sato', url: site + '/about/' },
+    });
+    expect(data).toContainEqual({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Blog', item: site + '/' },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: sampleArticleTitle,
+          item: canonical,
+        },
+      ],
+    });
+  });
+
+  test('BlogPosting includes an update date and the absolute post-specific image when present', async ({
+    page,
+  }) => {
+    await page.goto('/posts/setup-obsidian-livesync/', {
+      waitUntil: 'domcontentloaded',
+    });
+
+    const scripts = page.locator('head ' + jsonLd);
+    await expect(scripts).toHaveCount(2);
+    const data = (await scripts.allTextContents()).map((text) =>
+      JSON.parse(text),
+    );
+    expect(data).toContainEqual(
+      expect.objectContaining({
+        '@type': 'BlogPosting',
+        dateModified: '2025-02-03',
+        image: site + '/ogimage/setup-obsidian-livesync.png',
+      }),
+    );
+  });
+
+  test('the home page has only WebSite JSON-LD', async ({ page }) => {
+    await page.goto(routes.home, { waitUntil: 'domcontentloaded' });
+
+    const script = page.locator('head ' + jsonLd);
+    await expect(script).toHaveCount(1);
+    expect(JSON.parse((await script.textContent()) ?? '')).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Daiki Sato',
+      url: site + '/',
+    });
+  });
+
+  test('non-post pages and raw Markdown do not get JSON-LD', async ({
+    page,
+    request,
+  }) => {
+    for (const path of [
+      routes.about + '/',
+      routes.tagsBase,
+      routes.tagsBase + encodeURIComponent(sampleTag) + '/',
+      routes.notFound,
+    ]) {
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
+      await expect(page.locator(jsonLd), path).toHaveCount(0);
+    }
+    const markdown = await request.get(routes.sampleArticleMarkdown);
+    await expect(markdown).toBeOK();
+    expect(await markdown.text()).not.toContain('application/ld+json');
+  });
 
   for (const { path, image, description } of cases) {
     test(`${decodeURI(path)} の OGP と説明文が正しい`, async ({ page }) => {

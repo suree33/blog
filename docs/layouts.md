@@ -41,6 +41,12 @@ so their dimensions are omitted rather than guessed or fetched remotely.
 the site name and custom images use the page title. Object-form post `ogimage.alt`
 is forwarded to this prop.
 
+Published post routes pass `BlogPosting` and `BreadcrumbList` JSON-LD into
+the named head slot. The home page supplies `WebSite`; other routes do not
+supply structured data. Post metadata comes from frontmatter and the site
+configuration. Posts without an update date or a post-specific image omit
+those properties rather than using a default.
+
 Google Analyticsのスクリプトは読み込みません。Cloudflare Web Analyticsの設定は変更していません。
 
 ### Keyboard navigation and headings
