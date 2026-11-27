@@ -87,6 +87,46 @@ test.each(['/this-integration-route-does-not-exist', '/posts/no-such-post/'])(
   },
 );
 
+test('Dreamhouse has no built HTML or raw Markdown assets', () => {
+  expect(existsSync('dist/dreamhouse')).toBe(false);
+  expect(existsSync('dist/dreamhouse.md')).toBe(false);
+});
+
+test.each([
+  ['/dreamhouse', 'text/html'],
+  ['/dreamhouse/', 'text/html'],
+  ['/dreamhouse.md', 'text/markdown'],
+  ['/dreamhouse/', 'text/markdown'],
+])('unpublished %s returns 404 with Accept: %s', async (path, accept) => {
+  const response = await server.fetch(path, { headers: { Accept: accept } });
+  expect(response.status).toBe(404);
+});
+
+test('public outputs omit Dreamhouse', async () => {
+  const sitemap = await server.fetch('/sitemap-index.xml');
+  expect(sitemap.status).toBe(200);
+  const sitemapLocations = [
+    ...(await sitemap.text()).matchAll(/<loc>([^<]+)<\/loc>/g),
+  ];
+  expect(sitemapLocations.length).toBeGreaterThan(0);
+
+  for (const path of [
+    ...sitemapLocations.map(([, url]) => new URL(url).pathname),
+    '/rss.xml',
+    '/llms.txt',
+    '/index.md',
+    '/about.md',
+    '/tags/生活.md',
+    '/tags/ガジェット.md',
+  ]) {
+    const response = await server.fetch(path);
+    expect(response.status, path).toBe(200);
+    const body = await response.text();
+    expect(body, path).not.toContain('/dreamhouse');
+    expect(body, path).not.toContain('理想の家のアイデア');
+  }
+});
+
 const linkHeader = (response: Awaited<ReturnType<typeof server.fetch>>) =>
   response.headers.get('link') ?? '';
 

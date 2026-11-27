@@ -280,7 +280,7 @@ sudo apt-get install fonts-noto-cjk
 
 Markdown 処理系の移行などで「画面での表示が変わらない」ことを確認するため、サイトの全ページをフルページで撮影します。
 
-- 対象: ホーム、About、Dreamhouse、全記事（`src/content/posts/*.md`、`template/` を除く）、全タグページ、404。記事とタグは `tests/e2e/utils/site-pages.ts` がソース（ファイル名と frontmatter の `tags`）から列挙します。列挙結果がビルド後の sitemap と一致することも検証するため、ページの追加漏れや列挙ロジックの誤りはテスト失敗になります。
+- 対象: ホーム、About、全記事（`src/content/posts/*.md`、`template/` を除く）、全タグページ、404。記事とタグは `tests/e2e/utils/site-pages.ts` がソース（ファイル名と frontmatter の `tags`）から列挙します。列挙結果がビルド後の sitemap と一致することも検証するため、ページの追加漏れや列挙ロジックの誤りはテスト失敗になります。
 - プロジェクト: `chromium`（ライト / ダーク）と `Mobile Chrome`（ライト）のみ。ダークは Shiki の `light-dark()` 配色や Callout のダーク用スタイルを確認するために撮影します。専用 config は 2 workers、retry なしで実行し、通常の `test:e2e` とは分離します。
 - スナップショット名: ルート・プロジェクト・OS から決めます。例: `posts/nespresso-mold-light-chromium-linux.png`、`home-light-Mobile-Chrome-linux.png`。ベースラインが欠けていても通常実行では生成せず失敗させます。
 
@@ -315,7 +315,7 @@ Playwright の更新時は lockfile と CI のイメージのバージョンを�
 - `/rss.xml` が 200 で応答し、`content-type` が XML 系（`application/xml` 等）であること。
 - `<channel>` にサイト名（`config.siteName`）・説明・`<language>ja-jp</language>` が含まれること。
 - 代表記事（`sampleArticleTitle`）のタイトルとリンクが `<item>` に含まれること。リンクはホスト・末尾スラッシュの差異に依存しないようパスで部分一致させる。
-- RSS は公開記事のみを出力します。既存の standalone Markdown ページ（Dreamhouse）も従来どおり含みます。テンプレートはコレクション glob の対象外です。
+- RSS は公開記事と、タイトル・公開日のある公開固定ページを出力します。テンプレートはコレクション glob の対象外です。
 
 ### スナップショットの更新
 

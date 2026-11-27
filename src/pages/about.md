@@ -48,7 +48,3 @@ interests:
 - Audio Technica AT2020GM
 - YAMAHA NX-50
 - Elgato Stream Deck Mini
-
-## アイデア
-
-- [理想の家のアイデア](/dreamhouse/)

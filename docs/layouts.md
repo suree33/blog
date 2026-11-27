@@ -55,8 +55,8 @@ header does not cover the first content link after activation and Tab.
 
 Each HTML page supplies exactly one nonempty `h1` inside `main`; the header logo
 is not a heading. The home page uses a visually hidden `Blog` heading to preserve
-the existing design. Article, About, tag, Dreamhouse and 404 pages retain their
-page titles as headings.
+the existing design. Article, About, tag and 404 pages retain their page titles
+as headings.
 
 ### Props
 
