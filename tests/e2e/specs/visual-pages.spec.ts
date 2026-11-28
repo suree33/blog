@@ -71,7 +71,7 @@ async function loadAllImagesAndFonts(page: Page): Promise<string[]> {
  * サイト全体（全ページ）のフルページ・ビジュアルリグレッション。
  *
  * Markdown 処理系の移行などで「画面での表示が変わらない」ことを確認するために、
- * ホーム、About、Dreamhouse、全記事、全タグページ、404 をフルページで撮影する。
+ * ホーム、About、全記事、全タグページ、404 をフルページで撮影する。
  * 記事とタグは `utils/site-pages.ts` がソースから列挙する。
  *
  * 決定性のための対策:

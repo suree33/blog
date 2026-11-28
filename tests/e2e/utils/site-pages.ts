@@ -122,12 +122,6 @@ export const sitePages: SitePage[] = [
     snapshotPath: ['about'],
     inSitemap: true,
   },
-  {
-    label: 'Dreamhouse',
-    route: '/dreamhouse',
-    snapshotPath: ['dreamhouse'],
-    inSitemap: true,
-  },
   ...listPostSlugs().map((slug) => ({
     label: `記事 ${slug}`,
     route: `/posts/${slug}`,
