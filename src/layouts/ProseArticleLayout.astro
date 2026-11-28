@@ -14,6 +14,7 @@ const { tocHeadings, ...baseProps } = Astro.props;
 ---
 
 <BaseLayout {...baseProps}>
+  <slot name="head" slot="head" />
   <div
     class={cn(
       'mt-10 mb-16 flex w-full justify-center px-4',

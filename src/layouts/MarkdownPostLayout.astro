@@ -23,6 +23,7 @@ const tocHeadings = headings.filter(({ depth }) => depth === 2 || depth === 3);
   description={frontmatter.description}
   tocHeadings={tocHeadings}
 >
+  <slot name="head" slot="head" />
   <PostMetadata
     tags={frontmatter.tags}
     pubDate={frontmatter.pubDate}
