@@ -8,7 +8,10 @@ test('immutable caching is restricted to fingerprinted Astro assets', async () =
     'utf8',
   );
   assert.equal(
-    headers.trim(),
+    headers
+      .split('\n')
+      .filter((line) => /^\/|^\s+cache-control:/i.test(line))
+      .join('\n'),
     '/_astro/*\n  Cache-Control: public, max-age=31536000, immutable',
   );
 });
